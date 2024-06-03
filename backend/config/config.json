@@ -1,0 +1,30 @@
+{
+    "development": {
+        "username": "root",
+        "password": null,
+        "database": "tickbookv4",
+        "host": "127.0.0.1",
+        "port": "3308",
+        "dialect": "mysql"
+    },
+    "test": {
+        "username": "",
+        "password": null,
+        "database": "",
+        "host": "",
+        "dialect": "mysql",
+        "dialectOptions": {
+            "ssl": {
+                "require": true,
+                "rejectUnauthorized": true
+            }
+        }
+    },
+    "production": {
+        "username": "root",
+        "password": null,
+        "database": "tickbookv4",
+        "host": "127.0.0.1",
+        "dialect": "mysql"
+    }
+}

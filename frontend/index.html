@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <link rel="icon" type="image/svg+xml" href="src/assets/favicon.png" />
+        <link
+            rel="preload"
+            href="/fonts/Archivo.woff2"
+            as="font"
+            type="font/woff2"
+            crossorigin="anonymous"
+        />
+        <link
+            rel="preload"
+            href="/fonts/ArchivoNarrow.woff2"
+            as="font"
+            type="font/woff2"
+            crossorigin="anonymous"
+        />
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+        <link
+            href="https://fonts.googleapis.com/css2?family=Bellota+Text:ital,wght@0,300;0,400;0,700;1,300;1,400;1,700&display=swap"
+            rel="stylesheet"
+        />
+
+        <style>
+            #loaderContainer {
+                position: absolute;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+            }
+
+            #loader {
+                width: 56px;
+                height: 56px;
+                display: grid;
+                animation: rotate 4s infinite;
+            }
+
+            #loader::before,
+            #loader::after {
+                content: '';
+                grid-area: 1/1;
+                border: 9px solid;
+                border-radius: 50%;
+                border-color: #786fff #786fff #0000 #0000;
+                mix-blend-mode: darken;
+                animation: rotate 1s infinite linear;
+            }
+
+            #loader::after {
+                border-color: #0000 #0000 #00cfb9 #00cfb9;
+                animation-direction: reverse;
+            }
+
+            @keyframes rotate {
+                100% {
+                    transform: rotate(1turn);
+                }
+            }
+        </style>
+
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Tickbook App</title>
+    </head>
+    <body>
+        <div id="root">
+            <div id="loaderContainer">
+                <div id="loader"></div>
+            </div>
+        </div>
+        <script type="module" src="/src/index.jsx"></script>
+    </body>
+</html>

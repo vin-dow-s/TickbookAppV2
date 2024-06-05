@@ -6,6 +6,8 @@ import { RiShare2Line } from 'react-icons/ri'
 import DashboardView from './views/DashboardView'
 import ProjectView from './views/ProjectView'
 import CodesView from './views/CodesView'
+import ComponentsView from './views/ComponentsView'
+import useStore from './hooks/useStore'
 
 const AppContainer = styled.div`
     width: 100svw;
@@ -44,6 +46,7 @@ const ExportContainer = styled.div`
     color: #4b4b4b;
     border-radius: 10px;
     font-size: 9px;
+    transition: background-color 0.1s, transform 50ms;
 
     &:hover {
         background-color: #ebebeb;
@@ -71,10 +74,15 @@ const ViewContainer = styled.div`
 
 /**
  * @file Main component of the application.
- * Contains and renders Navbar (and its dialog boxes) and MainFrameView.
- * Integrates the main routing logic for project data fetches, and handles "global" user actions.
+ * Integrates the main routing logic.
  */
 const App = () => {
+    const { jobNo, jobTitle, jobAddress } = useStore((state) => ({
+        jobNo: state.jobNo,
+        jobTitle: state.jobTitle,
+        jobAddress: state.jobAddress,
+    }))
+
     return (
         <Router>
             <AppContainer>
@@ -82,9 +90,9 @@ const App = () => {
                 <MainContainer>
                     <InfoSectionExportContainer>
                         <MainInfoSection
-                            jobNo="X11661"
-                            jobTitle="Syngenta"
-                            jobAddress="Bracknell, UK"
+                            jobNo={jobNo}
+                            jobTitle={jobTitle}
+                            jobAddress={jobAddress}
                         />
                         <ExportContainer>
                             <RiShare2Line />
@@ -95,15 +103,13 @@ const App = () => {
                         <Routes>
                             <Route
                                 path="/dashboard"
-                                element={
-                                    <DashboardView
-                                        jobNo="X11661"
-                                        viewType="Section"
-                                    />
-                                }
+                                element={<DashboardView />}
                             />
                             <Route path="/revisions" />
-                            <Route path="/components" />
+                            <Route
+                                path="/components"
+                                element={<ComponentsView />}
+                            />
                             <Route path="/templates" />
                             <Route path="/equipment" />
                             <Route path="/cable-schedules" />
@@ -111,14 +117,8 @@ const App = () => {
                             <Route path="/revisions" />
                             <Route path="/ccs" />
                             <Route path="/tender-sections" />
-                            <Route
-                                path="/"
-                                element={<ProjectView jobNo="X11661" />}
-                            />
-                            <Route
-                                path="/codes"
-                                element={<CodesView jobNo="X11661" />}
-                            />
+                            <Route path="/" element={<ProjectView />} />
+                            <Route path="/codes" element={<CodesView />} />
                         </Routes>
                     </ViewContainer>
                 </MainContainer>

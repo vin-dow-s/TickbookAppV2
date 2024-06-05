@@ -191,7 +191,7 @@ const CodesView = ({ jobNo }) => {
                 <span className="grey-label">Codes List</span>
                 <div
                     style={{
-                        height: '96.5%',
+                        height: 'calc(100% - 18px)',
                         width: '100%',
                         marginTop: '2px',
                     }}

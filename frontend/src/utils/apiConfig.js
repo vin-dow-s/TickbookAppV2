@@ -9,17 +9,21 @@ export const generateCodesURL = () => `${BASE_URL}/codes`
 
 export const generateProjectsURL = () => `${BASE_URL}/projects`
 
-//Main Table
-export const generateProjectDataURL = (jobNo) =>
-    jobNo ? `${BASE_URL}/${encodeURIComponent(jobNo)}/projectData` : null
+//Main Info Section
+export const generateProjectInfoURL = (jobNo) =>
+    jobNo ? `${BASE_URL}/${encodeURIComponent(jobNo)}/projectInfo` : null
 
-//Summary values
-export const generateProjectSummaryValues = (jobNo) =>
-    jobNo ? `${BASE_URL}/${encodeURIComponent(jobNo)}/summaryValues` : null
+//Main Table
+export const generateMainTableDataURL = (jobNo) =>
+    jobNo ? `${BASE_URL}/${encodeURIComponent(jobNo)}/mainTableData` : null
 
 //Main Table EquipRef
 export const generateEquipmentURL = (jobNo, equipRef) =>
     `${BASE_URL}/${encodeURIComponent(jobNo)}/${encodeURIComponent(equipRef)}`
+
+//Summary values
+export const generateProjectSummaryValues = (jobNo) =>
+    jobNo ? `${BASE_URL}/${encodeURIComponent(jobNo)}/summaryValues` : null
 
 //View Table
 export const generateViewTableURL = (jobNo, viewType) =>

@@ -1,18 +1,18 @@
 //Modules
-import PropTypes from 'prop-types'
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { toast } from 'react-toastify'
 import styled from 'styled-components'
 
 //Hooks
 import { useFetch } from '../hooks/useFetch'
+import useStore from '../hooks/useStore'
 
 //Utils
 import {
     generateEquipmentInAreaCompURL,
     generateEquipmentInAreaSectionCompURL,
     generateEquipmentInSectionURL,
-    generateProjectDataURL,
+    generateMainTableDataURL,
     generateProjectSummaryValues,
     generateViewTableURL,
 } from '../utils/apiConfig'
@@ -67,13 +67,6 @@ const LabelAndInputContainer = styled.div`
     justify-content: space-between;
     background-color: white;
     margin-bottom: 2px;
-
-    span {
-        align-self: end;
-        color: #5e6066;
-        font-size: smaller;
-        font-style: italic;
-    }
 `
 
 const ViewTableAndSummaryContainer = styled.div`
@@ -150,8 +143,14 @@ const RefreshButton = styled.button`
  * @param {string} viewType - The type of view selected by the user (View tab).
  * @param {boolean} autoUpdateEnabled - Flag to enable/disable auto-update feature for the view table.
  */
-const DashboardView = ({ jobNo, viewType, autoUpdateEnabled }) => {
+const DashboardView = () => {
     // 1. State declarations
+    const { jobNo, viewType, autoUpdateEnabled } = useStore((state) => ({
+        jobNo: state.jobNo,
+        viewType: state.viewType,
+        autoUpdateEnabled: state.autoUpdateEnabled,
+    }))
+
     const [localMainTableData, setLocalMainTableData] = useState([])
     const [mainTableGridApi, setMainTableGridApi] = useState(null)
     const [viewTableGridApi, setViewTableGridApi] = useState(null)
@@ -176,10 +175,10 @@ const DashboardView = ({ jobNo, viewType, autoUpdateEnabled }) => {
     // 2. Data fetching with Hooks
     //Fetches project data based on the user-selected job number
     const {
-        data: projectData = [],
-        isLoading: isLoadingProject,
-        error: projectError,
-    } = useFetch(generateProjectDataURL(jobNo))
+        data: mainTableData = [],
+        isLoading: isLoadingMainTable,
+        error: mainTableError,
+    } = useFetch(generateMainTableDataURL(jobNo))
 
     //Fetches data for the "view table" based on the user-selected jobNo and viewType
     const {
@@ -191,6 +190,7 @@ const DashboardView = ({ jobNo, viewType, autoUpdateEnabled }) => {
         refreshViewTableTrigger,
         autoUpdateEnabled ? localMainTableData : null
     )
+
     // 3. Helper Functions
     const onCellContextMenu = (params) => {
         const event = params.event
@@ -318,10 +318,10 @@ const DashboardView = ({ jobNo, viewType, autoUpdateEnabled }) => {
 
     // 5. useEffects (synchronise and update data dynamically)
     useEffect(() => {
-        if (projectData?.mainTableData) {
-            setLocalMainTableData(projectData.mainTableData)
+        if (mainTableData) {
+            setLocalMainTableData(mainTableData)
         }
-    }, [projectData])
+    }, [mainTableData])
 
     useEffect(() => {
         if (mainTableGridApi && quickFilterText !== null) {
@@ -336,14 +336,14 @@ const DashboardView = ({ jobNo, viewType, autoUpdateEnabled }) => {
     }, [localMainTableData, mainTableGridApi])
 
     useEffect(() => {
-        if (isLoadingProject) {
+        if (isLoadingMainTable) {
             mainTableGridApi?.showLoadingOverlay()
-        } else if (!jobNo && !isLoadingProject) {
+        } else if (!jobNo && !isLoadingMainTable) {
             mainTableGridApi?.showNoRowsOverlay()
         } else if (mainTableGridApi) {
             mainTableGridApi?.hideOverlay()
         }
-    }, [localMainTableData, mainTableGridApi, isLoadingProject, jobNo])
+    }, [localMainTableData, mainTableGridApi, isLoadingMainTable, jobNo])
 
     useEffect(() => {
         const config = getConfigForView(viewType)
@@ -441,40 +441,15 @@ const DashboardView = ({ jobNo, viewType, autoUpdateEnabled }) => {
         setQuickFilterText('')
     }, [jobNo])
 
-    // 6. Computation and Memoisation
-    //Extracts relevant project data and "memo"ises it to optimize performance by preventing unnecessary re-renders
-    const {
-        jobTitle,
-        jobAddress,
-        mainTableData = [],
-    } = useMemo(() => {
-        if (projectData?.projectInfo) {
-            return {
-                jobTitle: projectData.projectInfo.Title,
-                jobAddress: projectData.projectInfo.Address,
-                completion: projectData.projectInfo.CompLoaded?.toString(),
-                mainTableData: projectData.mainTableData,
-                viewTableData: viewTableData,
-            }
-        } else {
-            if (!isLoadingProject && projectError && jobNo) {
-                console.error('Data or project info missing:', projectError)
-                toast.error('Data or project info missing.')
-            }
-            if (viewTableError) {
-                console.error('View table data missing:', projectError)
-                toast.error('View table data missing.')
-            }
-            return {}
-        }
-    }, [
-        projectData,
-        viewTableData,
-        isLoadingProject,
-        projectError,
-        viewTableError,
-        jobNo,
-    ])
+    if (!isLoadingMainTable && mainTableError && jobNo) {
+        console.error('Data or project info missing:', mainTableError)
+        toast.error('Data or project info missing.')
+    }
+
+    if (viewTableError) {
+        console.error('View table data missing:', mainTableError)
+        toast.error('View table data missing.')
+    }
 
     return (
         <DashboardViewContainer>
@@ -484,7 +459,7 @@ const DashboardView = ({ jobNo, viewType, autoUpdateEnabled }) => {
             <MainTableContainer>
                 {/* Search field for main table */}
                 <LabelAndInputContainer>
-                    <span>Equipment List</span>
+                    <span className="grey-label">Equipment List</span>
                     <input
                         className="quick-filter-input"
                         type="text"
@@ -541,11 +516,4 @@ const DashboardView = ({ jobNo, viewType, autoUpdateEnabled }) => {
         </DashboardViewContainer>
     )
 }
-
-DashboardView.propTypes = {
-    jobNo: PropTypes.string,
-    viewType: PropTypes.string,
-    autoUpdateEnabled: PropTypes.bool,
-}
-
 export default DashboardView

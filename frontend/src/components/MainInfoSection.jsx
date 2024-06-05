@@ -1,5 +1,6 @@
 import PropTypes from 'prop-types'
 import styled from 'styled-components'
+import useStore from '../hooks/useStore'
 import { colors, fonts } from '../styles/global-styles'
 
 //Styled components declarations
@@ -16,14 +17,11 @@ const MainInfoSectionStyled = styled.section`
     ul {
         display: flex;
         flex: 1;
-        justify-content: left;
+        justify-content: space-between;
         align-items: center;
         padding: 0;
-        padding-left: 17px;
-
-        div {
-            padding-right: 15vw;
-        }
+        padding-left: 20px;
+        padding-right: 20px;
 
         li {
             text-align: left;
@@ -69,7 +67,13 @@ ProjectInfoItem.defaultProps = {
 }
 
 //Main component of the file
-const MainInfoSection = ({ jobNo, jobTitle, jobAddress }) => {
+const MainInfoSection = () => {
+    const { jobNo, jobTitle, jobAddress } = useStore((state) => ({
+        jobNo: state.jobNo,
+        jobTitle: state.jobTitle,
+        jobAddress: state.jobAddress,
+    }))
+
     return (
         <MainInfoSectionStyled>
             <ul>
@@ -79,12 +83,6 @@ const MainInfoSection = ({ jobNo, jobTitle, jobAddress }) => {
             </ul>
         </MainInfoSectionStyled>
     )
-}
-
-MainInfoSection.propTypes = {
-    jobNo: PropTypes.string,
-    jobTitle: PropTypes.string,
-    jobAddress: PropTypes.string,
 }
 
 export default MainInfoSection

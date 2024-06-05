@@ -134,43 +134,56 @@ export const GlobalStyle = createGlobalStyle`
         }
 
         .quick-filter-input {
-        box-sizing: border-box;
-        height: 30px;
-        width: 15em;
-        padding: 0 10px;
-        font-size: 14px;
-        border: 1px solid #d9d9d9;
-        border-radius: 7px;
-        outline: none;
-        background-image: url('/search-line.svg');
-        background-repeat: no-repeat;
-        background-position: right 10px center;
-        padding-right: 30px;
-        transition: all 0.1s;
+            box-sizing: border-box;
+            height: 30px;
+            width: 15em;
+            padding: 0 10px;
+            font-size: 14px;
+            border: 1px solid #d9d9d9;
+            border-radius: 7px;
+            outline: none;
+            background-image: url('/search-line.svg');
+            background-repeat: no-repeat;
+            background-position: right 10px center;
+            padding-right: 30px;
+            transition: all 0.1s;
 
-        &:hover {
-            border-color: #adadad;
-        }
+            &:hover {
+                border-color: #adadad;
+            }
 
-        &:focus {
-            border-color: #00cfb9;
-
-            box-shadow: 0 0 0 2px rgba(0, 207, 185, 0.1);
-        }
-
-        &::placeholder {
-            color: gray;
-            font-size: small;
-        }
-
-        &.purple {
             &:focus {
-            border-color: #786FFF;
+                border-color: #00cfb9;
 
-            box-shadow: 0 0 0 2px rgba(120, 111, 255, 0.1);
+                box-shadow: 0 0 0 2px rgba(0, 207, 185, 0.1);
+            }
+
+            &::placeholder {
+                color: gray;
+                font-size: small;
+            }
+
+            &.purple {
+                &:focus {
+                    border-color: #786FFF;
+
+                    box-shadow: 0 0 0 2px rgba(120, 111, 255, 0.1);
+                }   
+            }
         }
+
+        .purple-label {
+            color: var(--purple-bgen);
+            font-size: small;
+            font-style: italic;
         }
-    }
+
+        .grey-label {
+            align-self: end;
+            color: #5e6066;
+            font-size: smaller;
+            font-style: italic;
+        }
     }
 `
 

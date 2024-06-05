@@ -23,6 +23,8 @@ router.post('/codes', codeController.createNewCode)
 router.get('/projects', projectController.getAllProjects)
 router.post('/projects', projectController.createNewProject)
 
+//Project details
+
 //Revisions
 router.get('/:jobNo/revisions', revisionController.getProjectRevisions)
 
@@ -111,49 +113,45 @@ router.get('/:jobNo/ccs', ccsController.getAllCCs)
 router.post('/:jobNo/ccs', ccsController.createCCs)
 router.put('/:jobNo/ccs/:equipRef/:ccRef', ccsController.updateCCs)
 
-//Fetch project's data based on jobNo
-router.get('/:jobNo/projectData', async (req, res) => {
+//Fetch project's info (MainInfoSection.jsx) based on jobNo
+router.get('/:jobNo/projectInfo', async (req, res) => {
     const { jobNo } = req.params
 
     try {
         const projectInfo = await projectController.getMainProjectInfo(jobNo)
-        const mainTableData = await projectController.getMainTableData(jobNo)
 
-        const projectData = {
-            projectInfo: projectInfo,
-            mainTableData: mainTableData,
-        }
-
-        res.json(projectData)
+        res.json(projectInfo)
     } catch (error) {
         console.error(
-            `Error while fetching project data for jobNo ${jobNo}:`,
+            `Error while fetching project info for jobNo ${jobNo}:`,
             error
         )
         res.status(500).json({
-            error: `Error while fetching project data for jobNo ${jobNo}:`,
+            error: `Error while fetching project info for jobNo ${jobNo}:`,
         })
     }
 })
 
-router.get('/:jobNo/summaryValues', async (req, res) => {
+//Fetch project's main table (DashboardView.jsx) data based on jobNo
+router.get('/:jobNo/mainTableData', async (req, res) => {
     const { jobNo } = req.params
 
     try {
-        const summaryValues = await projectController.getSummaryValues(jobNo)
-        res.json(summaryValues)
+        const mainTableData = await projectController.getMainTableData(jobNo)
+
+        res.json(mainTableData)
     } catch (error) {
         console.error(
-            `Error while fetching summary values for jobNo ${jobNo}:`,
+            `Error while fetching main table data for jobNo ${jobNo}:`,
             error
         )
         res.status(500).json({
-            error: `Error while fetching summary values for jobNo ${jobNo}`,
+            error: `Error while fetching main table data for jobNo ${jobNo}:`,
         })
     }
 })
 
-//Fetch project's view table data based on jobNo
+//Fetch project's view table (DashboardView.jsx) data based on jobNo
 router.get('/:jobNo/viewTableData', async (req, res) => {
     const { jobNo } = req.params
     const viewType = req.query.viewType
@@ -176,6 +174,24 @@ router.get('/:jobNo/viewTableData', async (req, res) => {
         )
         res.status(500).json({
             error: `Error while fetching viewTable data for jobNo ${jobNo}:`,
+        })
+    }
+})
+
+//Fetch project's summary values (Summary.jsx) based on jobNo
+router.get('/:jobNo/summaryValues', async (req, res) => {
+    const { jobNo } = req.params
+
+    try {
+        const summaryValues = await projectController.getSummaryValues(jobNo)
+        res.json(summaryValues)
+    } catch (error) {
+        console.error(
+            `Error while fetching summary values for jobNo ${jobNo}:`,
+            error
+        )
+        res.status(500).json({
+            error: `Error while fetching summary values for jobNo ${jobNo}`,
         })
     }
 })

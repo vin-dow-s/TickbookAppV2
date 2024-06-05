@@ -25,6 +25,7 @@ const SidebarContainer = styled.div`
     background-color: #fff;
     color: black;
     border-radius: 10px;
+    overflow: auto;
 `
 
 const Menu = styled.div`
@@ -55,6 +56,16 @@ const SidebarLink = styled(NavLink)`
         height: 20px;
         width: 20px;
         margin-right: 10px;
+    }
+
+    @media screen and (max-height: 800px) {
+        padding-top: 10px;
+        padding-bottom: 10px;
+    }
+
+    @media screen and (max-height: 700px) {
+        padding-top: 8px;
+        padding-bottom: 8px;
     }
 `
 

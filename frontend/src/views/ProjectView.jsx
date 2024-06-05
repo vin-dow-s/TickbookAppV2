@@ -1,8 +1,11 @@
 //Modules
-import PropTypes from 'prop-types'
 import { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { toast } from 'react-toastify'
 import styled from 'styled-components'
+
+//Hooks
+import useStore from '../hooks/useStore'
 
 //Utils
 import { generateProjectsURL } from '../utils/apiConfig'
@@ -13,7 +16,6 @@ import { columnsSelectProject } from '../constants/dialog-box-tables-columns'
 
 //Components
 import { overlayLoadingTemplatePurple } from '../components/Common/Loader'
-import { colors } from '../styles/global-styles'
 import {
     ButtonsContainer,
     ErrorMessage,
@@ -30,12 +32,6 @@ const ProjectViewContainer = styled.div`
     flex: 1;
     gap: 10px;
     background-color: #f7f6f3;
-
-    .purple-label {
-        color: ${colors.purpleBgen};
-        font-size: small;
-        font-style: italic;
-    }
 `
 
 const SelectProjectContainer = styled.div`
@@ -87,7 +83,22 @@ const CreateProjectFormField = styled(FormField)`
     }
 `
 
-const ProjectView = ({ jobNo }) => {
+const ProjectView = () => {
+    const navigate = useNavigate()
+    const {
+        projectsList,
+        fetchProjectsList,
+        isLoading,
+        onProjectSelect,
+        onProjectCreate,
+    } = useStore((state) => ({
+        projectsList: state.projectsList,
+        fetchProjectsList: state.fetchProjectsList,
+        isLoading: state.isLoading,
+        onProjectSelect: state.onProjectSelect,
+        onProjectCreate: state.onProjectCreate,
+    }))
+
     const [selectProjectTableGridApi, setSelectProjectTableGridApi] =
         useState(null)
     const [isNumberValid, setIsNumberValid] = useState(null)
@@ -96,6 +107,7 @@ const ProjectView = ({ jobNo }) => {
     const [titleErrorMessage, setTitleErrorMessage] = useState('')
     const [addressErrorMessage, setAddressErrorMessage] = useState('')
     const [numberErrorMessage, setNumberErrorMessage] = useState('')
+    const [restoreTableFocus, setRestoreTableFocus] = useState(null)
 
     const selectProjectTableGridOptions = {
         defaultColDef: {
@@ -108,6 +120,11 @@ const ProjectView = ({ jobNo }) => {
         overlayLoadingTemplate: overlayLoadingTemplatePurple,
         onGridReady: (params) => {
             setSelectProjectTableGridApi(params.api)
+            params.api.updateGridOptions({ rowData: projectsList })
+        },
+        onRowClicked: (params) => {
+            onProjectSelect(params.data)
+            navigate('/dashboard')
         },
     }
 
@@ -169,8 +186,12 @@ const ProjectView = ({ jobNo }) => {
             } else if (response.ok) {
                 const newProject = await response.json()
                 toast.success(`Project ${number} successfully created!`)
-                /*                 onProjectCreate(newProject)
-                 */
+                onProjectCreate(newProject)
+
+                setRestoreTableFocus({
+                    rowIndex: projectsList.length - 1,
+                    column: 'Name',
+                })
             }
         } catch (error) {
             console.error('Error:', error)
@@ -188,23 +209,44 @@ const ProjectView = ({ jobNo }) => {
     }
 
     useEffect(() => {
-        selectProjectTableGridApi?.hideOverlay()
-    }, [selectProjectTableGridApi])
+        fetchProjectsList()
+    }, [fetchProjectsList])
+
+    useEffect(() => {
+        if (isLoading) {
+            selectProjectTableGridApi?.showLoadingOverlay()
+        } else selectProjectTableGridApi?.hideOverlay()
+    }, [projectsList, selectProjectTableGridApi, isLoading])
+
+    useEffect(() => {
+        if (
+            restoreTableFocus &&
+            selectProjectTableGridApi &&
+            restoreTableFocus.rowIndex > 0
+        ) {
+            const { rowIndex, column } = restoreTableFocus
+            selectProjectTableGridApi.ensureIndexVisible(rowIndex, 'middle')
+            selectProjectTableGridApi.setFocusedCell(rowIndex, column)
+
+            setRestoreTableFocus(null)
+        }
+    }, [restoreTableFocus, selectProjectTableGridApi])
 
     return (
         <ProjectViewContainer>
             <SelectProjectContainer>
-                <span className="purple-label">Select a Project</span>
+                <span className="grey-label">Projects List</span>
                 <div
                     style={{
-                        height: '95%',
+                        height: 'calc(100% - 18px)',
                         width: '100%',
-                        marginTop: '10px',
+                        marginTop: '2px',
                     }}
                 >
                     <StyledAGGrid
                         className="ag-theme-quartz purple-table"
                         gridOptions={selectProjectTableGridOptions}
+                        rowData={projectsList}
                     />
                 </div>
             </SelectProjectContainer>
@@ -294,10 +336,6 @@ const ProjectView = ({ jobNo }) => {
             </CreateProjectContainer>
         </ProjectViewContainer>
     )
-}
-
-ProjectView.propTypes = {
-    jobNo: PropTypes.string,
 }
 
 export default ProjectView

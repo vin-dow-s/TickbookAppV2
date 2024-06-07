@@ -3,21 +3,21 @@ const { QueryTypes } = require('sequelize')
 
 const getViewByAreaData = async (jobNo) => {
     const query = `
-    SELECT Area, ROUND(SUM(TotalHours), 2) AS TotalHours, ROUND(SUM(RecoveredHours), 2) AS RecoveredHours, ROUND((SUM(RecoveredHours)/SUM(TotalHours)) * 100) AS PercentComplete
+    SELECT Area, ROUND(SUM(TotalHours), 2) AS TotalHours, ROUND(SUM(RecoveredHours) / 100, 2) AS RecoveredHours, ROUND((SUM(RecoveredHours)/SUM(TotalHours))  ) AS PercentComplete
     FROM (
-        SELECT tendid AS Area, equiplists.progid, codes.name, SUM(components.labnorm) AS TotalHours,
+        SELECT Area, equiplists.Section, codes.name, SUM(components.labnorm) AS TotalHours,
         SUM(components.labnorm * complete) AS RecoveredHours
         FROM equiplists
         INNER JOIN components ON equiplists.Component_ID = components.ID AND components.jobNo = :jobNo
         INNER JOIN codes ON components.code = codes.code 
         WHERE codes.name <> 'Blank' AND codes.name <> 'Title' AND equiplists.jobNo = :jobNo AND components.jobNo = :jobNo
-        GROUP BY Area, progid, name
+        GROUP BY Area, Section, name
 
         UNION
 
-        SELECT AGlandArea AS Area, progid, 'Schedule Cable A-Gland' AS Name, SUM(Hrs) AS TotalHours, SUM(ARec) AS RecoveredHours
+        SELECT AGlandArea AS Area, Section, 'Schedule Cable A-Gland' AS Name, SUM(Hrs) AS TotalHours, SUM(ARec) AS RecoveredHours
         FROM (
-            SELECT DISTINCT cabscheds.AGlandArea, equiplists.progid, codes.name, components.labnorm AS Hrs, components.labnorm * AGlandComp AS ARec
+            SELECT DISTINCT cabscheds.AGlandArea, equiplists.Section, codes.name, components.labnorm AS Hrs, components.labnorm * AGlandComp AS ARec
             FROM cabscheds
             INNER JOIN equiplists ON cabscheds.equipref = equiplists.ref
             INNER JOIN components ON components.name = concat(cabsize, ' Term')
@@ -25,13 +25,13 @@ const getViewByAreaData = async (jobNo) => {
             WHERE codes.name <> 'Blank' AND codes.name <> 'Title' AND cabscheds.jobNo = :jobNo AND equiplists.jobNo = :jobNo AND components.jobNo = :jobNo
             ORDER BY AGlandArea
         ) AS AGlandHrs
-        GROUP BY Area, progid
+        GROUP BY Area, Section
 
         UNION
 
-        SELECT ZGlandArea AS Area, progid, 'Schedule Cable Z-Gland' AS Name, SUM(Hrs) AS TotalHours, SUM(ZRec) AS RecoveredHours
+        SELECT ZGlandArea AS Area, Section, 'Schedule Cable Z-Gland' AS Name, SUM(Hrs) AS TotalHours, SUM(ZRec) AS RecoveredHours
         FROM (
-            SELECT DISTINCT cabscheds.ZGlandArea, equiplists.progid, codes.name, components.labnorm AS Hrs, components.labnorm * ZGlandComp AS ZRec
+            SELECT DISTINCT cabscheds.ZGlandArea, equiplists.Section, codes.name, components.labnorm AS Hrs, components.labnorm * ZGlandComp AS ZRec
             FROM cabscheds
             INNER JOIN equiplists ON cabscheds.equipref = equiplists.ref
             INNER JOIN components ON components.name = concat(cabsize, ' Term')
@@ -39,35 +39,35 @@ const getViewByAreaData = async (jobNo) => {
             WHERE codes.name <> 'Blank' AND codes.name <> 'Title' AND cabscheds.jobNo = :jobNo AND equiplists.jobNo = :jobNo AND components.jobNo = :jobNo
             ORDER BY ZGlandArea
         ) AS ZGlandHrs
-        GROUP BY Area, progid
+        GROUP BY Area, Section
 
         UNION
 
-        SELECT TendID AS Area, progid, 'Schedule Cable Test' AS Name, SUM(Hrs) AS TotalHours, SUM(ZRec) AS RecoveredHours
+        SELECT Area, Section, 'Schedule Cable Test' AS Name, SUM(Hrs) AS TotalHours, SUM(ZRec) AS RecoveredHours
         FROM (
-            SELECT DISTINCT equiplists.TendID, equiplists.progid, codes.name, components.labnorm AS Hrs, components.labnorm * CabTest AS ZRec
+            SELECT DISTINCT equiplists.Area, equiplists.Section, codes.name, components.labnorm AS Hrs, components.labnorm * CabTest AS ZRec
             FROM cabscheds
             INNER JOIN equiplists ON cabscheds.equipref = equiplists.ref
             INNER JOIN components ON components.name = concat(cabsize, ' Test')
             INNER JOIN codes ON components.code = codes.code
             WHERE codes.name <> 'Blank' AND codes.name <> 'Title' AND cabscheds.jobNo = :jobNo AND equiplists.jobNo = :jobNo AND components.jobNo = :jobNo
-            ORDER BY TendID
+            ORDER BY Area
         ) AS CabTestHrs
-        GROUP BY Area, progid
+        GROUP BY Area, Section
 
         UNION
 
-        SELECT TendID AS Area, progid AS Section, Name, SUM(hrs) AS TotalHours, SUM(RecoveredHoursHrs) AS RecoveredHours
+        SELECT Area, Section , Name, SUM(hrs) AS TotalHours, SUM(RecoveredHoursHrs) AS RecoveredHours
         FROM (
-            SELECT DISTINCT equiplists.TendID, equiplists.progid, codes.name AS Name, components.labnorm * length AS Hrs, (components.labnorm * length) * cabcomp AS RecoveredHoursHrs
+            SELECT DISTINCT equiplists.Area, equiplists.Section, codes.name AS Name, components.labnorm * length AS Hrs, (components.labnorm * length) * cabcomp AS RecoveredHoursHrs
             FROM cabscheds
             INNER JOIN equiplists ON cabscheds.equipref = equiplists.ref
             INNER JOIN components ON components.name = cabsize
             INNER JOIN codes ON components.code = codes.code
             WHERE codes.name <> 'Blank' AND codes.name <> 'Title' AND cabscheds.jobNo = :jobNo AND equiplists.jobNo = :jobNo AND components.jobNo = :jobNo
-            ORDER BY tendid
+            ORDER BY Area
         ) AS CabHrs
-        GROUP BY Area, progid
+        GROUP BY Area, Section
     ) AS test
     GROUP BY Area
     ORDER BY Area;    
@@ -86,14 +86,14 @@ const getViewByAreaCompData = async (jobNo) => {
         Area, 
         Name AS Component, 
         ROUND(SUM(TotalHours), 2) as TotalHours, 
-        ROUND(SUM(RecoveredHours), 2) as RecoveredHours, 
-        ROUND((SUM(RecoveredHours) / SUM(TotalHours)) * 100, 2) AS PercentComplete
+        ROUND(SUM(RecoveredHours) / 100, 2) as RecoveredHours, 
+        ROUND((SUM(RecoveredHours) / SUM(TotalHours))  , 2) AS PercentComplete
     FROM (
         SELECT 
-            tendid AS Area, 
+            Area, 
             codes.name AS Name, 
             SUM(components.labnorm) AS TotalHours, 
-            SUM(components.labnorm * complete) AS RecoveredHours, 
+            SUM(components.labnorm * complete / 100) AS RecoveredHours, 
             equiplists.Ref, 
             equiplists.Component 
         FROM equiplists 
@@ -105,7 +105,7 @@ const getViewByAreaCompData = async (jobNo) => {
         UNION 
 
         SELECT 
-            AGlandArea AS Area, 
+            AGlandArea, 
             'Schedule Cable A-Gland' AS Name, 
             SUM(LabNorm) AS TotalHours, 
             SUM(RecoveredHours) AS RecoveredHours, 
@@ -129,7 +129,7 @@ const getViewByAreaCompData = async (jobNo) => {
         UNION 
 
         SELECT 
-            ZGlandArea AS Area, 
+            ZGlandArea, 
             'Schedule Cable Z-Gland' AS Name, 
             SUM(LabNorm) AS TotalHours, 
             SUM(RecoveredHours) AS RecoveredHours, 
@@ -153,7 +153,7 @@ const getViewByAreaCompData = async (jobNo) => {
         UNION 
 
         SELECT 
-            TendID AS Area, 
+            Area, 
             'Schedule Cable' AS Name, 
             SUM(Hrs) AS TotalHours, 
             SUM(RecoveredHours) AS RecoveredHours, 
@@ -161,7 +161,7 @@ const getViewByAreaCompData = async (jobNo) => {
             equipref
         FROM (
             SELECT DISTINCT 
-                equiplists.TendID, 
+                equiplists.Area, 
                 (components.labnorm * cabscheds.Length) AS Hrs, 
                 (components.labnorm * cabscheds.Length * cabscheds.CabComp) AS RecoveredHours, 
                 cabnum, 
@@ -176,7 +176,7 @@ const getViewByAreaCompData = async (jobNo) => {
         UNION 
 
         SELECT 
-            TendID AS Area, 
+            Area, 
             'Schedule Cable Test' AS Name, 
             SUM(Hrs) AS TotalHours, 
             SUM(RecoveredHours) AS RecoveredHours, 
@@ -184,7 +184,7 @@ const getViewByAreaCompData = async (jobNo) => {
             equipref
         FROM (
             SELECT DISTINCT 
-                equiplists.TendID, 
+                equiplists.Area, 
                 compTest.labnorm AS Hrs, 
                 compTest.labnorm * cabscheds.CabTest AS RecoveredHours, 
                 cabnum, 
@@ -213,15 +213,15 @@ const getViewByAreaSectionCompData = async (jobNo) => {
     const query = `
     SELECT 
         Area, 
-        progid AS Section, 
+        Section , 
         Name AS Component, 
         ROUND(SUM(TotalHours), 2) as TotalHours, 
-        ROUND(SUM(RecoveredHours), 2) as RecoveredHours, 
-        ROUND((SUM(RecoveredHours) / SUM(TotalHours)) * 100, 2) AS PercentComplete
+        ROUND(SUM(RecoveredHours) / 100, 2) as RecoveredHours, 
+        ROUND((SUM(RecoveredHours) / SUM(TotalHours))  , 2) AS PercentComplete
     FROM (
         SELECT 
-            tendid AS Area, 
-            progid, 
+            Area, 
+            Section, 
             codes.name AS Name, 
             SUM(components.labnorm) AS TotalHours, 
             SUM(components.labnorm * complete) AS RecoveredHours, 
@@ -231,13 +231,13 @@ const getViewByAreaSectionCompData = async (jobNo) => {
         INNER JOIN components ON equiplists.Component_ID = components.ID AND equiplists.jobNo = components.jobNo
         INNER JOIN codes ON components.code = codes.code 
         WHERE codes.name <> 'Blank' AND codes.name <> 'Title' AND equiplists.jobNo = :jobNo AND components.jobNo = :jobNo
-        GROUP BY Area, equiplists.progid, Name 
+        GROUP BY Area, equiplists.Section, Name 
 
         UNION 
 
         SELECT 
-            AGlandArea AS Area, 
-            progid, 
+            AGlandArea, 
+            Section, 
             'Schedule Cable A-Gland' AS Name, 
             SUM(LabNorm) AS TotalHours, 
             SUM(RecoveredHours) AS RecoveredHours, 
@@ -246,7 +246,7 @@ const getViewByAreaSectionCompData = async (jobNo) => {
         FROM (
             SELECT DISTINCT 
                 cabscheds.AGlandArea, 
-                equiplists.progid, 
+                equiplists.Section, 
                 compTerm.labnorm AS LabNorm, 
                 compTerm.labnorm * cabscheds.AGlandComp AS RecoveredHours, 
                 cabnum, 
@@ -257,13 +257,13 @@ const getViewByAreaSectionCompData = async (jobNo) => {
             LEFT JOIN components compTerm ON compTerm.jobNo = cabscheds.jobNo AND compTerm.Name = CONCAT(baseComp.Name, ' Term')
             WHERE cabscheds.jobNo = :jobNo
         ) AS AGlandHrs 
-        GROUP BY AGlandArea, progid, cabnum, equipref
+        GROUP BY AGlandArea, Section, cabnum, equipref
 
         UNION 
 
         SELECT 
-            ZGlandArea AS Area, 
-            progid, 
+            ZGlandArea, 
+            Section, 
             'Schedule Cable Z-Gland' AS Name, 
             SUM(LabNorm) AS TotalHours, 
             SUM(RecoveredHours) AS RecoveredHours, 
@@ -272,7 +272,7 @@ const getViewByAreaSectionCompData = async (jobNo) => {
         FROM (
             SELECT DISTINCT 
                 cabscheds.ZGlandArea, 
-                equiplists.progid, 
+                equiplists.Section, 
                 compTerm.labnorm AS LabNorm, 
                 compTerm.labnorm * cabscheds.ZGlandComp AS RecoveredHours, 
                 cabnum, 
@@ -283,13 +283,13 @@ const getViewByAreaSectionCompData = async (jobNo) => {
             LEFT JOIN components compTerm ON compTerm.jobNo = cabscheds.jobNo AND compTerm.Name = CONCAT(baseComp.Name, ' Term')
             WHERE cabscheds.jobNo = :jobNo
         ) AS ZGlandHrs 
-        GROUP BY ZGlandArea, progid, cabnum, equipref
+        GROUP BY ZGlandArea, Section, cabnum, equipref
 
         UNION 
 
         SELECT 
-            TendID AS Area, 
-            progid AS Section, 
+            Area, 
+            Section , 
             'Schedule Cable' AS Name, 
             SUM(Hrs) AS TotalHours, 
             SUM(RecoveredHours) AS RecoveredHours, 
@@ -297,8 +297,8 @@ const getViewByAreaSectionCompData = async (jobNo) => {
             equipref
         FROM (
             SELECT DISTINCT 
-                equiplists.TendID, 
-                equiplists.progid, 
+                equiplists.Area, 
+                equiplists.Section, 
                 (components.labnorm * cabscheds.Length) AS Hrs, 
                 (components.labnorm * cabscheds.Length * cabscheds.CabComp) AS RecoveredHours, 
                 cabnum, 
@@ -308,13 +308,13 @@ const getViewByAreaSectionCompData = async (jobNo) => {
             INNER JOIN components ON components.ID = cabscheds.Component_ID 
             WHERE cabscheds.jobNo = :jobNo AND equiplists.jobNo = :jobNo AND components.jobNo = :jobNo
         ) AS CabHrs 
-        GROUP BY Area, progid, cabnum, equipref
+        GROUP BY Area, Section, cabnum, equipref
 
         UNION 
 
         SELECT 
-            TendID AS Area, 
-            progid AS Section, 
+            Area, 
+            Section , 
             'Schedule Cable Test' AS Name, 
             SUM(Hrs) AS TotalHours, 
             SUM(RecoveredHours) AS RecoveredHours, 
@@ -322,8 +322,8 @@ const getViewByAreaSectionCompData = async (jobNo) => {
             equipref
         FROM (
             SELECT DISTINCT 
-                equiplists.TendID, 
-                equiplists.progid, 
+                equiplists.Area, 
+                equiplists.Section, 
                 compTest.labnorm AS Hrs, 
                 compTest.labnorm * cabscheds.CabTest AS RecoveredHours, 
                 cabnum, 
@@ -334,10 +334,10 @@ const getViewByAreaSectionCompData = async (jobNo) => {
             LEFT JOIN components compTest ON compTest.jobNo = equiplists.jobNo AND compTest.Name = CONCAT(baseComp.Name, ' Test')
             WHERE cabscheds.jobNo = :jobNo AND equiplists.jobNo = :jobNo AND compTest.jobNo = :jobNo
         ) AS TestHrs 
-        GROUP BY Area, progid, cabnum, equipref
+        GROUP BY Area, Section, cabnum, equipref
     ) AS test 
-    GROUP BY Area, progid, Name 
-    ORDER BY Area, progid, Name;
+    GROUP BY Area, Section, Name 
+    ORDER BY Area, Section, Name;
     `
 
     const viewByAreaSectionCompData = await sequelize.query(query, {
@@ -391,18 +391,18 @@ const getViewByLabourAndMaterialData = async (jobNo) => {
 
 const getViewBySectionData = async (jobNo) => {
     const query = `
-    SELECT progid AS Section, ROUND(SUM(labnorm), 2) AS TotalHours, ROUND(SUM(RecdHrs), 2) AS RecoveredHours, ROUND(SUM(RecdHrs)/SUM(labnorm) * 100) AS PercentComplete
+    SELECT Section , ROUND(SUM(labnorm), 2) AS TotalHours, ROUND(SUM(RecdHrs) / 100, 2) AS RecoveredHours, ROUND(SUM(RecdHrs)/SUM(labnorm)) AS PercentComplete
     FROM
     (
-        SELECT progid, equiplists.Component, SUM(components.labnorm) AS "labnorm", SUM((components.labnorm * complete)) AS "RecdHrs"
+        SELECT Section, equiplists.Component, SUM(components.labnorm) AS "labnorm", SUM((components.labnorm * complete)) AS "RecdHrs"
         FROM equiplists
         INNER JOIN components ON equiplists.Component_ID = components.ID AND components.jobNo = :jobNo
         WHERE equiplists.jobNo = :jobNo
-        GROUP BY progid
+        GROUP BY Section
 
         UNION
 
-        SELECT progid, cabnum AS Component, (length * components.labnorm) AS "labnorm", ((length * components.labnorm) * cabcomp) AS "RecdHrs"
+        SELECT Section, cabnum AS Component, (length * components.labnorm) AS "labnorm", ((length * components.labnorm) * cabcomp) AS "RecdHrs"
         FROM equiplists
         JOIN cabscheds ON equiplists.ref = cabscheds.equipref AND cabscheds.jobNo = :jobNo
         JOIN components ON components.Name = cabscheds.cabsize AND components.jobNo = :jobNo
@@ -411,7 +411,7 @@ const getViewBySectionData = async (jobNo) => {
 
         UNION
 
-        SELECT progid, CONCAT(cabnum, " A Gland") AS Component, components.labnorm AS "labnorm", (components.labnorm * aglandcomp) AS "RecdHrs"
+        SELECT Section, CONCAT(cabnum, " A Gland") AS Component, components.labnorm AS "labnorm", (components.labnorm * aglandcomp) AS "RecdHrs"
         FROM equiplists
         JOIN cabscheds ON equiplists.ref = cabscheds.equipref AND cabscheds.jobNo = :jobNo
         JOIN components ON components.Name = CONCAT(cabscheds.cabsize, " Term") AND components.jobNo = :jobNo
@@ -420,7 +420,7 @@ const getViewBySectionData = async (jobNo) => {
 
         UNION
 
-        SELECT progid, CONCAT(cabnum, " Z Gland") AS Component, components.labnorm AS "labnorm", (components.labnorm * zglandcomp) AS "RecdHrs"
+        SELECT Section, CONCAT(cabnum, " Z Gland") AS Component, components.labnorm AS "labnorm", (components.labnorm * zglandcomp) AS "RecdHrs"
         FROM equiplists
         JOIN cabscheds ON equiplists.ref = cabscheds.equipref AND cabscheds.jobNo = :jobNo
         JOIN components ON components.Name = CONCAT(cabscheds.cabsize, " Term") AND components.jobNo = :jobNo
@@ -429,7 +429,7 @@ const getViewBySectionData = async (jobNo) => {
 
         UNION
 
-        SELECT progid, cabnum AS Component, components.labnorm AS "labnorm", (components.labnorm * cabtest) AS "RecdHrs"
+        SELECT Section, cabnum AS Component, components.labnorm AS "labnorm", (components.labnorm * cabtest) AS "RecdHrs"
         FROM equiplists
         JOIN cabscheds ON equiplists.ref = cabscheds.equipref AND cabscheds.jobNo = :jobNo
         JOIN components ON components.Name = CONCAT(cabscheds.cabsize, " Test") AND components.jobNo = :jobNo
@@ -437,8 +437,8 @@ const getViewBySectionData = async (jobNo) => {
         GROUP BY cabnum
     ) AS CombinedData
 
-    GROUP BY progid 
-    ORDER BY progid;
+    GROUP BY Section 
+    ORDER BY Section;
     `
 
     const viewBySectionData = await sequelize.query(query, {

@@ -20,7 +20,7 @@ const useStore = create((set) => ({
     equipmentList: [],
     cabschedsList: [],
     isLoading: false,
-    viewType: 'Section',
+    viewType: 'Area-Section-Comp',
     dataHasChanged: false,
 
     setJobNo: (jobNo) => set({ jobNo }),

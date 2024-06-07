@@ -23,7 +23,7 @@ const componentsNamePattern =
     /^(?!-|\/|\s|.{181,}$)(?!.*[-/\s]$)[a-zA-Z0-9/&|¬()' x?]+([ -/][a-zA-Z0-9/&|¬()' x?]+)*$/
 
 //Templates
-const templatesTempNamePattern =
+const templatesNamePattern =
     /^(?!.*[-/ ]$)(?!-|\/| |.{81,})([a-zA-Z0-9]+(?:[ -/][a-zA-Z0-9]+)*?)$/
 
 //Equipment
@@ -31,9 +31,9 @@ const equipmentRefPattern =
     /^(?!-|\/|.{81,})[a-zA-Z0-9]+(?:[-/][a-zA-Z0-9]+)*(?:\([a-zA-Z0-9/-]+\))?$/
 const equipmentDescriptionPattern =
     /^(?!.*[-/ ]$)(?!-|\/|.{81,})([a-zA-Z0-9?(). -]+(?:[ -/][a-zA-Z0-9?(). -]+)*?)$/
-const equipmentProgIDPattern =
+const equipmentSectionPattern =
     /^(?!.*[-/ ]$)(?!-|\/| |.{21,})([a-zA-Z0-9]+(?:[ -/][a-zA-Z0-9]+)*?)$/
-const equipmentTendIDPattern =
+const equipmentAreaPattern =
     /^(?!.*[-/ ]$)(?!-|\/| |.{41,})([a-zA-Z0-9() -]+(?:[ -/][a-zA-Z0-9() -]+)*?)$/
 const equipmentTendSectionPattern =
     /^(?!.*[-/ ]$)(?!-|\/| |.{81,})([a-zA-Z0-9]+(?:[ -/][a-zA-Z0-9]+)*?)$/
@@ -53,11 +53,11 @@ module.exports = {
     projectNumberPattern,
     componentsCodePattern,
     componentsNamePattern,
-    templatesTempNamePattern,
+    templatesNamePattern,
     equipmentRefPattern,
     equipmentDescriptionPattern,
-    equipmentProgIDPattern,
-    equipmentTendIDPattern,
+    equipmentSectionPattern,
+    equipmentAreaPattern,
     equipmentTendSectionPattern,
     equipmentCurrentRevisionPattern,
     ccRefPattern,

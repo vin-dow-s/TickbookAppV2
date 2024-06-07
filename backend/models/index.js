@@ -63,7 +63,7 @@ models.Equiplist.belongsTo(models.Component, {
 //Relationship Equiplist <-> Template : One-To-Many
 models.Equiplist.belongsTo(models.Template, {
     foreignKey: 'Template',
-    targetKey: 'TempName',
+    targetKey: 'Name',
 })
 
 //Relationship Equiplist <-> Project : One-To-One
@@ -153,7 +153,7 @@ models.Template.belongsTo(models.Component, {
 //Relationship Template <-> Equiplist : Many-To-One
 models.Template.hasMany(models.Equiplist, {
     foreignKey: 'Template',
-    sourceKey: 'TempName',
+    sourceKey: 'Name',
 })
 
 //Relationship TickCabBySC <-> Project : Many-To-One
@@ -178,11 +178,11 @@ models.TickCCHead.belongsTo(models.Project, {
 //Relationship TickCCHead <-> TickCCHist : One-To-Many
 models.TickCCHist.belongsTo(models.TickCCHead, {
     foreignKey: 'JobNo',
-    targetKey: 'JobNo'
+    targetKey: 'JobNo',
 })
 models.TickCCHist.belongsTo(models.TickCCHead, {
     foreignKey: 'CcNr',
-    targetKey: 'CcNr'
+    targetKey: 'CcNr',
 })
 
 //Relationship TickCCHist <-> Project : Many-To-One
@@ -204,7 +204,7 @@ models.TickEquipList.belongsTo(models.Equiplist, {
 })
 
 //Synchronisation with the DATABASE. Uncomment to create the database and tables on npm start.
-/* sequelize
+sequelize
     .sync()
     .then(() => {
         console.log('Sequelize Sync : Tables successfully created.')
@@ -214,6 +214,6 @@ models.TickEquipList.belongsTo(models.Equiplist, {
             'Sequelize Sync : Error while creating the tables :',
             error
         )
-    }) */
+    })
 
 module.exports = models

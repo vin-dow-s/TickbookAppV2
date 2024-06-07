@@ -11,6 +11,14 @@ module.exports = (sequelize) => {
                 allowNull: false,
                 autoIncrement: true,
             },
+            JobNo: {
+                type: DataTypes.STRING(7),
+                allowNull: false,
+            },
+            EquipRef: {
+                type: DataTypes.STRING(80),
+                allowNull: false,
+            },
             CcNr: {
                 type: DataTypes.STRING(25),
                 allowNull: false,
@@ -24,18 +32,10 @@ module.exports = (sequelize) => {
                 type: DataTypes.DATE,
                 defaultValue: DataTypes.NOW,
             },
-            Current: {
+            Status: {
                 type: DataTypes.STRING(10),
                 allowNull: false,
                 defaultValue: '""',
-            },
-            JobNo: {
-                type: DataTypes.STRING(7),
-                allowNull: false,
-            },
-            EquipRef: {
-                type: DataTypes.STRING(80),
-                allowNull: false,
             },
         },
         {

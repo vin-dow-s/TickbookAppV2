@@ -10,6 +10,10 @@ module.exports = (sequelize) => {
                 primaryKey: true,
                 autoIncrement: true,
             },
+            JobNo: {
+                type: DataTypes.STRING(7),
+                allowNull: false,
+            },
             Revision: {
                 type: DataTypes.STRING(5),
                 allowNull: false,
@@ -24,10 +28,6 @@ module.exports = (sequelize) => {
             },
             Notes: {
                 type: DataTypes.STRING(200),
-                allowNull: false,
-            },
-            JobNo: {
-                type: DataTypes.STRING(7),
                 allowNull: false,
             },
             Dated: {

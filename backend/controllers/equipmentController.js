@@ -13,8 +13,8 @@ const errorCodes = require('../config/errorCodes')
 const {
     equipmentRefPattern,
     equipmentDescriptionPattern,
-    equipmentProgIDPattern,
-    equipmentTendIDPattern,
+    equipmentSectionPattern,
+    equipmentAreaPattern,
     equipmentCurrentRevisionPattern,
     equipmentTendSectionPattern,
 } = require('../config/validation')
@@ -69,12 +69,12 @@ const QUERY_CONFIGS_AREA_COMP = {
         SELECT DISTINCT Ref, CONCAT('Cable No. ', CabNum) AS CabNum,
             ROUND((components.labnorm * length), 3) AS "TotalHours", 
             ROUND((components.labnorm * length * cabcomp) , 3) AS "RecoveredHours", 
-            (((components.labnorm * length) * cabcomp) / (components.labnorm * length)) * 100 AS PercentComplete
+            (((components.labnorm * length) * cabcomp) / (components.labnorm * length))   AS PercentComplete
         FROM cabscheds 
             INNER JOIN equiplists ON cabscheds.equipRef = equiplists.Ref AND cabscheds.jobNo = equiplists.jobNo 
             INNER JOIN components ON components.ID = cabscheds.Component_ID AND components.jobNo = equiplists.jobNo 
             INNER JOIN codes ON codes.code = components.code
-        WHERE cabscheds.jobNo = :jobNo AND equiplists.tendid = :area
+        WHERE cabscheds.jobNo = :jobNo AND equiplists.Area = :area
         ORDER BY Ref;
         `,
     },
@@ -83,7 +83,7 @@ const QUERY_CONFIGS_AREA_COMP = {
         SELECT DISTINCT Ref, CONCAT('Cable No. ', CabNum, ' A Gland') AS CabNum, "A Gland Area" AS Component, 
             ROUND(components.labnorm, 3) AS TotalHours, 
             ROUND((components.labnorm * AGlandComp), 3) AS RecoveredHours, 
-            ((components.labnorm * AGlandComp) / components.labnorm) * 100 AS PercentComplete
+            ((components.labnorm * AGlandComp) / components.labnorm)   AS PercentComplete
         FROM cabscheds 
             INNER JOIN equiplists ON cabscheds.equipRef = equiplists.Ref AND cabscheds.jobNo = equiplists.jobNo 
             INNER JOIN components ON components.name = CONCAT(cabsize, " Term") AND components.jobNo = equiplists.jobNo 
@@ -97,7 +97,7 @@ const QUERY_CONFIGS_AREA_COMP = {
         SELECT DISTINCT Ref, CONCAT('Cable No. ', CabNum, ' Z Gland') AS CabNum, "Z Gland Area" AS Component, 
             ROUND(components.labnorm, 3) AS TotalHours, 
             ROUND((components.labnorm * ZGlandComp), 3) AS RecoveredHours, 
-            ((components.labnorm * ZGlandComp) / components.labnorm) * 100 AS PercentComplete
+            ((components.labnorm * ZGlandComp) / components.labnorm)   AS PercentComplete
         FROM cabscheds 
             INNER JOIN equiplists ON cabscheds.equipRef = equiplists.Ref AND cabscheds.jobNo = equiplists.jobNo 
             INNER JOIN components ON components.name = CONCAT(cabsize, " Term") AND components.jobNo = equiplists.jobNo 
@@ -111,12 +111,12 @@ const QUERY_CONFIGS_AREA_COMP = {
         SELECT DISTINCT Ref, CONCAT('Cable No. ', CabNum, ' Test') AS CabNum, "Cable Test" AS Component, 
             ROUND(components.labnorm, 3) AS TotalHours, 
             ROUND((components.labnorm * cabtest), 3) AS RecoveredHours, 
-            ((components.labnorm * cabtest) / components.labnorm) * 100 AS PercentComplete
+            ((components.labnorm * cabtest) / components.labnorm)   AS PercentComplete
         FROM cabscheds 
             INNER JOIN equiplists ON cabscheds.equipRef = equiplists.Ref AND cabscheds.jobNo = equiplists.jobNo 
             INNER JOIN components ON components.name = CONCAT(cabsize, " Test") AND components.jobNo = equiplists.jobNo 
             INNER JOIN codes ON codes.code = components.code 
-        WHERE cabscheds.jobNo = :jobNo AND equiplists.tendid = :area
+        WHERE cabscheds.jobNo = :jobNo AND equiplists.Area = :area
         ORDER BY Ref;
         `,
     },
@@ -129,11 +129,11 @@ const QUERY_CONFIGS_AREA_SECTION_COMP = {
         SELECT DISTINCT Ref, CONCAT('Cable No. ', CabNum) AS CabNum, 
             ROUND((components.labnorm * length), 3) AS "TotalHours", 
             ROUND((components.labnorm * length * cabcomp), 3) AS "RecoveredHours", 
-            (((components.labnorm * length) * cabcomp) / (components.labnorm * length)) * 100 AS PercentComplete
+            (((components.labnorm * length) * cabcomp) / (components.labnorm * length))   AS PercentComplete
         FROM cabscheds 
             INNER JOIN equiplists ON cabscheds.equipRef = equiplists.Ref AND cabscheds.jobNo = equiplists.jobNo 
             INNER JOIN components ON components.name = cabsize AND components.jobNo = equiplists.jobNo             INNER JOIN codes ON codes.code = components.code
-        WHERE cabscheds.jobNo = :jobNo AND equiplists.tendid = :area AND equiplists.progid = :section
+        WHERE cabscheds.jobNo = :jobNo AND equiplists.Area = :area AND equiplists.Section = :section
         ORDER BY cabnum;
         `,
     },
@@ -142,11 +142,11 @@ const QUERY_CONFIGS_AREA_SECTION_COMP = {
         SELECT DISTINCT Ref, CONCAT('Cable No. ', CabNum, ' A Gland') AS CabNum, "A Gland Area" AS Component, 
             ROUND(components.labnorm, 3) AS TotalHours, 
             ROUND((components.labnorm * AGlandComp), 3) AS RecoveredHours, 
-            ((components.labnorm * AGlandComp) / components.labnorm) * 100 AS PercentComplete
+            ((components.labnorm * AGlandComp) / components.labnorm)   AS PercentComplete
         FROM cabscheds 
             INNER JOIN equiplists ON cabscheds.equipRef = equiplists.Ref AND cabscheds.jobNo = equiplists.jobNo 
             INNER JOIN components ON components.name = CONCAT(cabsize, " Term") AND components.jobNo = equiplists.jobNo 
-        WHERE cabscheds.jobNo = :jobNo AND cabscheds.AGlandArea = :area AND equiplists.progid = :section
+        WHERE cabscheds.jobNo = :jobNo AND cabscheds.AGlandArea = :area AND equiplists.Section = :section
         ORDER BY cabnum;
         `,
     },
@@ -155,11 +155,11 @@ const QUERY_CONFIGS_AREA_SECTION_COMP = {
         SELECT DISTINCT Ref, CONCAT('Cable No. ', CabNum, ' Z Gland') AS CabNum, "Z Gland Area" AS Component, 
             ROUND(components.labnorm, 3) AS TotalHours, 
             ROUND((components.labnorm * ZGlandComp), 3) AS RecoveredHours, 
-            ((components.labnorm * ZGlandComp) / components.labnorm) * 100 AS PercentComplete
+            ((components.labnorm * ZGlandComp) / components.labnorm)   AS PercentComplete
         FROM cabscheds 
             INNER JOIN equiplists ON cabscheds.equipRef = equiplists.Ref AND cabscheds.jobNo = equiplists.jobNo 
             INNER JOIN components ON components.name = CONCAT(cabsize, " Term") AND components.jobNo = equiplists.jobNo 
-        WHERE cabscheds.jobNo = :jobNo AND cabscheds.ZGlandArea = :area AND equiplists.progid = :section
+        WHERE cabscheds.jobNo = :jobNo AND cabscheds.ZGlandArea = :area AND equiplists.Section = :section
         ORDER BY cabnum;
 
         `,
@@ -169,11 +169,11 @@ const QUERY_CONFIGS_AREA_SECTION_COMP = {
         SELECT DISTINCT Ref, CONCAT('Cable No. ', CabNum, ' Test') AS CabNum, "Cable Test" AS Component, 
             ROUND(components.labnorm, 3) AS TotalHours, 
             ROUND((components.labnorm * cabtest), 3) AS RecoveredHours, 
-            ((components.labnorm * cabtest) / components.labnorm) * 100 AS PercentComplete
+            ((components.labnorm * cabtest) / components.labnorm)   AS PercentComplete
         FROM cabscheds 
             INNER JOIN equiplists ON cabscheds.equipRef = equiplists.Ref AND cabscheds.jobNo = equiplists.jobNo 
             INNER JOIN components ON components.name = CONCAT(cabsize, " Test") AND components.jobNo = equiplists.jobNo 
-        WHERE cabscheds.jobNo = :jobNo AND equiplists.tendid = :area AND equiplists.progid = :section
+        WHERE cabscheds.jobNo = :jobNo AND equiplists.Area = :area AND equiplists.Section = :section
         ORDER BY cabnum;
         `,
     },
@@ -182,13 +182,13 @@ const QUERY_CONFIGS_AREA_SECTION_COMP = {
 const getEquipmentListByEquipRef = async (jobNo, equipRef) => {
     try {
         const query = `
-        SELECT ID, Ref, Component, Code, ROUND(LabNorm, 3) AS "LabNorm", ROUND(Norms.RecHrs, 3) AS "CurrentRecovery", ROUND(Norms.RecHrs/LabNorm * 100) AS "PercentComplete", inOrder, Type
+        SELECT ID, Ref, Component, Code, ROUND(LabNorm, 3) AS "LabNorm", ROUND(Norms.RecHrs, 3) AS "CurrentRecovery", ROUND(Norms.RecHrs/LabNorm  ) AS "PercentComplete", inOrder, Type
         FROM (
-            SELECT equiplists.ID, Ref, ProgID, equiplists.Component, components.Code, LabNorm, Complete, (LabNorm * Complete) AS "RecHrs", Description, templates.inOrder, 'Component' AS Type
+            SELECT equiplists.ID, Ref, Section, equiplists.Component, components.Code, LabNorm, Complete, (LabNorm * Complete) AS "RecHrs", Description, templates.inOrder, 'Component' AS Type
             FROM equiplists
             INNER JOIN components ON equiplists.Component_ID = components.ID
             LEFT JOIN templates t1 ON t1.ID = equiplists.Template_ID
-            LEFT JOIN templates t2 ON t2.Component_ID = components.ID AND t2.TempName = equiplists.Template
+            LEFT JOIN templates t2 ON t2.Component_ID = components.ID AND t2.Name = equiplists.Template
             INNER JOIN templates ON templates.ID = COALESCE(t1.ID, t2.ID)
             WHERE equiplists.JobNo = :jobNo AND Ref = :equipRef
             GROUP BY equiplists.ID, Ref, equiplists.Component
@@ -196,7 +196,7 @@ const getEquipmentListByEquipRef = async (jobNo, equipRef) => {
             UNION
         
             -- Base Cable Component subquery
-            SELECT CabNum, equiplists.Ref, equiplists.ProgID, CONCAT('Cable No. ', CabNum) AS Component, Code, ROUND((Length * LabNorm), 3) AS LabNorm, CabComp, (Length * LabNorm) * CabComp AS "RecHrs", Description, NULL, 'Cable' AS Type
+            SELECT CabNum, equiplists.Ref, equiplists.Section, CONCAT('Cable No. ', CabNum) AS Component, Code, ROUND((Length * LabNorm), 3) AS LabNorm, CabComp, (Length * LabNorm) * CabComp AS "RecHrs", Description, NULL, 'Cable' AS Type
             FROM equiplists
             INNER JOIN cabscheds ON equiplists.Ref = cabscheds.EquipRef AND equiplists.JobNo = cabscheds.JobNo
             INNER JOIN components ON components.Name = cabscheds.CabSize AND equiplists.JobNo = components.JobNo
@@ -205,7 +205,7 @@ const getEquipmentListByEquipRef = async (jobNo, equipRef) => {
             UNION
 
             -- A Gland Cable Component subquery
-            SELECT CONCAT(CabNum, 'A'), equiplists.Ref, equiplists.ProgID, CONCAT('Cable No. ', CabNum, ' A Gland in Area ', AGlandArea) AS Component, Code, LabNorm, AglandComp, (AglandComp * LabNorm) AS "RecHrs", Description, NULL, 'CableA' AS Type
+            SELECT CONCAT(CabNum, 'A'), equiplists.Ref, equiplists.Section, CONCAT('Cable No. ', CabNum, ' A Gland in Area ', AGlandArea) AS Component, Code, LabNorm, AglandComp, (AglandComp * LabNorm) AS "RecHrs", Description, NULL, 'CableA' AS Type
             FROM equiplists
             INNER JOIN cabscheds ON equiplists.Ref = cabscheds.EquipRef AND equiplists.JobNo = cabscheds.JobNo
             INNER JOIN components ON components.Name = CONCAT(cabscheds.CabSize, " Term") AND equiplists.JobNo = components.JobNo
@@ -215,7 +215,7 @@ const getEquipmentListByEquipRef = async (jobNo, equipRef) => {
             UNION
 
             -- Z Gland Cable Component subquery
-            SELECT CONCAT(CabNum, 'Z'), equiplists.Ref, equiplists.ProgID, CONCAT('Cable No. ', CabNum, ' Z Gland in Area ', ZGlandArea) AS Component, Code, LabNorm, ZGlandComp, (ZGlandComp * LabNorm) AS "RecHrs", Description, NULL, 'CableZ' AS Type            FROM equiplists
+            SELECT CONCAT(CabNum, 'Z'), equiplists.Ref, equiplists.Section, CONCAT('Cable No. ', CabNum, ' Z Gland in Area ', ZGlandArea) AS Component, Code, LabNorm, ZGlandComp, (ZGlandComp * LabNorm) AS "RecHrs", Description, NULL, 'CableZ' AS Type            FROM equiplists
             INNER JOIN cabscheds ON equiplists.Ref = cabscheds.EquipRef AND equiplists.JobNo = cabscheds.JobNo
             INNER JOIN components ON components.Name = CONCAT(cabscheds.CabSize, " Term") AND equiplists.JobNo = components.JobNo
             WHERE equiplists.JobNo = :jobNo AND equiplists.Ref = :equipRef
@@ -223,7 +223,7 @@ const getEquipmentListByEquipRef = async (jobNo, equipRef) => {
             UNION
 
             -- Test Cable Component subquery
-            SELECT CONCAT(CabNum, 'T'), equiplists.Ref, equiplists.ProgID, CONCAT('Cable No. ', CabNum, " Test") AS Component, Code, LabNorm, CabTest, (LabNorm * CabTest) AS "RecHrs", Description, NULL, 'CableT' AS Type
+            SELECT CONCAT(CabNum, 'T'), equiplists.Ref, equiplists.Section, CONCAT('Cable No. ', CabNum, " Test") AS Component, Code, LabNorm, CabTest, (LabNorm * CabTest) AS "RecHrs", Description, NULL, 'CableT' AS Type
             FROM equiplists
             INNER JOIN cabscheds ON equiplists.Ref = cabscheds.EquipRef AND equiplists.JobNo = cabscheds.JobNo
             INNER JOIN components ON components.Name = CONCAT(cabscheds.CabSize, " Test") AND equiplists.JobNo = components.JobNo
@@ -263,48 +263,48 @@ const getEquipmentListByEquipRef = async (jobNo, equipRef) => {
 const getEquipmentListBySection = async (jobNo, section) => {
     try {
         const query = `
-        SELECT Ref, Description, ROUND(SUM(LabNorm), 3) AS TotalHours, ROUND(SUM(CombinedData.RecHrs), 3) AS RecoveredHours, (SUM(CombinedData.RecHrs)/SUM(LabNorm)) * 100 AS PercentComplete
+        SELECT Ref, Description, ROUND(SUM(LabNorm), 3) AS TotalHours, ROUND(SUM(CombinedData.RecHrs), 3) AS RecoveredHours, (SUM(CombinedData.RecHrs)/SUM(LabNorm))   AS PercentComplete
         FROM (
-            SELECT Ref, ProgID, Description, SUM(LabNorm) AS "LabNorm", SUM((LabNorm * Complete)) AS "RecHrs"
+            SELECT Ref, Section, Description, SUM(LabNorm) AS "LabNorm", SUM((LabNorm * Complete)) AS "RecHrs"
             FROM equiplists
             INNER JOIN components ON components.ID = equiplists.Component_ID AND equiplists.JobNo = components.JobNo
-            WHERE equiplists.JobNo = :jobNo AND ProgID = :section
+            WHERE equiplists.JobNo = :jobNo AND Section = :section
             GROUP BY Ref
 
             UNION
 
-            SELECT Ref, ProgID, CONCAT('Cable No. ', CabNum) AS Description, (Length * LabNorm) AS "LabNorm", (Length * LabNorm) * CabComp AS "RecHrs"
+            SELECT Ref, Section, CONCAT('Cable No. ', CabNum) AS Description, (Length * LabNorm) AS "LabNorm", (Length * LabNorm) * CabComp AS "RecHrs"
             FROM equiplists
             INNER JOIN cabscheds ON equiplists.Ref = cabscheds.equipRef AND equiplists.JobNo = cabscheds.JobNo
             INNER JOIN components ON components.Name = cabscheds.CabSize AND equiplists.JobNo = components.JobNo
-            WHERE equiplists.JobNo = :jobNo AND ProgID = :section
+            WHERE equiplists.JobNo = :jobNo AND Section = :section
             GROUP BY cabnum
 
             UNION
 
-            SELECT Ref, ProgID, CONCAT('Cable No. ', CabNum, ' A Gland in Area ', AGlandArea) AS Description, LabNorm, (AglandComp * LabNorm) AS "RecHrs"
+            SELECT Ref, Section, CONCAT('Cable No. ', CabNum, ' A Gland in Area ', AGlandArea) AS Description, LabNorm, (AglandComp * LabNorm) AS "RecHrs"
             FROM equiplists
             INNER JOIN cabscheds ON equiplists.Ref = cabscheds.equipRef AND equiplists.JobNo = cabscheds.JobNo
             INNER JOIN components ON components.Name = CONCAT(cabscheds.CabSize, " Term") AND equiplists.JobNo = components.JobNo
-            WHERE equiplists.JobNo = :jobNo AND ProgID = :section
+            WHERE equiplists.JobNo = :jobNo AND Section = :section
             GROUP BY cabnum
 
             UNION
 
-            SELECT Ref, ProgID, CONCAT('Cable No. ', CabNum, ' Z Gland in Area ', ZGlandArea) AS Description, LabNorm, (ZGlandComp * LabNorm) AS "RecHrs"
+            SELECT Ref, Section, CONCAT('Cable No. ', CabNum, ' Z Gland in Area ', ZGlandArea) AS Description, LabNorm, (ZGlandComp * LabNorm) AS "RecHrs"
             FROM equiplists
             INNER JOIN cabscheds ON equiplists.Ref = cabscheds.equipRef AND equiplists.JobNo = cabscheds.JobNo
             INNER JOIN components ON components.Name = CONCAT(cabscheds.CabSize, " Term") AND equiplists.JobNo = components.JobNo
-            WHERE equiplists.JobNo = :jobNo AND ProgID = :section
+            WHERE equiplists.JobNo = :jobNo AND Section = :section
             GROUP BY cabnum
 
             UNION
 
-            SELECT Ref, ProgID, CONCAT('Cable No. ', CabNum, " Test") AS Description, LabNorm, (LabNorm * CabTest) AS "RecHrs"
+            SELECT Ref, Section, CONCAT('Cable No. ', CabNum, " Test") AS Description, LabNorm, (LabNorm * CabTest) AS "RecHrs"
             FROM equiplists
             INNER JOIN cabscheds ON equiplists.Ref = cabscheds.equipRef AND equiplists.JobNo = cabscheds.JobNo
             INNER JOIN components ON components.Name = CONCAT(cabscheds.CabSize, " Test") AND equiplists.JobNo = components.JobNo
-            WHERE equiplists.JobNo = :jobNo AND ProgID = :section
+            WHERE equiplists.JobNo = :jobNo AND Section = :section
             GROUP BY cabnum
 
         ) AS CombinedData
@@ -382,11 +382,11 @@ const getDefaultConfigAreaComp = () => {
         SELECT Ref, Component, codes.Name AS Type, 
             components.labnorm AS TotalHours, 
             components.labnorm * complete AS RecoveredHours, 
-            ((components.labnorm * complete) / components.labnorm) * 100 AS PercentComplete
+            ((components.labnorm * complete) / components.labnorm)   AS PercentComplete
         FROM equiplists 
             INNER JOIN components ON equiplists.Component_ID = components.ID AND equiplists.jobNo = components.jobNo 
             INNER JOIN codes ON components.Code = codes.Code
-        WHERE equiplists.jobNo = :jobNo AND equiplists.tendid = :area AND codes.Name = :component
+        WHERE equiplists.jobNo = :jobNo AND equiplists.Area = :area AND codes.Name = :component
         ORDER BY Ref, component;
         `,
     }
@@ -399,11 +399,11 @@ const getDefaultConfigAreaSectionComp = () => {
         SELECT Ref, Component, codes.Name AS Type, 
             components.labnorm AS TotalHours, 
             components.labnorm * complete AS RecoveredHours, 
-            ((components.labnorm * complete) / components.labnorm) * 100 AS PercentComplete
+            ((components.labnorm * complete) / components.labnorm)   AS PercentComplete
         FROM equiplists 
             INNER JOIN components ON equiplists.Component_ID = components.ID AND equiplists.jobNo = components.jobNo 
             INNER JOIN codes ON components.Code = codes.Code
-        WHERE equiplists.jobNo = :jobNo AND equiplists.tendid = :area AND equiplists.progid = :section AND codes.Name = :component
+        WHERE equiplists.jobNo = :jobNo AND equiplists.Area = :area AND equiplists.Section = :section AND codes.Name = :component
         ORDER BY Ref, component;
         `,
     }
@@ -415,7 +415,7 @@ const getEquipmentRefsDescArea = async (req, res, next) => {
     try {
         const equipmentRefs = await Equiplist.findAll({
             where: { JobNo: jobNo },
-            attributes: ['Ref', 'Description', 'TendID'],
+            attributes: ['Ref', 'Description', 'Area'],
             group: ['Ref'],
             order: ['Ref'],
         })
@@ -440,7 +440,7 @@ const getComponentsCodesForASpecificEquipment = async (req, res, next) => {
             FROM codes
             INNER JOIN components ON components.Code = codes.Code
             INNER JOIN equiplists ON equiplists.Component_ID = components.ID AND equiplists.JobNo = components.JobNo
-            WHERE components.JobNo = :jobNo AND equiplists.TendID = :area AND equiplists.ProgID = :section
+            WHERE components.JobNo = :jobNo AND equiplists.Area = :area AND equiplists.Section = :section
             ORDER BY codes.Code
         `,
             {
@@ -481,7 +481,7 @@ const getProjectTenderHours = async (req, res, next) => {
                     SELECT Ref, equiplists.component, SUM(LabNorm) AS LabNorm, Description 
                     FROM equiplists
                     INNER JOIN components ON equiplists.Component_ID = components.ID AND components.JobNo = :jobNo
-                    INNER JOIN templates ON equiplists.template = templates.tempname AND equiplists.Component_ID = templates.Component_ID AND templates.JobNo = :jobNo
+                    INNER JOIN templates ON equiplists.template = templates.Name AND equiplists.Component_ID = templates.Component_ID AND templates.JobNo = :jobNo
                     WHERE equiplists.JobNo = :jobNo
                     GROUP BY equiplists.id
 
@@ -538,11 +538,11 @@ const createEquipment = async (req, res, next) => {
     const { equipmentCreatedOnFileUpload, CurrentRevision } = req.body
 
     try {
-        const { Ref, Description, ProgID, TendID, TempName } = req.body
+        const { Ref, Description, Section, Area, Template } = req.body
 
         const trimmedDescription = Description.trim()
 
-        if (!Ref || !trimmedDescription || !ProgID || !TendID || !TempName) {
+        if (!Ref || !trimmedDescription || !Section || !Area || !Template) {
             return res.status(400).json({ message: 'All fields are required.' })
         }
 
@@ -565,7 +565,7 @@ const createEquipment = async (req, res, next) => {
 
         //Fetch the list of components for the selected Template
         const templateData = await Template.findAll({
-            where: { JobNo: jobNo, TempName: TempName },
+            where: { JobNo: jobNo, Name: Template },
             include: [
                 {
                     model: Component,
@@ -609,9 +609,9 @@ const createEquipment = async (req, res, next) => {
                 JobNo: jobNo,
                 Ref: Ref,
                 Description: trimmedDescription,
-                Template: TempName,
-                ProgID: ProgID,
-                TendID: TendID,
+                Template: Template,
+                Section: Section,
+                Area: Area,
                 Component: name,
                 Component_ID: id,
                 Template_ID: templateID++,
@@ -681,7 +681,7 @@ const bulkCreateEquipment = async (req, res) => {
         const processedRefs = new Set()
 
         for (const equipment of equipmentsData) {
-            const { Ref, Description, ProgID, TendID, TempName } = equipment
+            const { Ref, Description, Section, Area, Template } = equipment
             const trimmedDescription = Description.trim()
 
             if (processedRefs.has(Ref)) {
@@ -703,7 +703,7 @@ const bulkCreateEquipment = async (req, res) => {
 
             // Fetch the list of components for the selected Template
             const templateData = await Template.findAll({
-                where: { JobNo: jobNo, TempName: TempName },
+                where: { JobNo: jobNo, Name: Template },
                 include: [
                     {
                         model: Component,
@@ -721,7 +721,7 @@ const bulkCreateEquipment = async (req, res) => {
             if (!components || components.length === 0) {
                 results.failures.push({
                     Ref,
-                    reason: `No components found for the selected template: ${TempName}`,
+                    reason: `No components found for the selected template: ${Template}`,
                 })
                 processedRefs.add(Ref)
                 continue
@@ -733,9 +733,9 @@ const bulkCreateEquipment = async (req, res) => {
                         JobNo: jobNo,
                         Ref: Ref,
                         Description: trimmedDescription,
-                        Template: TempName,
-                        ProgID: ProgID,
-                        TendID: TendID,
+                        Template: Template,
+                        Section: Section,
+                        Area: Area,
                         Component: name,
                         Component_ID: id,
                         Template_ID: templateID,
@@ -820,7 +820,7 @@ const updateEquipment = async (req, res, next) => {
             })
 
             const newTemplate = await Template.findOne({
-                where: { JobNo: jobNo, TempName: dataToUpdate.Template },
+                where: { JobNo: jobNo, Name: dataToUpdate.Template },
             })
 
             let newTemplateID = newTemplate.dataValues.ID
@@ -837,9 +837,9 @@ const updateEquipment = async (req, res, next) => {
                     Description: dataToUpdate.Description,
                     Template: dataToUpdate.Template,
                     Component: component.Component,
-                    ProgID: dataToUpdate.ProgID,
+                    Section: dataToUpdate.Section,
                     Complete: 0,
-                    TendID: dataToUpdate.TendID,
+                    Area: dataToUpdate.Area,
                     Component_ID: component.Component_ID,
                     Template_ID: newTemplateID++,
                 })
@@ -862,8 +862,8 @@ const updateEquipment = async (req, res, next) => {
             })
         }
 
-        const oldArea = equipment[0].TendID
-        const newArea = dataToUpdate.TendID
+        const oldArea = equipment[0].Area
+        const newArea = dataToUpdate.Area
 
         const promises = equipment.map((equip) => equip.update(dataToUpdate))
         const updatedEquipment = await Promise.all(promises)
@@ -901,13 +901,6 @@ const updateEquipment = async (req, res, next) => {
         const updatedCabscheds = await Cabsched.findAll({
             where: { JobNo: jobNo, EquipRef: newEquipRef },
         })
-
-        for (const cabsched of updatedCabscheds) {
-            cabsched.CabComp *= 100
-            cabsched.AGlandComp *= 100
-            cabsched.ZGlandComp *= 100
-            cabsched.CabTest *= 100
-        }
 
         try {
             await Revision.create({
@@ -986,14 +979,14 @@ const bulkUpdateEquipment = async (req, res) => {
 
             await Promise.all(updatePromises)
 
-            if (fieldToUpdate === 'TendID') {
+            if (fieldToUpdate === 'Area') {
                 await Cabsched.update(
                     { AGlandArea: newValue },
                     {
                         where: {
                             JobNo: jobNo,
                             EquipRef: decodedRef,
-                            AGlandArea: equipmentList[0].TendID,
+                            AGlandArea: equipmentList[0].Area,
                         },
                     }
                 )
@@ -1044,13 +1037,6 @@ const bulkUpdateEquipment = async (req, res) => {
             })
 
             if (cabschedsList.length > 0) {
-                for (const cabsched of cabschedsList) {
-                    cabsched.CabComp *= 100
-                    cabsched.AGlandComp *= 100
-                    cabsched.ZGlandComp *= 100
-                    cabsched.CabTest *= 100
-                }
-
                 updatedCabschedsArrays.push(cabschedsList)
             }
         }
@@ -1125,33 +1111,28 @@ const updateEquipRecoveryAndCompletion = async (req, res, next) => {
                 updatedItem.dataValues.AGlandComp ||
                 updatedItem.dataValues.ZGlandComp ||
                 updatedItem.dataValues.CabTest
-
-            updatedItem.dataValues.CabComp *= 100
-            updatedItem.dataValues.AGlandComp *= 100
-            updatedItem.dataValues.ZGlandComp *= 100
-            updatedItem.dataValues.CabTest *= 100
         }
 
         const recalculatedData = await sequelize.query(
-            `SELECT Ref, ProgID AS Section, Description, Template,
+            `SELECT Ref, Section , Description, Template,
             ROUND(SUM(LabNorm), 2) AS TotalHours, 
             ROUND(SUM(LabNorm * complete), 2) AS RecoveredHours,
-            ROUND((SUM(LabNorm * complete)/SUM(LabNorm)), 2) * 100 AS PercentComplete,  
-            TendID AS Area, 
+            ROUND((SUM(LabNorm * complete)/SUM(LabNorm)), 2)   AS PercentComplete,  
+            Area, 
             IFNULL(equipRef, '')
         FROM (
-            SELECT equiplists.id, Ref, progid, equiplists.component, LabNorm, complete, 
+            SELECT equiplists.id, Ref, Section, equiplists.component, LabNorm, complete, 
                     (LabNorm * complete) AS "Rec''d Hrs", 
-                    description, Template, TendID, inorder
+                    description, Template, Area, inorder
             FROM equiplists
             INNER JOIN components ON equiplists.Component_ID = components.ID AND components.JobNo = :jobNo
-            INNER JOIN templates ON equiplists.template = templates.tempname AND equiplists.Component_ID = templates.Component_ID AND templates.JobNo = :jobNo
+            INNER JOIN templates ON equiplists.template = templates.Name AND equiplists.Component_ID = templates.Component_ID AND templates.JobNo = :jobNo
             WHERE equiplists.JobNo = :jobNo
             GROUP BY equiplists.id
 
             UNION
 
-            SELECT equiplists.id, Ref, progid, cabnum, 
+            SELECT equiplists.id, Ref, Section, cabnum, 
                     (length * LabNorm), cabcomp, 
                     (length * LabNorm) * cabcomp, 
                     description, Template, "Area", "InOrder"
@@ -1163,7 +1144,7 @@ const updateEquipRecoveryAndCompletion = async (req, res, next) => {
 
             UNION
 
-            SELECT equiplists.id, Ref, progid, CONCAT(cabnum, " A Gland"), 
+            SELECT equiplists.id, Ref, Section, CONCAT(cabnum, " A Gland"), 
                     LabNorm, aglandcomp, 
                     (aglandcomp * LabNorm), 
                     description, Template, "Area", "InOrder"
@@ -1175,7 +1156,7 @@ const updateEquipRecoveryAndCompletion = async (req, res, next) => {
 
             UNION
 
-            SELECT equiplists.id, Ref, progid, CONCAT(cabnum, " Z Gland"), 
+            SELECT equiplists.id, Ref, Section, CONCAT(cabnum, " Z Gland"), 
                     LabNorm, zglandcomp, 
                     (LabNorm * zglandcomp), 
                     description, Template, "Area", "InOrder"
@@ -1187,7 +1168,7 @@ const updateEquipRecoveryAndCompletion = async (req, res, next) => {
 
             UNION
             
-            SELECT equiplists.id, Ref, progid, cabnum, LabNorm, 
+            SELECT equiplists.id, Ref, Section, cabnum, LabNorm, 
                     cabtest, (LabNorm * cabtest), 
                     description, Template, "Area", "InOrder"
             FROM equiplists
@@ -1259,7 +1240,7 @@ const bulkUpdateEquipmentCompletion = async (req, res, next) => {
             const updatedRef = selectedRefs.find((item) => item === Ref)
             if (updatedCode) {
                 await Equiplist.update(
-                    { Complete: updatedCode.PercentComplete / 100 },
+                    { Complete: updatedCode.PercentComplete },
                     { where: { Ref: updatedRef, Component_ID: component.id } }
                 )
                 updatedRefs.add(updatedRef)
@@ -1271,24 +1252,24 @@ const bulkUpdateEquipmentCompletion = async (req, res, next) => {
         try {
             if (updatedRefsArray.length > 0) {
                 const recalculatedData = await sequelize.query(
-                    `SELECT Ref, ProgID AS Section, Description, Template,
+                    `SELECT Ref, Section , Description, Template,
                     ROUND(SUM(LabNorm), 2) AS TotalHours, 
                     ROUND(SUM(LabNorm * complete), 2) AS RecoveredHours,
-                    ROUND((SUM(LabNorm * complete)/SUM(LabNorm)), 2) * 100 AS PercentComplete,  
-                    TendID AS Area, 
+                    ROUND((SUM(LabNorm * complete)/SUM(LabNorm)), 2)   AS PercentComplete,  
+                    Area, 
                     IFNULL(equipRef, '')
                 FROM (
-                    SELECT Ref, progid, equiplists.component, LabNorm, complete, 
+                    SELECT Ref, Section, equiplists.component, LabNorm, complete, 
                             (LabNorm * complete) AS "Rec''d Hrs", 
-                            description, Template, TendID, inorder
+                            description, Template, Area, inorder
                     FROM equiplists
                     INNER JOIN components ON equiplists.Component_ID = components.ID AND components.JobNo = :jobNo
-                    INNER JOIN templates ON equiplists.template = templates.tempname AND equiplists.Component_ID = templates.Component_ID AND templates.JobNo = :jobNo
+                    INNER JOIN templates ON equiplists.template = templates.Name AND equiplists.Component_ID = templates.Component_ID AND templates.JobNo = :jobNo
                     WHERE equiplists.JobNo = :jobNo
     
                     UNION
     
-                    SELECT Ref, progid, cabnum, 
+                    SELECT Ref, Section, cabnum, 
                             (length * LabNorm), cabcomp, 
                             (length * LabNorm) * cabcomp, 
                             description, Template, "Area", "InOrder"
@@ -1300,7 +1281,7 @@ const bulkUpdateEquipmentCompletion = async (req, res, next) => {
     
                     UNION
     
-                    SELECT Ref, progid, CONCAT(cabnum, " A Gland"), 
+                    SELECT Ref, Section, CONCAT(cabnum, " A Gland"), 
                             LabNorm, aglandcomp, 
                             (aglandcomp * LabNorm), 
                             description, Template, "Area", "InOrder"
@@ -1312,7 +1293,7 @@ const bulkUpdateEquipmentCompletion = async (req, res, next) => {
     
                     UNION
     
-                    SELECT Ref, progid, CONCAT(cabnum, " Z Gland"), 
+                    SELECT Ref, Section, CONCAT(cabnum, " Z Gland"), 
                             LabNorm, zglandcomp, 
                             (LabNorm * zglandcomp), 
                             description, Template, "Area", "InOrder"
@@ -1324,7 +1305,7 @@ const bulkUpdateEquipmentCompletion = async (req, res, next) => {
     
                     UNION
                     
-                    SELECT Ref, progid, cabnum, LabNorm, 
+                    SELECT Ref, Section, cabnum, LabNorm, 
                             cabtest, (LabNorm * cabtest), 
                             description, Template, "Area", "InOrder"
                     FROM equiplists
@@ -1473,8 +1454,8 @@ const validateEquipmentData = (data) => {
     const isValidDescription = equipmentDescriptionPattern.test(
         data.Description
     )
-    const isValidProgID = equipmentProgIDPattern.test(data.ProgID)
-    const isValidTendID = equipmentTendIDPattern.test(data.TendID)
+    const isValidSection = equipmentSectionPattern.test(data.Section)
+    const isValidArea = equipmentAreaPattern.test(data.Area)
 
     let isValidRevision = true
     let isValidTendSection = true
@@ -1489,16 +1470,16 @@ const validateEquipmentData = (data) => {
     return (
         isValidEquipRef &&
         isValidDescription &&
-        isValidProgID &&
-        isValidTendID &&
+        isValidSection &&
+        isValidArea &&
         isValidTendSection &&
         isValidRevision
     )
 }
 
 const fieldMapping = {
-    Section: 'ProgID',
-    Area: 'TendID',
+    Section: 'Section',
+    Area: 'Area',
     Ref_1: 'Ref',
 }
 
@@ -1506,7 +1487,7 @@ const gmtPlusOneDate = () => {
     const currentDate = new Date()
 
     // Convert to GMT+1 by adding one hour to the current UTC time
-    return new Date(currentDate.getTime() + 60 * 60 * 1000)
+    return new Date(currentDate.getTime() + 60 * 60 * 100)
 }
 
 module.exports = {

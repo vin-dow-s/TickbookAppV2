@@ -11,21 +11,21 @@ module.exports = (sequelize) => {
                 autoIncrement: true,
                 allowNull: false,
             },
+            JobNo: {
+                type: DataTypes.STRING(7),
+                allowNull: false,
+            },
             SeqNr: {
                 type: DataTypes.INTEGER.UNSIGNED,
                 allowNull: true,
                 defaultValue: 9999,
-            },
-            JobNo: {
-                type: DataTypes.STRING(7),
-                allowNull: false,
             },
             EquipRef: {
                 type: DataTypes.STRING(80),
                 allowNull: false,
             },
             TendSection: {
-                type: DataTypes.STRING(25),
+                type: DataTypes.STRING(45),
                 allowNull: false,
             },
         },

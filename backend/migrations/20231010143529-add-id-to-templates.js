@@ -30,7 +30,7 @@ module.exports = {
             onDelete: 'CASCADE',
         })
         await queryInterface.addConstraint('templates', {
-            fields: ['JobNo', 'TempName', 'Component', 'InOrder'],
+            fields: ['JobNo', 'Name', 'Component', 'InOrder'],
             type: 'primary key',
             name: 'PRIMARY',
         })

@@ -39,25 +39,25 @@ const getMainProjectInfo = async (jobNo) => {
 const getMainTableData = async (jobNo) => {
     try {
         const query = `
-        SELECT Ref, ProgID AS Section, Description, Template,
+        SELECT Ref, Section , Description, Template,
             ROUND(SUM(LabNorm), 2) AS TotalHours, 
-            ROUND(SUM(LabNorm * complete), 2) AS RecoveredHours,
-            ROUND((SUM(LabNorm * complete)/SUM(LabNorm)), 2) * 100 AS PercentComplete,  
-            TendID AS Area, 
+            ROUND(SUM(LabNorm * complete / 100), 2) AS RecoveredHours,
+            ROUND((SUM(LabNorm * complete)/SUM(LabNorm)), 2) AS PercentComplete,  
+            Area, 
             IFNULL(equipRef, '')
         FROM (
-            SELECT equiplists.id, Ref, progid, equiplists.component, LabNorm, complete, 
+            SELECT equiplists.id, Ref, Section, equiplists.component, LabNorm, complete, 
                     (LabNorm * complete) AS "Rec''d Hrs", 
-                    description, Template, TendID, inorder
+                    description, Template, Area, inorder
             FROM equiplists
             INNER JOIN components ON equiplists.Component_ID = components.ID AND components.JobNo = :jobNo
-            INNER JOIN templates ON equiplists.template = templates.tempname AND equiplists.Component_ID = templates.Component_ID AND templates.JobNo = :jobNo
+            INNER JOIN templates ON equiplists.template = templates.Name AND equiplists.Component_ID = templates.Component_ID AND templates.JobNo = :jobNo
             WHERE equiplists.JobNo = :jobNo
             GROUP BY equiplists.id
 
             UNION
 
-            SELECT equiplists.id, Ref, progid, cabnum, 
+            SELECT equiplists.id, Ref, Section, cabnum, 
                     (length * LabNorm), cabcomp, 
                     (length * LabNorm) * cabcomp, 
                     description, Template, "Area", "InOrder"
@@ -69,7 +69,7 @@ const getMainTableData = async (jobNo) => {
 
             UNION
 
-            SELECT equiplists.id, Ref, progid, CONCAT(cabnum, " A Gland"), 
+            SELECT equiplists.id, Ref, Section, CONCAT(cabnum, " A Gland"), 
                     LabNorm, aglandcomp, 
                     (aglandcomp * LabNorm), 
                     description, Template, "Area", "InOrder"
@@ -81,7 +81,7 @@ const getMainTableData = async (jobNo) => {
 
             UNION
 
-            SELECT equiplists.id, Ref, progid, CONCAT(cabnum, " Z Gland"), 
+            SELECT equiplists.id, Ref, Section, CONCAT(cabnum, " Z Gland"), 
                     LabNorm, zglandcomp, 
                     (LabNorm * zglandcomp), 
                     description, Template, "Area", "InOrder"
@@ -93,7 +93,7 @@ const getMainTableData = async (jobNo) => {
 
             UNION
             
-            SELECT equiplists.id, Ref, progid, cabnum, LabNorm, 
+            SELECT equiplists.id, Ref, Section, cabnum, LabNorm, 
                     cabtest, (LabNorm * cabtest), 
                     description, Template, "Area", "InOrder"
             FROM equiplists

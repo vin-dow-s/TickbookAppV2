@@ -15,14 +15,14 @@ module.exports = (sequelize) => {
                 primaryKey: true,
                 allowNull: false,
             },
+            EquipRef: {
+                type: DataTypes.STRING(80),
+                allowNull: false,
+            },
             Length: {
                 type: DataTypes.DOUBLE,
                 allowNull: false,
                 defaultValue: 0,
-            },
-            EquipRef: {
-                type: DataTypes.STRING(20),
-                allowNull: false,
             },
             AGlandArea: {
                 type: DataTypes.STRING(45),

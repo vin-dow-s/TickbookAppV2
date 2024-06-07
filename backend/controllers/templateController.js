@@ -8,12 +8,12 @@ const getProjectTemplates = async (req, res, next) => {
 
     try {
         const query = `
-        SELECT templates.ID AS ID, TempName, Component, ROUND(SUM(LabNorm), 3) AS Hours
+        SELECT templates.ID AS ID, templates.Name, Component, ROUND(SUM(LabNorm), 3) AS Hours
         FROM templates
         INNER JOIN components ON components.ID = templates.Component_ID 
         WHERE templates.jobNo = :jobNo AND components.jobNo = :jobNo
-        GROUP BY TempName
-        ORDER BY TempName;
+        GROUP BY Name
+        ORDER BY Name;
         `
 
         const templates = await sequelize.query(query, {
@@ -29,12 +29,12 @@ const getProjectTemplates = async (req, res, next) => {
 }
 
 const getTemplateComponents = async (req, res, next) => {
-    const { jobNo, tempName } = req.params
+    const { jobNo, template } = req.params
 
     try {
         const componentsInTemplate = await fetchTemplateComponents(
             jobNo,
-            tempName
+            template
         )
         res.json(componentsInTemplate)
     } catch (error) {
@@ -43,14 +43,14 @@ const getTemplateComponents = async (req, res, next) => {
 }
 
 const createTemplate = async (req, res, next) => {
-    const { jobNo, TempName, components } = req.body
+    const { jobNo, Name, components } = req.body
 
     if (!components || components.length === 0) {
         return res.status(400).json({ message: 'No components provided.' })
     }
     try {
         const existingTemplate = await Template.findOne({
-            where: { JobNo: jobNo, TempName: TempName },
+            where: { JobNo: jobNo, Name: Name },
         })
 
         if (existingTemplate) {
@@ -82,7 +82,7 @@ const createTemplate = async (req, res, next) => {
 
                 await Template.create({
                     JobNo: jobNo,
-                    TempName,
+                    Name,
                     Component: compName,
                     InOrder: orderCounter++,
                     Component_ID: componentID,
@@ -94,7 +94,7 @@ const createTemplate = async (req, res, next) => {
 
         res.status(201).json({
             JobNo: jobNo,
-            TempName,
+            Name,
             Hours: Number(totalHours.toFixed(3)),
             message: 'Template lines successfully created!',
         })
@@ -120,21 +120,21 @@ const bulkCreateTemplates = async (req, res) => {
     }
 
     try {
-        for (const { TempName, components } of templatesData) {
+        for (const { Name, components } of templatesData) {
             if (!components || components.length === 0) {
                 results.failures.push({
-                    TempName,
+                    Name,
                     reason: 'No components provided.',
                 })
                 continue
             }
 
             const existingTemplate = await Template.findOne({
-                where: { JobNo: jobNo, TempName: TempName },
+                where: { JobNo: jobNo, Name: Name },
             })
 
             if (existingTemplate) {
-                results.alreadyExists.push({ TempName })
+                results.alreadyExists.push({ Name })
                 continue
             }
 
@@ -160,7 +160,7 @@ const bulkCreateTemplates = async (req, res) => {
                     try {
                         await Template.create({
                             JobNo: jobNo,
-                            TempName,
+                            Name,
                             Component: compName,
                             InOrder:
                                 typeof inOrder !== 'undefined'
@@ -176,7 +176,7 @@ const bulkCreateTemplates = async (req, res) => {
                             error
                         )
                         results.failures.push({
-                            TempName,
+                            Name,
                             reason: 'Error creating template line.',
                         })
                         templateCreationSuccessful = false
@@ -187,7 +187,7 @@ const bulkCreateTemplates = async (req, res) => {
 
             if (templateCreationSuccessful) {
                 results.success.push({
-                    TempName,
+                    Name,
                     Hours: parseFloat(totalHours.toFixed(3)),
                 })
             }
@@ -203,24 +203,24 @@ const bulkCreateTemplates = async (req, res) => {
 }
 
 const updateTemplate = async (req, res, next) => {
-    const { jobNo, tempName } = req.params
+    const { jobNo, template } = req.params
     const components = req.body.components
 
     try {
         //Fetch existing Equiplists entries before deletion
         const existingEquipment = await Equiplist.findAll({
-            where: { JobNo: jobNo, Template: tempName },
+            where: { JobNo: jobNo, Template: template },
             group: ['Ref'],
         })
 
         //Delete existing Equiplists lines (easier in this situation than updating the corresponding ones)
         await Equiplist.destroy({
-            where: { JobNo: jobNo, Template: tempName },
+            where: { JobNo: jobNo, Template: template },
         })
 
         //Delete existing Template lines (easier in this situation than updating the corresponding ones)
         await Template.destroy({
-            where: { JobNo: jobNo, TempName: tempName },
+            where: { JobNo: jobNo, Name: template },
         })
 
         let totalHours = 0
@@ -230,7 +230,7 @@ const updateTemplate = async (req, res, next) => {
         for (let component of components) {
             await Template.create({
                 JobNo: jobNo,
-                TempName: tempName,
+                Name: template,
                 Component: component.Component || component.Name,
                 InOrder: orderCounter++,
                 Component_ID: component.ID,
@@ -255,7 +255,7 @@ const updateTemplate = async (req, res, next) => {
         }
 
         const newTemplate = await Template.findOne({
-            where: { JobNo: jobNo, TempName: tempName },
+            where: { JobNo: jobNo, Name: template },
             attributes: ['ID'],
         })
 
@@ -268,9 +268,9 @@ const updateTemplate = async (req, res, next) => {
                     JobNo: jobNo,
                     Ref: equipmentData.Ref,
                     Description: equipmentData.Description,
-                    Template: tempName,
-                    ProgID: equipmentData.ProgID,
-                    TendID: equipmentData.TendID,
+                    Template: template,
+                    Section: equipmentData.Section,
+                    Area: equipmentData.Area,
                     Component: component.Component || component.Name,
                     Component_ID: component.ID,
                     Template_ID: newTemplateID++,
@@ -282,7 +282,7 @@ const updateTemplate = async (req, res, next) => {
 
         res.status(201).json({
             JobNo: jobNo,
-            TempName: tempName,
+            Name: template,
             Hours: Number(totalHours.toFixed(3)),
             message: 'Template lines successfully created!',
         })
@@ -297,7 +297,7 @@ const updateTemplate = async (req, res, next) => {
     }
 }
 
-const fetchTemplateComponents = async (jobNo, tempName) => {
+const fetchTemplateComponents = async (jobNo, template) => {
     try {
         const query = `
         SELECT 
@@ -305,13 +305,13 @@ const fetchTemplateComponents = async (jobNo, tempName) => {
             components.LabNorm
         FROM templates
         JOIN components ON templates.Component_ID = components.ID
-        WHERE templates.jobNo = :jobNo AND templates.tempName = :tempName
+        WHERE templates.jobNo = :jobNo AND templates.Name = :template
         ORDER BY templates.InOrder ASC;
         `
 
         const componentsInTemplate = await sequelize.query(query, {
             type: QueryTypes.SELECT,
-            replacements: { jobNo, tempName },
+            replacements: { jobNo, template },
         })
 
         return componentsInTemplate

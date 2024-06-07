@@ -38,7 +38,7 @@ describe('Equipment Ref Validation Regex', () => {
     })
 })
 
-describe('Equipment Description/ProgID/TendID/TendSection/CurrentRevision Validation Regex', () => {
+describe('Equipment Description/Section/Area/TendSection/CurrentRevision Validation Regex', () => {
     test.each([
         // Valid Cases
         ['Description', true],

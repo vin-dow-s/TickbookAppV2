@@ -1,4 +1,4 @@
-const { templatesTempNamePattern } = require('../../config/validation')
+const { templatesNamePattern } = require('../../config/validation')
 
 describe('Template Name Validation Regex', () => {
     test.each([
@@ -40,6 +40,6 @@ describe('Template Name Validation Regex', () => {
         ['TemplateNAME', true],
         ['TemplateNAME', true],
     ])('Template Name Pattern - %s should be valid: %s', (input, expected) => {
-        expect(templatesTempNamePattern.test(input)).toBe(expected)
+        expect(templatesNamePattern.test(input)).toBe(expected)
     })
 })

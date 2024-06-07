@@ -32,7 +32,7 @@ module.exports = (sequelize) => {
                 type: DataTypes.STRING(180),
                 allowNull: false,
             },
-            ProgID: {
+            Section: {
                 type: DataTypes.STRING(20),
                 allowNull: false,
             },
@@ -41,7 +41,7 @@ module.exports = (sequelize) => {
                 allowNull: false,
                 defaultValue: 0,
             },
-            TendID: {
+            Area: {
                 type: DataTypes.STRING(40),
                 allowNull: false,
             },
@@ -66,7 +66,7 @@ module.exports = (sequelize) => {
             indexes: [
                 {
                     unique: true,
-                    fields: ['JobNo', 'Component'],
+                    fields: ['id'],
                 },
             ],
         }

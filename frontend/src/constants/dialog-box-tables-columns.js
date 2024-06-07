@@ -237,8 +237,7 @@ export const columnsEquipRef = [
                 return true
             }
             if (params.oldValue !== Number(newValue)) {
-                params.data.CurrentRecovery =
-                    (newValue / 100) * params.data.LabNorm
+                params.data.CurrentRecovery = newValue * params.data.LabNorm
                 params.data.PercentComplete = newValue
                 return true
             }
@@ -572,7 +571,7 @@ export const columnsComponentsInProject = [
 export const columnsTemplates = [
     {
         headerName: 'Template',
-        field: 'TempName',
+        field: 'Name',
         filter: true,
         sortable: true,
         flex: 0.7,

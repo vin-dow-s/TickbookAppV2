@@ -16,7 +16,7 @@ app.use(
         setHeaders: (res) => {
             res.setHeader(
                 'Cache-Control',
-                'public, max-age=`365 * 24 * 60 * 60 * 1000`'
+                'public, max-age=`365 * 24 * 60 * 60  0`'
             )
         },
     })

@@ -94,18 +94,18 @@ export const generateProjectTemplatesURL = (jobNo) =>
 export const generateProjectTemplatesBulkURL = (jobNo) =>
     jobNo ? `${BASE_URL}/${encodeURIComponent(jobNo)}/templates/bulk` : null
 
-export const generateTemplateComponentsURL = (jobNo, tempName) =>
+export const generateTemplateComponentsURL = (jobNo, template) =>
     jobNo
         ? `${BASE_URL}/${encodeURIComponent(
               jobNo
-          )}/templates/${encodeURIComponent(tempName)}`
+          )}/templates/${encodeURIComponent(template)}`
         : null
 
-export const updateTemplateURL = (jobNo, tempName) =>
+export const updateTemplateURL = (jobNo, template) =>
     jobNo
         ? `${BASE_URL}/${encodeURIComponent(
               jobNo
-          )}/templates/${encodeURIComponent(tempName)}`
+          )}/templates/${encodeURIComponent(template)}`
         : null
 
 //Equipment

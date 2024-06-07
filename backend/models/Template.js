@@ -15,7 +15,7 @@ module.exports = (sequelize) => {
                 type: DataTypes.STRING(7),
                 allowNull: false,
             },
-            TempName: {
+            Name: {
                 type: DataTypes.STRING(80),
                 allowNull: false,
             },

@@ -21,13 +21,7 @@ const getProjectCabscheds = async (req, res, next) => {
 
         const transformedCabscheds = cabscheds.map((cabsched) => {
             const plainCabsched = cabsched.get({ plain: true })
-            return {
-                ...plainCabsched,
-                AGlandComp: cabsched.AGlandComp * 100,
-                ZGlandComp: cabsched.ZGlandComp * 100,
-                CabComp: cabsched.CabComp * 100,
-                CabTest: cabsched.CabTest * 100,
-            }
+            return plainCabsched
         })
 
         res.json(transformedCabscheds)
@@ -137,11 +131,6 @@ const bulkCreateCabscheds = async (req, res) => {
                 // Create new cabsched
                 const newCabsched = await Cabsched.create(data)
 
-                newCabsched.CabComp *= 100
-                newCabsched.CabTest *= 100
-                newCabsched.AGlandComp *= 100
-                newCabsched.ZGlandComp *= 100
-
                 results.success.push(newCabsched)
             } catch (error) {
                 results.failures.push({ data, reason: error.message })
@@ -203,10 +192,10 @@ const updateCabsched = async (req, res, next) => {
                 AGlandArea: dataToUpdate.AGlandArea,
                 ZGlandArea: dataToUpdate.ZGlandArea,
                 CabSize: dataToUpdate.CabSize,
-                AGlandComp: dataToUpdate.AGlandComp / 100,
-                ZGlandComp: dataToUpdate.ZGlandComp / 100,
-                CabComp: dataToUpdate.CabComp / 100,
-                CabTest: dataToUpdate.CabTest / 100,
+                AGlandComp: dataToUpdate.AGlandComp,
+                ZGlandComp: dataToUpdate.ZGlandComp,
+                CabComp: dataToUpdate.CabComp,
+                CabTest: dataToUpdate.CabTest,
                 Component_ID: dataToUpdate.Component_ID,
             })
 
@@ -276,16 +265,6 @@ const updateCabschedCompletion = async (req, res, next) => {
         }
 
         const updatedCabsched = await existingCabsched.update(dataToUpdate)
-
-        //Multiply the properties by 100 for the frontend
-        updatedCabsched.CabComp = Math.round(updatedCabsched.CabComp * 100)
-        updatedCabsched.CabTest = Math.round(updatedCabsched.CabTest * 100)
-        updatedCabsched.AGlandComp = Math.round(
-            updatedCabsched.AGlandComp * 100
-        )
-        updatedCabsched.ZGlandComp = Math.round(
-            updatedCabsched.ZGlandComp * 100
-        )
 
         if (existingCabsched.tickCabBySC) {
             updatedCabsched.tickCabBySC = existingCabsched.tickCabBySC

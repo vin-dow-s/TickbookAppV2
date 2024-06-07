@@ -46,12 +46,12 @@ router.delete('/:jobNo/components/:id', componentController.deleteComponent)
 //Templates
 router.get('/:jobNo/templates', templateController.getProjectTemplates)
 router.get(
-    '/:jobNo/templates/:tempName',
+    '/:jobNo/templates/:template',
     templateController.getTemplateComponents
 )
 router.post('/:jobNo/templates', templateController.createTemplate)
 router.post('/:jobNo/templates/bulk', templateController.bulkCreateTemplates)
-router.put('/:jobNo/templates/:tempName', templateController.updateTemplate)
+router.put('/:jobNo/templates/:template', templateController.updateTemplate)
 
 //Equipment
 router.get('/:jobNo/equipment', equipmentController.getProjectEquipment)

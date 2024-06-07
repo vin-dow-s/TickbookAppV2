@@ -5,6 +5,11 @@ module.exports = (sequelize) => {
     const TickCCHead = sequelize.define(
         'TickCCHead',
         {
+            JobNo: {
+                type: DataTypes.STRING(7),
+                primaryKey: true,
+                allowNull: false,
+            },
             SeqNr: {
                 type: DataTypes.INTEGER,
                 allowNull: false,
@@ -17,11 +22,6 @@ module.exports = (sequelize) => {
             },
             Descrip: {
                 type: DataTypes.TEXT,
-                allowNull: false,
-            },
-            JobNo: {
-                type: DataTypes.STRING(7),
-                primaryKey: true,
                 allowNull: false,
             },
         },

@@ -4,6 +4,9 @@ import { useEffect, useState } from 'react'
 import { toast } from 'react-toastify'
 import styled from 'styled-components'
 
+//Hooks
+import useStore from '../hooks/useStore'
+
 //Utils
 import {
     alphanumericWithSpacesPattern,
@@ -98,7 +101,16 @@ const CreateCodeFormField = styled(FormField)`
     }
 `
 
-const CodesView = ({ jobNo }) => {
+const CodesView = () => {
+    const { codesList, fetchCodesList, isLoading, onCodeCreate } = useStore(
+        (state) => ({
+            codesList: state.codesList,
+            fetchCodesList: state.fetchCodesList,
+            isLoading: state.isLoading,
+            onCodeCreate: state.onCodeCreate,
+        })
+    )
+
     const [codesTableGridApi, setCodesTableGridApi] = useState(null)
     const [isCodeValid, setIsCodeValid] = useState(null)
     const [isNameValid, setIsNameValid] = useState(null)
@@ -164,8 +176,8 @@ const CodesView = ({ jobNo }) => {
             } else if (response.ok) {
                 const newCode = await response.json()
                 toast.success(`Code ${code} successfully created!`)
-                /*                 onCodeCreate(newCode)
-                 */ setIsCodeValid(null)
+                onCodeCreate(newCode)
+                setIsCodeValid(null)
                 setIsNameValid(null)
             }
         } catch (error) {
@@ -182,8 +194,14 @@ const CodesView = ({ jobNo }) => {
     }
 
     useEffect(() => {
-        codesTableGridApi?.hideOverlay()
-    }, [codesTableGridApi])
+        fetchCodesList()
+    }, [fetchCodesList])
+
+    useEffect(() => {
+        if (isLoading) {
+            codesTableGridApi?.showLoadingOverlay()
+        } else codesTableGridApi?.hideOverlay()
+    }, [codesList, codesTableGridApi, isLoading])
 
     return (
         <CodesViewContainer>
@@ -199,6 +217,7 @@ const CodesView = ({ jobNo }) => {
                     <StyledAGGrid
                         className="ag-theme-quartz purple-table"
                         gridOptions={codesTableGridOptions}
+                        rowData={codesList}
                     />
                 </div>
             </CodesListContainer>

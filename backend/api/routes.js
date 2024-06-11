@@ -72,8 +72,12 @@ router.put(
     equipmentController.bulkUpdateEquipment
 )
 router.put(
-    '/:jobNo/equipment/bulk/update-completion',
-    equipmentController.bulkUpdateEquipmentCompletion
+    '/:jobNo/equipment/bulk/update-completion-by-codes',
+    equipmentController.bulkUpdateEquipmentCompletionByCodes
+)
+router.put(
+    '/:jobNo/equipment/bulk/update-completion-by-components',
+    equipmentController.bulkUpdateEquipmentCompletionByComponents
 )
 router.put(
     '/:jobNo/equipment/update-completion/:id',

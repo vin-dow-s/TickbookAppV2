@@ -151,18 +151,25 @@ export const deleteEquipmentURL = (jobNo, ref) =>
           )}/equipment/${encodeURIComponent(ref)}`
         : null
 
-export const bulkUpdateEquipmentCompletionURL = (jobNo) =>
-    jobNo
-        ? `${BASE_URL}/${encodeURIComponent(
-              jobNo
-          )}/equipment/bulk/update-completion`
-        : null
-
 export const updateEquipRecoveryAndCompletionURL = (jobNo, id) =>
     jobNo
         ? `${BASE_URL}/${encodeURIComponent(
               jobNo
           )}/equipment/update-completion/${encodeURIComponent(id)}`
+        : null
+
+export const bulkUpdateEquipmentCompletionByCodesURL = (jobNo) =>
+    jobNo
+        ? `${BASE_URL}/${encodeURIComponent(
+              jobNo
+          )}/equipment/bulk/update-completion-by-codes`
+        : null
+
+export const bulkUpdateEquipmentCompletionByComponentsURL = (jobNo) =>
+    jobNo
+        ? `${BASE_URL}/${encodeURIComponent(
+              jobNo
+          )}/equipment/bulk/update-completion-by-components`
         : null
 
 //Cabscheds

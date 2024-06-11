@@ -7,6 +7,7 @@ import {
     generateProjectComponentsURL,
     generateProjectEquipmentURL,
     generateProjectTemplatesURL,
+    updateEquipRecoveryAndCompletionURL,
 } from '../utils/apiConfig'
 
 const useStore = create((set) => ({
@@ -155,6 +156,185 @@ const useStore = create((set) => ({
                 (component) => component.ID !== deletedComponent.ID
             ),
         }))
+    },
+
+    onEquipmentCompletionUpdate: async (
+        jobNo,
+        ID,
+        percentComplete,
+        rowData
+    ) => {
+        let url
+        let bodyData
+        const currentRecovery = (
+            (rowData.LabNorm * percentComplete) /
+            100
+        ).toFixed(2)
+
+        //Check the type of the Equipment to update the correct field
+        switch (rowData.Type) {
+            case 'Cable':
+                url = updateEquipRecoveryAndCompletionURL(jobNo, ID)
+                bodyData = {
+                    JobNo: jobNo,
+                    Ref: rowData.Ref,
+                    CabNum: ID,
+                    CabComp: Math.round(percentComplete),
+                    CurrentRecovery: currentRecovery,
+                }
+                break
+            case 'CableA':
+                url = updateEquipRecoveryAndCompletionURL(jobNo, ID)
+                bodyData = {
+                    JobNo: jobNo,
+                    Ref: rowData.Ref,
+                    CabNum: ID,
+                    AGlandComp: Math.round(percentComplete),
+                    CurrentRecovery: currentRecovery,
+                }
+                break
+            case 'CableZ':
+                url = updateEquipRecoveryAndCompletionURL(jobNo, ID)
+                bodyData = {
+                    JobNo: jobNo,
+                    Ref: rowData.Ref,
+                    CabNum: ID,
+                    ZGlandComp: Math.round(percentComplete),
+                    CurrentRecovery: currentRecovery,
+                }
+                break
+            case 'CableT':
+                url = updateEquipRecoveryAndCompletionURL(jobNo, ID)
+                bodyData = {
+                    JobNo: jobNo,
+                    Ref: rowData.Ref,
+                    CabNum: ID,
+                    CabTest: Math.round(percentComplete),
+                    CurrentRecovery: currentRecovery,
+                }
+                break
+            default:
+                url = updateEquipRecoveryAndCompletionURL(jobNo, ID)
+                bodyData = {
+                    JobNo: jobNo,
+                    Ref: rowData.Ref,
+                    ID: ID,
+                    Complete: Math.round(percentComplete),
+                    CurrentRecovery: currentRecovery,
+                    Type: 'Component',
+                }
+        }
+
+        try {
+            const response = await fetch(url, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(bodyData),
+            })
+
+            if (response.ok) {
+                const result = await response.json()
+
+                //Update equipmentList if it's a Component
+                if (result.updatedItem.Component) {
+                    set((state) => ({
+                        equipmentList: state.equipmentList.map((equip) =>
+                            equip.ID === ID
+                                ? { ...equip, ...result.updatedItem }
+                                : equip
+                        ),
+                        dataHasChanged: true,
+                    }))
+                }
+
+                //Update cabschedsList if it's a Cable
+                if (result.updatedItem.CabNum) {
+                    set((state) => ({
+                        cabschedsList: state.cabschedsList.map((cable) =>
+                            cable.CabNum === result.updatedItem.CabNum
+                                ? result.updatedItem
+                                : cable
+                        ),
+                        dataHasChanged: true,
+                    }))
+                }
+
+                return {
+                    updatedAvgCompletion: result.avgCompletion,
+                    updatedItem: result.updatedItem,
+                }
+            } else {
+                console.error('Failed to update item:', await response.text())
+                throw new Error('Failed to update item.')
+            }
+        } catch (error) {
+            console.error('Error while updating the completion:', error)
+            throw error
+        }
+    },
+
+    onEquipmentCompletionByComponentsBulkUpdate: async (
+        updatedEquipmentFromServer
+    ) => {
+        const updatedItemsArray = updatedEquipmentFromServer.updatedItems
+        const updatedEquipmentsArray =
+            updatedEquipmentFromServer.updatedEquipments
+        const updatedCabschedsArray =
+            updatedEquipmentFromServer.updatedCabscheds
+
+        set((state) => {
+            const updatedMainTableData = state.localMainTableData.map(
+                (item) => {
+                    const updatedItem = updatedItemsArray.find(
+                        (updated) => updated.Ref === item.Ref
+                    )
+                    if (updatedItem) {
+                        return {
+                            ...item,
+                            PercentComplete: updatedItem.PercentComplete,
+                            RecoveredHours: updatedItem.RecoveredHours,
+                            TotalHours: updatedItem.TotalHours,
+                        }
+                    }
+                    return item
+                }
+            )
+
+            const updatedEquipmentList = state.equipmentList.map((equip) => {
+                const updatedEquip = updatedEquipmentsArray.find(
+                    (updated) => updated.ID === equip.ID
+                )
+                if (updatedEquip) {
+                    return {
+                        ...equip,
+                        Complete: updatedEquip.Complete,
+                        Description: updatedEquip.Description,
+                        Template: updatedEquip.Template,
+                        Area: updatedEquip.Area,
+                    }
+                }
+                return equip
+            })
+
+            const updatedCabschedsList = state.cabschedsList.map(
+                (existingCable) => {
+                    const cableToUpdate = updatedCabschedsArray.find(
+                        (updatedCableFromServer) =>
+                            updatedCableFromServer.CabNum ===
+                            existingCable.CabNum
+                    )
+                    return cableToUpdate || existingCable
+                }
+            )
+
+            return {
+                localMainTableData: updatedMainTableData,
+                equipmentList: updatedEquipmentList,
+                cabschedsList: updatedCabschedsList,
+            }
+        })
     },
 }))
 

@@ -1,5 +1,5 @@
 import styled from 'styled-components'
-import { fonts, colors } from './global-styles'
+import { colors } from './global-styles'
 
 export const Overlay = styled.div`
     position: fixed;
@@ -19,9 +19,9 @@ export const DialogBoxContainer = styled.div`
     background-color: transparent;
     color: black;
     z-index: 1000;
-    outline: 1px solid black;
-    border-radius: 25px;
+    border-radius: 10px;
     overflow: hidden;
+    box-shadow: 0px 2px 8px rgba(0, 0, 0, 0.3);
     transform: translate(-50%, -50%);
 `
 
@@ -36,17 +36,13 @@ export const DialogHeader = styled.div`
     );
     background-repeat: no-repeat;
     color: white;
-    border-bottom: 1px solid black;
-    text-transform: uppercase;
-    ${fonts.narrowBold16}
 `
 
 export const DialogContent = styled.div`
     background-color: ${colors.mainFrameBackground};
     color: black;
-    border-top: none;
-    border-bottom-left-radius: 25px;
-    border-bottom-right-radius: 25px;
+    border-bottom-left-radius: 10px;
+    border-bottom-right-radius: 10px;
 
     td:last-of-type {
         padding: 0;
@@ -74,11 +70,5 @@ export const DialogContent = styled.div`
 
     @media screen and (max-height: 760px), screen and (max-width: 1120px) {
         font-size: small;
-
-        table {
-            thead {
-                font-size: small;
-            }
-        }
     }
 `

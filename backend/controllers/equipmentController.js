@@ -182,7 +182,7 @@ const QUERY_CONFIGS_AREA_SECTION_COMP = {
 const getEquipmentListByEquipRef = async (jobNo, equipRef) => {
     try {
         const query = `
-        SELECT ID, Ref, Component, Code, ROUND(LabNorm, 3) AS "LabNorm", ROUND(Norms.RecHrs, 3) AS "CurrentRecovery", ROUND(Norms.RecHrs/LabNorm  ) AS "PercentComplete", inOrder, Type
+        SELECT ID, Ref, Component, Code, ROUND(LabNorm, 3) AS "LabNorm", ROUND(Norms.RecHrs / 100, 3) AS "CurrentRecovery", ROUND(Norms.RecHrs/LabNorm  ) AS "PercentComplete", inOrder, Type
         FROM (
             SELECT equiplists.ID, Ref, Section, equiplists.Component, components.Code, LabNorm, Complete, (LabNorm * Complete) AS "RecHrs", Description, templates.inOrder, 'Component' AS Type
             FROM equiplists
@@ -263,7 +263,7 @@ const getEquipmentListByEquipRef = async (jobNo, equipRef) => {
 const getEquipmentListBySection = async (jobNo, section) => {
     try {
         const query = `
-        SELECT Ref, Description, ROUND(SUM(LabNorm), 3) AS TotalHours, ROUND(SUM(CombinedData.RecHrs), 3) AS RecoveredHours, (SUM(CombinedData.RecHrs)/SUM(LabNorm))   AS PercentComplete
+        SELECT Ref, Description, ROUND(SUM(LabNorm), 3) AS TotalHours, ROUND(SUM(CombinedData.RecHrs) / 100, 3) AS RecoveredHours, (SUM(CombinedData.RecHrs)/SUM(LabNorm))   AS PercentComplete
         FROM (
             SELECT Ref, Section, Description, SUM(LabNorm) AS "LabNorm", SUM((LabNorm * Complete)) AS "RecHrs"
             FROM equiplists
@@ -338,6 +338,13 @@ const getEquipmentListByAreaComp = async (jobNo, area, component) => {
             replacements: { jobNo, area, component },
         })
 
+        equipmentList.forEach((equip) => {
+            equip.RecoveredHours = Number(
+                (equip.RecoveredHours / 100).toFixed(3)
+            )
+            equip.TotalHours = Number(equip.TotalHours.toFixed(3))
+        })
+
         return equipmentList
     } catch (error) {
         console.error(
@@ -365,6 +372,14 @@ const getEquipmentListByAreaSectionComp = async (
             replacements: { jobNo, area, section, component },
         })
 
+        equipmentList.forEach((equip) => {
+            equip.RecoveredHours = Number(
+                (equip.RecoveredHours / 100).toFixed(3)
+            )
+            equip.TotalHours = Number(equip.TotalHours.toFixed(3))
+        })
+
+        console.log('🚀 ~ equipmentList:', equipmentList)
         return equipmentList
     } catch (error) {
         console.error(
@@ -1116,7 +1131,7 @@ const updateEquipRecoveryAndCompletion = async (req, res, next) => {
         const recalculatedData = await sequelize.query(
             `SELECT Ref, Section , Description, Template,
             ROUND(SUM(LabNorm), 2) AS TotalHours, 
-            ROUND(SUM(LabNorm * complete), 2) AS RecoveredHours,
+            ROUND(SUM(LabNorm * complete) / 100, 2) AS RecoveredHours,
             ROUND((SUM(LabNorm * complete)/SUM(LabNorm)), 2)   AS PercentComplete,  
             Area, 
             IFNULL(equipRef, '')
@@ -1208,7 +1223,7 @@ const updateEquipRecoveryAndCompletion = async (req, res, next) => {
     }
 }
 
-const bulkUpdateEquipmentCompletion = async (req, res, next) => {
+const bulkUpdateEquipmentCompletionByCodes = async (req, res, next) => {
     const { jobNo } = req.params
     const { selectedRefs, updatedCodes } = req.body
 
@@ -1240,7 +1255,7 @@ const bulkUpdateEquipmentCompletion = async (req, res, next) => {
             const updatedRef = selectedRefs.find((item) => item === Ref)
             if (updatedCode) {
                 await Equiplist.update(
-                    { Complete: updatedCode.PercentComplete },
+                    { Complete: updatedCode.PercentComplete / 100 },
                     { where: { Ref: updatedRef, Component_ID: component.id } }
                 )
                 updatedRefs.add(updatedRef)
@@ -1252,10 +1267,10 @@ const bulkUpdateEquipmentCompletion = async (req, res, next) => {
         try {
             if (updatedRefsArray.length > 0) {
                 const recalculatedData = await sequelize.query(
-                    `SELECT Ref, Section , Description, Template,
+                    `SELECT Ref, Section, Description, Template,
                     ROUND(SUM(LabNorm), 2) AS TotalHours, 
                     ROUND(SUM(LabNorm * complete), 2) AS RecoveredHours,
-                    ROUND((SUM(LabNorm * complete)/SUM(LabNorm)), 2)   AS PercentComplete,  
+                    ROUND((SUM(LabNorm * complete)/SUM(LabNorm)), 2) * 100 AS PercentComplete,  
                     Area, 
                     IFNULL(equipRef, '')
                 FROM (
@@ -1356,6 +1371,172 @@ const bulkUpdateEquipmentCompletion = async (req, res, next) => {
                 message: 'Failed to fetch updated Equipment details.',
             })
         }
+    } catch (error) {
+        console.error('Error updating Equipment:', error)
+        res.status(500).json({
+            message: 'Failed to update Equipment.',
+        })
+    }
+}
+
+const bulkUpdateEquipmentCompletionByComponents = async (req, res, next) => {
+    const { jobNo } = req.params
+    const { updates } = req.body
+
+    const updatedEquipments = []
+    const updatedCabschedsMap = {}
+
+    try {
+        for (const update of updates) {
+            const { id, percentComplete, type } = update
+            const decodedId = decodeURIComponent(id)
+            let itemToUpdate
+
+            if (type === 'Component') {
+                itemToUpdate = await Equiplist.findOne({
+                    where: {
+                        id: decodedId,
+                        JobNo: jobNo,
+                    },
+                })
+
+                if (!itemToUpdate) {
+                    return res
+                        .status(400)
+                        .json({ message: 'Equipment not found.' })
+                }
+
+                const updatedItem = await itemToUpdate.update({
+                    Complete: percentComplete,
+                })
+                updatedEquipments.push(updatedItem)
+            } else {
+                itemToUpdate = await Cabsched.findOne({
+                    where: {
+                        JobNo: jobNo,
+                        CabNum: decodedId,
+                    },
+                })
+
+                if (!itemToUpdate) {
+                    return res.status(400).json({ message: 'Cable not found.' })
+                }
+
+                const fieldMap = {
+                    Cable: 'CabComp',
+                    CableA: 'AGlandComp',
+                    CableZ: 'ZGlandComp',
+                    CableT: 'CabTest',
+                }
+
+                const updateData = {}
+                updateData[fieldMap[type]] = percentComplete / 100
+
+                const updatedItem = await itemToUpdate.update(updateData)
+
+                if (!updatedCabschedsMap[updatedItem.CabNum]) {
+                    updatedCabschedsMap[updatedItem.CabNum] = {
+                        ...updatedItem.dataValues,
+                    }
+                } else {
+                    updatedCabschedsMap[updatedItem.CabNum] = {
+                        ...updatedCabschedsMap[updatedItem.CabNum],
+                        ...updatedItem.dataValues,
+                    }
+                }
+            }
+        }
+
+        const updatedCabscheds = Object.values(updatedCabschedsMap)
+
+        // Recalculate the data after bulk update
+        const recalculatedData = await sequelize.query(
+            `SELECT Ref, Section, Description, Template,
+            ROUND(SUM(LabNorm), 2) AS TotalHours, 
+            ROUND(SUM(LabNorm * complete), 2) AS RecoveredHours,
+            ROUND((SUM(LabNorm * complete)/SUM(LabNorm)), 2) * 100 AS PercentComplete,  
+            Area, 
+            IFNULL(equipRef, '')
+        FROM (
+            SELECT equiplists.id, Ref, Section, equiplists.component, LabNorm, complete, 
+                    (LabNorm * complete) AS "Rec''d Hrs", 
+                    description, Template, Area, inorder
+            FROM equiplists
+            INNER JOIN components ON equiplists.Component_ID = components.ID AND components.JobNo = :jobNo
+            INNER JOIN templates ON equiplists.template = templates.Name AND equiplists.Component_ID = templates.Component_ID AND templates.JobNo = :jobNo
+            WHERE equiplists.JobNo = :jobNo
+            GROUP BY equiplists.id
+
+            UNION
+
+            SELECT equiplists.id, Ref, Section, cabnum, 
+                    (length * LabNorm), cabcomp, 
+                    (length * LabNorm) * cabcomp, 
+                    description, Template, "Area", "InOrder"
+            FROM equiplists
+            INNER JOIN cabscheds ON equiplists.Ref = cabscheds.equipRef AND cabscheds.JobNo = :jobNo
+            INNER JOIN components ON cabscheds.cabsize = components.name AND components.JobNo = :jobNo
+            WHERE equiplists.JobNo = :jobNo
+            GROUP BY cabnum
+
+            UNION
+
+            SELECT equiplists.id, Ref, Section, CONCAT(cabnum, " A Gland"), 
+                    LabNorm, aglandcomp, 
+                    (aglandcomp * LabNorm), 
+                    description, Template, "Area", "InOrder"
+            FROM equiplists
+            INNER JOIN cabscheds ON equiplists.Ref = cabscheds.equipRef AND cabscheds.JobNo = :jobNo
+            INNER JOIN components ON CONCAT(cabscheds.cabsize, " Term") = components.name AND components.JobNo = :jobNo
+            WHERE equiplists.JobNo = :jobNo
+            GROUP BY cabnum
+
+            UNION
+
+            SELECT equiplists.id, Ref, Section, CONCAT(cabnum, " Z Gland"), 
+                    LabNorm, zglandcomp, 
+                    (LabNorm * zglandcomp), 
+                    description, Template, "Area", "InOrder"
+            FROM equiplists
+            INNER JOIN cabscheds ON equiplists.Ref = cabscheds.equipRef AND cabscheds.JobNo = :jobNo
+            INNER JOIN components ON CONCAT(cabscheds.cabsize, " Term") = components.name AND components.JobNo = :jobNo
+            WHERE equiplists.JobNo = :jobNo
+            GROUP BY cabnum
+
+            UNION
+            
+            SELECT equiplists.id, Ref, Section, cabnum, LabNorm, 
+                    cabtest, (LabNorm * cabtest), 
+                    description, Template, "Area", "InOrder"
+            FROM equiplists
+            INNER JOIN cabscheds ON equiplists.Ref = cabscheds.equipRef AND cabscheds.JobNo = :jobNo
+            INNER JOIN components ON CONCAT(cabscheds.cabsize, " Test") = components.name AND components.JobNo = :jobNo
+            WHERE equiplists.JobNo = :jobNo
+            GROUP BY cabnum
+        ) AS Norms
+        LEFT JOIN (
+            SELECT DISTINCT equipRef, JobNo
+            FROM tickCChist 
+            WHERE JobNo = :jobNo AND datelift IS NULL
+        ) AS CCs
+        ON Ref = CCs.equipRef AND CCs.JobNo = :jobNo
+        WHERE Norms.Ref IN (:updatedRefs)
+        GROUP BY Ref
+        ORDER BY Ref;`,
+            {
+                replacements: {
+                    jobNo,
+                    updatedRefs: updates.map((u) => u.ref),
+                },
+                type: sequelize.QueryTypes.SELECT,
+            }
+        )
+
+        res.status(200).json({
+            updatedItems: recalculatedData,
+            updatedEquipments,
+            updatedCabscheds,
+        })
     } catch (error) {
         console.error('Error updating Equipment:', error)
         res.status(500).json({
@@ -1504,6 +1685,7 @@ module.exports = {
     updateEquipment,
     bulkUpdateEquipment,
     updateEquipRecoveryAndCompletion,
-    bulkUpdateEquipmentCompletion,
+    bulkUpdateEquipmentCompletionByCodes,
+    bulkUpdateEquipmentCompletionByComponents,
     deleteEquipment,
 }

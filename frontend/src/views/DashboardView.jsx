@@ -19,7 +19,7 @@ import {
 
 //Styles and constants
 import { StyledAGGrid } from '../styles/tables'
-import { colors } from '../styles/global-styles'
+import { colors, fonts } from '../styles/global-styles'
 import {
     columnsMainTable,
     columnsViewByArea,
@@ -52,6 +52,8 @@ import {
     DropdownItem,
     DropdownMenu,
 } from '../components/Common/Dropdown'
+import EquipRefDialogBox from './EquipRefDialogBox'
+import ViewTableDialogBox from './ViewTableDialogBox'
 
 //Styled components declarations
 const DashboardViewContainer = styled.div`
@@ -114,6 +116,8 @@ const LabelValueContainer = styled.div`
     display: flex;
     align-items: center;
     gap: 10px;
+    ${fonts.regular14}
+    cursor: pointer;
 
     span {
         position: relative;
@@ -121,9 +125,7 @@ const LabelValueContainer = styled.div`
         align-items: center;
 
         &.value {
-            padding-left: 3px;
             color: ${colors.darkBlueBgen};
-            cursor: pointer;
         }
     }
 `
@@ -169,22 +171,25 @@ const RefreshButton = styled.button`
  */
 const DashboardView = () => {
     // 1. State declarations
-    const { jobNo, viewType, setViewType } = useStore((state) => ({
-        jobNo: state.jobNo,
-        viewType: state.viewType,
-        setViewType: state.setViewType,
-    }))
+    const { jobNo, viewType, setViewType, dataHasChanged, setDataHasChanged } =
+        useStore((state) => ({
+            jobNo: state.jobNo,
+            viewType: state.viewType,
+            setViewType: state.setViewType,
+            dataHasChanged: state.dataHasChanged,
+            setDataHasChanged: state.setDataHasChanged,
+        }))
 
     const [localMainTableData, setLocalMainTableData] = useState([])
     const [mainTableGridApi, setMainTableGridApi] = useState(null)
-    const [viewTableGridApi, setViewTableGridApi] = useState(null)
     const [quickFilterText, setQuickFilterText] = useState('')
+    const [viewTableGridApi, setViewTableGridApi] = useState(null)
+    const [viewTableDetails, setViewTableDetails] = useState(null)
     const [contextMenuState, setContextMenuState] = useState({
         visible: false,
         position: { x: 0, y: 0 },
         rowData: null,
     })
-    const [isDataChanged, setIsDataChanged] = useState(false)
     const [refreshViewTableTrigger, setRefreshViewTableTrigger] =
         useState(false)
     const [summaryValues, setSummaryValues] = useState({
@@ -347,10 +352,11 @@ const DashboardView = () => {
     // 4. Event handlers
     //Handles the user action of clicking a row in the main table
     const handleMainTableRowClick = (clickedItem) => {
-        setEquipRef(clickedItem.data.Ref)
+        const equipRef = clickedItem.data.Ref
+        setEquipRef(equipRef)
     }
 
-    /*  //Handles the user action of clicking a row in the view table
+    //Handles the user action of clicking a row in the view table
     const handleViewTableRowClick = useCallback(
         (clickedItem) => {
             // Obtain the current view configuration
@@ -387,8 +393,6 @@ const DashboardView = () => {
         [viewType, jobNo, getConfigForView]
     )
 
-    */
-
     //Handles MainTable's context menu option click
     const handleContextMenuOptionClick = (option, rowData) => {
         switch (option.action) {
@@ -413,6 +417,49 @@ const DashboardView = () => {
     const handleViewDropdownItemClick = (viewName) => {
         setViewType(viewName)
         setIsViewDropdownVisible(false)
+    }
+
+    const updateDashboardTablesAndSummary = (updatedItem, rowData) => {
+        mainTableGridApi.applyTransaction({
+            update: [
+                {
+                    ...rowData,
+                    Ref: updatedItem.Ref || updatedItem.EquipRef,
+                    Section: updatedItem.Section,
+                    Description: updatedItem.Description,
+                    TotalHours: updatedItem.TotalHours,
+                    RecoveredHours: updatedItem.RecoveredHours,
+                    PercentComplete: updatedItem.PercentComplete,
+                    Area: updatedItem.Area,
+                },
+            ],
+        })
+
+        setTimeout(() => {
+            const allNodes = []
+            mainTableGridApi.forEachNodeAfterFilterAndSort((node) => {
+                allNodes.push(node)
+            })
+
+            const updatedRowNode = allNodes.find(
+                (node) => node.data.Ref === rowData.Ref
+            )
+
+            if (updatedRowNode) {
+                const updatedRowIndex = updatedRowNode.rowIndex
+                mainTableGridApi.ensureIndexVisible(updatedRowIndex, 'middle')
+                mainTableGridApi.setFocusedCell(updatedRowIndex, 'Ref')
+                updatedRowNode.setSelected(true)
+            }
+        }, 0)
+
+        fetchSummaryValues()
+    }
+
+    // Handler for manual refresh, if needed
+    const handleManualRefresh = () => {
+        setRefreshViewTableTrigger((prev) => !prev)
+        setDataHasChanged(false)
     }
 
     // 5. useEffects (synchronise and update data dynamically)
@@ -468,27 +515,8 @@ const DashboardView = () => {
     }, [localMainTableData, autoRefreshEnabled])
 
     useEffect(() => {
-        if (!autoRefreshEnabled) setIsDataChanged(true)
-    }, [localMainTableData, autoRefreshEnabled])
-
-    //Prevents the default browser right click menu to appear in tables
-    useEffect(() => {
-        const handleContextMenu = (event) => {
-            if (
-                event.target.closest('.main-table') ||
-                event.target.closest('.view-table') ||
-                event.target.closest('.purple-table')
-            ) {
-                event.preventDefault()
-            }
-        }
-
-        document.addEventListener('contextmenu', handleContextMenu, true)
-
-        return () => {
-            document.removeEventListener('contextmenu', handleContextMenu, true)
-        }
-    }, [])
+        if (!autoRefreshEnabled) setDataHasChanged(true)
+    }, [localMainTableData, autoRefreshEnabled, setDataHasChanged])
 
     useEffect(() => {
         const handleClickOutside = (event) => {
@@ -527,7 +555,7 @@ const DashboardView = () => {
 
     useEffect(() => {
         fetchSummaryValues()
-    }, [jobNo, fetchSummaryValues])
+    }, [jobNo, fetchSummaryValues, localMainTableData])
 
     useEffect(() => {
         const clickOutside = (event) => {
@@ -614,9 +642,27 @@ const DashboardView = () => {
                     />
                 )}
             </MainTableContainer>
+            {/* Displays EquipRefDialogBox when a row in main table is clicked */}
+            {equipRef && (
+                <EquipRefDialogBox
+                    key={`${jobNo}-${equipRef}`}
+                    jobNo={jobNo}
+                    equipRef={equipRef}
+                    isOpen={!!equipRef}
+                    onClose={() => {
+                        setEquipRef(null)
+                    }}
+                    updateDashboardTablesAndSummary={
+                        updateDashboardTablesAndSummary
+                    }
+                />
+            )}
             <ViewTableAndSummaryContainer>
                 <ViewTableContainer>
-                    <RefreshButton disabled={!isDataChanged}>
+                    <RefreshButton
+                        onClick={handleManualRefresh}
+                        disabled={!dataHasChanged}
+                    >
                         <svg
                             xmlns="http://www.w3.org/2000/svg"
                             viewBox="0 0 24 24"
@@ -632,15 +678,13 @@ const DashboardView = () => {
                         className="ag-theme-quartz view-table"
                         gridOptions={viewTableGridOptions}
                         rowData={viewTableData}
+                        onRowClicked={handleViewTableRowClick}
                         overlayNoRowsTemplate="&#8203;"
                     />
                     <ViewTableOptionsContainer>
-                        <LabelValueContainer>
+                        <LabelValueContainer onClick={toggleViewDropdown}>
                             Change View:
-                            <span
-                                className="value"
-                                onClick={toggleViewDropdown}
-                            >
+                            <span className="value">
                                 {viewType}
                                 <img src={upArrow} alt="arrow-drop-up-line" />
                             </span>
@@ -665,19 +709,32 @@ const DashboardView = () => {
                                 </DropdownMenu>
                             )}
                         </LabelValueContainer>
-                        <LabelValueContainer>
+                        <LabelValueContainer
+                            onClick={() =>
+                                setAutoRefreshEnabled((prev) => !prev)
+                            }
+                        >
                             Automatic Refresh:
-                            <span
-                                className="value"
-                                onClick={() =>
-                                    setAutoRefreshEnabled((prev) => !prev)
-                                }
-                            >
+                            <span className="value">
                                 {autoRefreshEnabled ? 'ON' : 'OFF'}
                             </span>
                         </LabelValueContainer>
                     </ViewTableOptionsContainer>
                 </ViewTableContainer>
+                {/* Displays ViewTableDialogBox when a row in view table is clicked */}
+                {viewTableDetails?.isOpen && (
+                    <ViewTableDialogBox
+                        columns={viewTableDetails.columns}
+                        fetchUrl={viewTableDetails.url}
+                        initialArea={viewTableDetails.area}
+                        initialSection={viewTableDetails.section}
+                        initialComponent={viewTableDetails.component}
+                        isOpen={viewTableDetails.isOpen}
+                        onClose={() => {
+                            setViewTableDetails(null)
+                        }}
+                    />
+                )}
                 {/* Summary values fetched along project data */}
                 <SummaryContainer>
                     <Summary values={summaryValues} />

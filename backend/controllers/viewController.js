@@ -87,13 +87,13 @@ const getViewByAreaCompData = async (jobNo) => {
         Name AS Component, 
         ROUND(SUM(TotalHours), 2) as TotalHours, 
         ROUND(SUM(RecoveredHours) / 100, 2) as RecoveredHours, 
-        ROUND((SUM(RecoveredHours) / SUM(TotalHours))  , 2) AS PercentComplete
+        ROUND((SUM(RecoveredHours) / SUM(TotalHours)), 2) AS PercentComplete
     FROM (
         SELECT 
             Area, 
             codes.name AS Name, 
             SUM(components.labnorm) AS TotalHours, 
-            SUM(components.labnorm * complete / 100) AS RecoveredHours, 
+            SUM(components.labnorm * complete) AS RecoveredHours, 
             equiplists.Ref, 
             equiplists.Component 
         FROM equiplists 

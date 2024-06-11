@@ -218,6 +218,10 @@ export const fonts = {
         font-family: var(--font-family-archivo);
         font-size: var(--font-size-14);
     `,
+    regular16: css`
+        font-family: var(--font-family-archivo);
+        font-size: var(--font-size-16);
+    `,
 }
 
 export const colors = {

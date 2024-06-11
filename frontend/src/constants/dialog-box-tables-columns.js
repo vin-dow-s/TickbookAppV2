@@ -237,7 +237,8 @@ export const columnsEquipRef = [
                 return true
             }
             if (params.oldValue !== Number(newValue)) {
-                params.data.CurrentRecovery = newValue * params.data.LabNorm
+                params.data.CurrentRecovery =
+                    (newValue * params.data.LabNorm) / 100
                 params.data.PercentComplete = newValue
                 return true
             }

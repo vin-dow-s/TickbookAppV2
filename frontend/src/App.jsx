@@ -1,13 +1,23 @@
+//Modules
 import { Route, BrowserRouter as Router, Routes } from 'react-router-dom'
 import styled from 'styled-components'
+
+//Hooks
+import useStore from './hooks/useStore'
+
+//Assets
+import { RiShare2Line } from 'react-icons/ri'
+
+//Components
 import MainInfoSection from './components/MainInfoSection'
 import Sidebar from './components/Sidebar'
-import { RiShare2Line } from 'react-icons/ri'
+
+//Views
 import DashboardView from './views/DashboardView'
 import ProjectView from './views/ProjectView'
 import CodesView from './views/CodesView'
 import ComponentsView from './views/ComponentsView'
-import useStore from './hooks/useStore'
+import { useEffect } from 'react'
 
 const AppContainer = styled.div`
     width: 100svw;
@@ -82,6 +92,25 @@ const App = () => {
         jobTitle: state.jobTitle,
         jobAddress: state.jobAddress,
     }))
+
+    //Prevents the default browser right click menu to appear in tables
+    useEffect(() => {
+        const handleContextMenu = (event) => {
+            if (
+                event.target.closest('.main-table') ||
+                event.target.closest('.view-table') ||
+                event.target.closest('.purple-table')
+            ) {
+                event.preventDefault()
+            }
+        }
+
+        document.addEventListener('contextmenu', handleContextMenu, true)
+
+        return () => {
+            document.removeEventListener('contextmenu', handleContextMenu, true)
+        }
+    }, [])
 
     return (
         <Router>

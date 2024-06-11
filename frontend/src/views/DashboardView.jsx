@@ -1,5 +1,5 @@
 //Modules
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { toast } from 'react-toastify'
 import styled from 'styled-components'
 
@@ -35,6 +35,10 @@ import {
     columnsEquipInAreaSectionCompCables,
     columnsEquipInSection,
 } from '../constants/dialog-box-tables-columns'
+import { contextMenuOptions } from '../constants/context-menu'
+
+//Assets
+import upArrow from '../assets/arrow-drop-up-line.svg'
 
 //Components
 import Summary from '../components/Summary'
@@ -42,6 +46,12 @@ import {
     overlayLoadingTemplateDarkBlue,
     overlayLoadingTemplateLightBlue,
 } from '../components/Common/Loader'
+import ContextMenu from '../components/Common/ContextMenu'
+import {
+    DROPDOWN_VIEWS,
+    DropdownItem,
+    DropdownMenu,
+} from '../components/Common/Dropdown'
 
 //Styled components declarations
 const DashboardViewContainer = styled.div`
@@ -97,16 +107,30 @@ const ViewTableOptionsContainer = styled.div`
     color: gray;
     padding-top: 20px;
     padding-bottom: 10px;
+`
 
-    span .value {
-        padding-left: 3px;
-        font-weight: 600;
-        color: ${colors.darkBlueBgen};
+const LabelValueContainer = styled.div`
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+
+    span {
+        position: relative;
+        display: flex;
+        align-items: center;
+
+        &.value {
+            padding-left: 3px;
+            color: ${colors.darkBlueBgen};
+            cursor: pointer;
+        }
     }
 `
 
 const SummaryContainer = styled.div`
     flex: 0.2;
+    min-width: 20em;
     background-color: white;
     color: black;
     border-radius: 10px;
@@ -141,14 +165,14 @@ const RefreshButton = styled.button`
  *
  * @param {string} jobNo - The project number.
  * @param {string} viewType - The type of view selected by the user (View tab).
- * @param {boolean} autoUpdateEnabled - Flag to enable/disable auto-update feature for the view table.
+ * @param {boolean} autoRefreshEnabled - Flag to enable/disable auto-update feature for the view table.
  */
 const DashboardView = () => {
     // 1. State declarations
-    const { jobNo, viewType, autoUpdateEnabled } = useStore((state) => ({
+    const { jobNo, viewType, setViewType } = useStore((state) => ({
         jobNo: state.jobNo,
         viewType: state.viewType,
-        autoUpdateEnabled: state.autoUpdateEnabled,
+        setViewType: state.setViewType,
     }))
 
     const [localMainTableData, setLocalMainTableData] = useState([])
@@ -170,7 +194,11 @@ const DashboardView = () => {
         netHoursRecovered: 0,
         globalPercentComplete: 0,
     })
+    const [equipRef, setEquipRef] = useState(null)
+    const dropdownRef = useRef(null)
+    const [isViewDropdownVisible, setIsViewDropdownVisible] = useState(false)
     const [restoreMainTableFocus, setRestoreMainTableFocus] = useState(null)
+    const [autoRefreshEnabled, setAutoRefreshEnabled] = useState(true)
 
     // 2. Data fetching with Hooks
     //Fetches project data based on the user-selected job number
@@ -188,7 +216,7 @@ const DashboardView = () => {
     } = useFetch(
         generateViewTableURL(jobNo, viewType),
         refreshViewTableTrigger,
-        autoUpdateEnabled ? localMainTableData : null
+        autoRefreshEnabled ? localMainTableData : null
     )
 
     // 3. Helper Functions
@@ -316,6 +344,77 @@ const DashboardView = () => {
         }
     }, [jobNo])
 
+    // 4. Event handlers
+    //Handles the user action of clicking a row in the main table
+    const handleMainTableRowClick = (clickedItem) => {
+        setEquipRef(clickedItem.data.Ref)
+    }
+
+    /*  //Handles the user action of clicking a row in the view table
+    const handleViewTableRowClick = useCallback(
+        (clickedItem) => {
+            // Obtain the current view configuration
+            const config = getConfigForView(
+                viewType,
+                clickedItem.data.Component
+            )
+
+            // Check if a URL generator exists for the current view
+            if (config.urlGenerator) {
+                // Generate the URL with necessary parameters
+                const urlParams = {
+                    jobNo: jobNo,
+                    area: clickedItem.data.Area,
+                    section: clickedItem.data.Section,
+                    component: clickedItem.data.Component,
+                    // Include additional parameters as needed
+                }
+                const dialogBoxURL = config.urlGenerator(urlParams)
+
+                // Update the state to include all details needed for the dialog box
+                setViewTableDetails({
+                    url: dialogBoxURL,
+                    columns: config.dialogColumns,
+                    area: clickedItem.data.Area,
+                    section: clickedItem.data.Section,
+                    component: clickedItem.data.Component,
+                    isOpen: true, // Flag to indicate that the dialog box should be opened
+                })
+            } else {
+                // Handle cases where no dialog box should be opened or another action should be taken
+            }
+        },
+        [viewType, jobNo, getConfigForView]
+    )
+
+    */
+
+    //Handles MainTable's context menu option click
+    const handleContextMenuOptionClick = (option, rowData) => {
+        switch (option.action) {
+            case 'editEquipment':
+                openEditEquipmentDialogBox(rowData)
+                break
+            case 'addCC':
+                openAddCCDialogBox(rowData)
+                break
+            case 'deleteEquipment':
+                openDeleteEquipmentDialogBox(rowData)
+                break
+        }
+
+        setContextMenuState({ ...contextMenuState, visible: false })
+    }
+
+    const toggleViewDropdown = () => {
+        setIsViewDropdownVisible((prev) => !prev)
+    }
+
+    const handleViewDropdownItemClick = (viewName) => {
+        setViewType(viewName)
+        setIsViewDropdownVisible(false)
+    }
+
     // 5. useEffects (synchronise and update data dynamically)
     useEffect(() => {
         if (mainTableData) {
@@ -363,14 +462,14 @@ const DashboardView = () => {
     }, [viewTableGridApi, isLoadingViewTable])
 
     useEffect(() => {
-        if (autoUpdateEnabled) {
+        if (autoRefreshEnabled) {
             setRefreshViewTableTrigger((prev) => !prev)
         }
-    }, [localMainTableData, autoUpdateEnabled])
+    }, [localMainTableData, autoRefreshEnabled])
 
     useEffect(() => {
-        if (!autoUpdateEnabled) setIsDataChanged(true)
-    }, [localMainTableData, autoUpdateEnabled])
+        if (!autoRefreshEnabled) setIsDataChanged(true)
+    }, [localMainTableData, autoRefreshEnabled])
 
     //Prevents the default browser right click menu to appear in tables
     useEffect(() => {
@@ -390,6 +489,22 @@ const DashboardView = () => {
             document.removeEventListener('contextmenu', handleContextMenu, true)
         }
     }, [])
+
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (
+                dropdownRef.current &&
+                !dropdownRef.current.contains(event.target)
+            ) {
+                setIsViewDropdownVisible(false)
+            }
+        }
+
+        document.addEventListener('mousedown', handleClickOutside)
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside)
+        }
+    }, [dropdownRef])
 
     useEffect(() => {
         if (restoreMainTableFocus && mainTableGridApi) {
@@ -472,8 +587,32 @@ const DashboardView = () => {
                     <StyledAGGrid
                         className="ag-theme-quartz main-table"
                         gridOptions={mainTableGridOptions}
+                        onRowClicked={handleMainTableRowClick}
                     />
                 </div>
+                {contextMenuState.visible && (
+                    <ContextMenu
+                        className="visible"
+                        position={{
+                            top: contextMenuState.position.y,
+                            left: contextMenuState.position.x,
+                        }}
+                        data={contextMenuState.rowData}
+                        options={contextMenuOptions.mainTable}
+                        onClose={() =>
+                            setContextMenuState({
+                                ...contextMenuState,
+                                visible: false,
+                            })
+                        }
+                        onOptionClick={(option) =>
+                            handleContextMenuOptionClick(
+                                option,
+                                contextMenuState.rowData
+                            )
+                        }
+                    />
+                )}
             </MainTableContainer>
             <ViewTableAndSummaryContainer>
                 <ViewTableContainer>
@@ -496,16 +635,47 @@ const DashboardView = () => {
                         overlayNoRowsTemplate="&#8203;"
                     />
                     <ViewTableOptionsContainer>
-                        <span>
+                        <LabelValueContainer>
                             Change View:
-                            <span className="value">
-                                AREA-SECTION-COMPONENT
+                            <span
+                                className="value"
+                                onClick={toggleViewDropdown}
+                            >
+                                {viewType}
+                                <img src={upArrow} alt="arrow-drop-up-line" />
                             </span>
-                        </span>
-                        <span>
+                            {isViewDropdownVisible && (
+                                <DropdownMenu
+                                    ref={dropdownRef}
+                                    className="visible"
+                                >
+                                    {DROPDOWN_VIEWS.map((viewName) => (
+                                        <DropdownItem
+                                            key={viewName}
+                                            $isActive={viewName === viewType}
+                                            onClick={() =>
+                                                handleViewDropdownItemClick(
+                                                    viewName
+                                                )
+                                            }
+                                        >
+                                            {viewName}
+                                        </DropdownItem>
+                                    ))}
+                                </DropdownMenu>
+                            )}
+                        </LabelValueContainer>
+                        <LabelValueContainer>
                             Automatic Refresh:
-                            <span className="value">ON</span>
-                        </span>
+                            <span
+                                className="value"
+                                onClick={() =>
+                                    setAutoRefreshEnabled((prev) => !prev)
+                                }
+                            >
+                                {autoRefreshEnabled ? 'ON' : 'OFF'}
+                            </span>
+                        </LabelValueContainer>
                     </ViewTableOptionsContainer>
                 </ViewTableContainer>
                 {/* Summary values fetched along project data */}

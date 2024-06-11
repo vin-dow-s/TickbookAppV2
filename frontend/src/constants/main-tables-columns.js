@@ -170,7 +170,7 @@ export const columnsViewByAreaSectionComp = [
 
 export const columnsViewByLabourAndMaterial = [
     {
-        headerName: 'EquipRef',
+        headerName: 'Equip Ref',
         field: 'Ref',
         sortable: true,
         filter: true,

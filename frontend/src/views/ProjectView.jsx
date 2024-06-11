@@ -252,7 +252,7 @@ const ProjectView = () => {
             </SelectProjectContainer>
             <CreateProjectContainer>
                 {' '}
-                <span className="purple-label">Create a new Project</span>
+                <div className="purple-label">Create a new Project</div>
                 <CreateProjectForm onSubmit={handleFormSubmit}>
                     <CreateProjectFormFieldsContainer>
                         <CreateProjectFormField>

@@ -37,12 +37,6 @@ const CodesViewContainer = styled.div`
     flex: 1;
     gap: 10px;
     background-color: #f7f6f3;
-
-    .purple-label {
-        color: ${colors.purpleBgen};
-        font-size: small;
-        font-style: italic;
-    }
 `
 
 const CodesListContainer = styled.div`
@@ -223,7 +217,7 @@ const CodesView = () => {
             </CodesListContainer>
             <CreateCodeContainer>
                 {' '}
-                <span className="purple-label">Create a new Code</span>
+                <div className="purple-label">Create a new Code</div>
                 <CreateCodeForm onSubmit={handleFormSubmit}>
                     <CreateCodeFormFieldsContainer>
                         <CreateCodeFormField>

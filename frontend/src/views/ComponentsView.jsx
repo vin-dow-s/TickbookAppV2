@@ -1064,12 +1064,12 @@ const ComponentsView = () => {
                 </ComponentsDataContainer>
                 <CreateComponentAndFileUploadContainer>
                     <CreateComponentContainer>
-                        <span className="purple-label">
+                        <div className="purple-label">
                             {' '}
                             {!selectedComponent
                                 ? 'Create a new Component'
                                 : 'Edit Component'}
-                        </span>
+                        </div>
                         <CreateComponentForm onSubmit={handleFormSubmit}>
                             <FieldsWrapper>
                                 <CreateComponentFormFieldsContainer>
@@ -1455,9 +1455,9 @@ const ComponentsView = () => {
                         </CreateComponentForm>
                     </CreateComponentContainer>
                     <FileUploadContainer>
-                        <span className="purple-label">
+                        <div className="purple-label">
                             Load Component(s) from File
-                        </span>
+                        </div>
                         <div className="file-content">
                             <FileUploadButton onChange={handleFileUpload} />
                             <span className="file-loaded-indicator">

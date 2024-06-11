@@ -173,6 +173,7 @@ export const GlobalStyle = createGlobalStyle`
         }
 
         .purple-label {
+            padding: 10px;;
             color: var(--purple-bgen);
             font-size: small;
             font-style: italic;

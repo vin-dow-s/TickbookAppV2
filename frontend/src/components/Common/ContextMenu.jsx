@@ -13,27 +13,43 @@ const StyledContextMenu = styled.ul`
     padding: 0;
     color: black;
     background-color: white;
-    border: 1px solid ${colors.purpleBgenDarker};
     border-radius: 5px;
-    border-top-left-radius: 0;
     list-style: none;
     z-index: 1001;
     ${fonts.regular14}
-    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2);
+    box-shadow: 0px 2px 8px rgba(0, 0, 0, 0.3);
+
+    &.visible {
+        animation: fadeInDown 2s forwards;
+    }
+
+    @keyframes fadeInDown {
+        0% {
+            opacity: 0;
+            transform: translateY(0);
+        }
+        100% {
+            opacity: 1;
+            transform: translateY(7px);
+        }
+    }
 `
 
 const ContextMenuItem = styled.li`
     position: relative;
+    height: 20px;
+
     display: flex;
     align-items: center;
-    padding: 10px;
-    gap: 5px;
+    padding: 15px;
+    gap: 10px;
     border-radius: 5px;
 
     text-align: left;
     cursor: pointer;
 
     &:last-child&:not(:only-child) {
+        height: 20px;
         color: #e74c3c;
     }
 
@@ -48,7 +64,7 @@ const ContextMenuItem = styled.li`
     }
 
     &:hover {
-        background-color: ${colors.mainFrameBackground};
+        background-color: #f4f4f4;
     }
 `
 
@@ -92,7 +108,9 @@ const ContextMenu = ({ position, data, options, onClose, onOptionClick }) => {
                         handleOptionClick(option)
                     }}
                 >
-                    {option.icon && <img src={option.icon} />}
+                    {option.icon && (
+                        <img src={option.icon} alt={option.label} />
+                    )}
                     {option.label}
                 </ContextMenuItem>
             ))}

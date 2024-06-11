@@ -1,21 +1,26 @@
 import styled from 'styled-components'
-import { colors, fonts } from '../../styles/global-styles'
+import { colors } from '../../styles/global-styles'
+
+export const DROPDOWN_VIEWS = [
+    'Area',
+    'Area-Comp',
+    'Area-Section-Comp',
+    'Labour-Material',
+    'Section',
+]
 
 export const DropdownMenu = styled.ul`
     position: absolute;
-    top: 100%;
-    left: 0;
-    width: 13em;
-    margin-top: 7px;
-    padding: 1px;
-    color: ${colors.purpleBgen};
+    bottom: 10px;
+    left: 100%;
+    width: 180px;
+    padding: 0;
+    color: gray;
     background-color: white;
     border-radius: 5px;
-    text-transform: capitalize;
     list-style: none;
-    z-index: 1;
-    ${fonts.narrowRegular14}
-    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
+    z-index: 1000;
+    box-shadow: 0px 2px 8px rgba(0, 0, 0, 0.3);
 
     &.visible {
         animation: fadeInDown 0.2s forwards;
@@ -36,25 +41,18 @@ export const DropdownMenu = styled.ul`
 export const DropdownItem = styled.li`
     position: relative;
     display: flex;
-    padding: 8px;
-    margin: 1px 0;
+    align-items: center;
+    height: 20px;
+    padding: 15px;
     border-radius: 5px;
     background-color: ${({ $isActive }) =>
-        $isActive ? `${colors.mainFrameBackground}` : 'transparent'};
+        $isActive ? '#ebebeb' : 'transparent'};
+    color: ${({ $isActive }) =>
+        $isActive ? `${colors.darkBlueBgen}` : 'black'};
 
-    &:hover {
+    &:hover&:not(active) {
         cursor: pointer;
-        background-color: ${colors.mainFrameBackground};
-    }
-
-    &:nth-child(6)::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: 20px;
-        width: calc(100% - 40px);
-        height: 1px;
-        background-color: ${colors.tablesBorders};
+        background-color: #f4f4f4;
     }
 
     ${({ $isActive }) =>
@@ -63,14 +61,10 @@ export const DropdownItem = styled.li`
         &::after {
             content: '✔';
             position: absolute;
-            right: 8px;
+            right: 15px;
             top: 50%;
             transform: translateY(-50%);
-            color: ${colors.purpleBgen};
+            color: ${colors.darkBlueBgen};
         }
     `}
-
-    &:last-child {
-        margin-bottom: 0;
-    }
 `

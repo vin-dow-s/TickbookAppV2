@@ -20,7 +20,7 @@ const useStore = create((set) => ({
     equipmentList: [],
     cabschedsList: [],
     isLoading: false,
-    viewType: 'Area-Section-Comp',
+    viewType: 'Section',
     dataHasChanged: false,
 
     setJobNo: (jobNo) => set({ jobNo }),
@@ -32,8 +32,8 @@ const useStore = create((set) => ({
     setTemplatesList: (templates) => set({ templatesList: templates }),
     setEquipmentList: (equipment) => set({ equipmentList: equipment }),
     setCabschedsList: (cabscheds) => set({ cabschedsList: cabscheds }),
-    setDataHasChanged: (hasChanged) => set({ dataHasChanged: hasChanged }),
     setViewType: (type) => set({ viewType: type }),
+    setDataHasChanged: (hasChanged) => set({ dataHasChanged: hasChanged }),
     resetDataHasChanged: () => set({ dataHasChanged: false }),
 
     fetchProjectsList: async () => {

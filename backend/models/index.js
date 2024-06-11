@@ -204,7 +204,7 @@ models.TickEquipList.belongsTo(models.Equiplist, {
 })
 
 //Synchronisation with the DATABASE. Uncomment to create the database and tables on npm start.
-sequelize
+/* sequelize
     .sync()
     .then(() => {
         console.log('Sequelize Sync : Tables successfully created.')
@@ -214,6 +214,6 @@ sequelize
             'Sequelize Sync : Error while creating the tables :',
             error
         )
-    })
+    }) */
 
 module.exports = models

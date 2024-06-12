@@ -1,5 +1,4 @@
 import styled from 'styled-components'
-import { colors } from './global-styles'
 
 export const Overlay = styled.div`
     position: fixed;
@@ -39,7 +38,7 @@ export const DialogHeader = styled.div`
 `
 
 export const DialogContent = styled.div`
-    background-color: ${colors.mainFrameBackground};
+    background-color: white;
     color: black;
     border-bottom-left-radius: 10px;
     border-bottom-right-radius: 10px;

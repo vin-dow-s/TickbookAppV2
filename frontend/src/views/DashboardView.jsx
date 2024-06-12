@@ -52,8 +52,10 @@ import {
     DropdownItem,
     DropdownMenu,
 } from '../components/Common/Dropdown'
-import EquipRefDialogBox from './EquipRefDialogBox'
+import DetailsEquipmentDialogBox from './DetailsEquipmentDialogBox'
 import ViewTableDialogBox from './ViewTableDialogBox'
+import DeleteEquipmentDialogBox from './DeleteEquipmentDialogBox'
+import EditEquipmentDialogBox from './EditEquipmentDialogBox'
 
 //Styled components declarations
 const DashboardViewContainer = styled.div`
@@ -117,7 +119,6 @@ const LabelValueContainer = styled.div`
     align-items: center;
     gap: 10px;
     ${fonts.regular14}
-    cursor: pointer;
 
     span {
         position: relative;
@@ -126,6 +127,7 @@ const LabelValueContainer = styled.div`
 
         &.value {
             color: ${colors.darkBlueBgen};
+            cursor: pointer;
         }
     }
 `
@@ -200,6 +202,11 @@ const DashboardView = () => {
         globalPercentComplete: 0,
     })
     const [equipRef, setEquipRef] = useState(null)
+    const [currentEquipmentData, setCurrentEquipmentData] = useState(null)
+    const [isEditEquipmentDialogBoxOpen, setIsEditEquipmentDialogBoxOpen] =
+        useState(false)
+    const [isDeleteEquipmentDialogBoxOpen, setIsDeleteEquipmentDialogBoxOpen] =
+        useState(false)
     const dropdownRef = useRef(null)
     const [isViewDropdownVisible, setIsViewDropdownVisible] = useState(false)
     const [restoreMainTableFocus, setRestoreMainTableFocus] = useState(null)
@@ -352,8 +359,12 @@ const DashboardView = () => {
     // 4. Event handlers
     //Handles the user action of clicking a row in the main table
     const handleMainTableRowClick = (clickedItem) => {
-        const equipRef = clickedItem.data.Ref
-        setEquipRef(equipRef)
+        if (isEditEquipmentDialogBoxOpen || isDeleteEquipmentDialogBoxOpen) {
+            toast.info('Close the current dialog box first.')
+        } else {
+            const equipRef = clickedItem.data.Ref
+            setEquipRef(equipRef)
+        }
     }
 
     //Handles the user action of clicking a row in the view table
@@ -397,13 +408,19 @@ const DashboardView = () => {
     const handleContextMenuOptionClick = (option, rowData) => {
         switch (option.action) {
             case 'editEquipment':
-                openEditEquipmentDialogBox(rowData)
+                setCurrentEquipmentData(rowData)
+                setIsEditEquipmentDialogBoxOpen(true)
+                setEquipRef(null)
+                setViewTableDetails(null)
                 break
             case 'addCC':
                 openAddCCDialogBox(rowData)
                 break
             case 'deleteEquipment':
-                openDeleteEquipmentDialogBox(rowData)
+                setCurrentEquipmentData(rowData)
+                setIsDeleteEquipmentDialogBoxOpen(true)
+                setEquipRef(null)
+                setViewTableDetails(null)
                 break
         }
 
@@ -419,21 +436,51 @@ const DashboardView = () => {
         setIsViewDropdownVisible(false)
     }
 
-    const updateDashboardTablesAndSummary = (updatedItem, rowData) => {
-        mainTableGridApi.applyTransaction({
-            update: [
-                {
-                    ...rowData,
-                    Ref: updatedItem.Ref || updatedItem.EquipRef,
-                    Section: updatedItem.Section,
-                    Description: updatedItem.Description,
-                    TotalHours: updatedItem.TotalHours,
-                    RecoveredHours: updatedItem.RecoveredHours,
-                    PercentComplete: updatedItem.PercentComplete,
-                    Area: updatedItem.Area,
-                },
-            ],
-        })
+    const updateDashboardTablesAndSummary = (mainTableRow, actionType) => {
+        switch (actionType) {
+            case 'update':
+                mainTableGridApi.applyTransaction({
+                    update: [
+                        {
+                            Ref: mainTableRow.Ref || mainTableRow.EquipRef,
+                            Section: mainTableRow.Section,
+                            Description: mainTableRow.Description,
+                            TotalHours: mainTableRow.TotalHours,
+                            RecoveredHours: mainTableRow.RecoveredHours,
+                            PercentComplete: mainTableRow.PercentComplete,
+                            Area: mainTableRow.Area,
+                        },
+                    ],
+                })
+                break
+            case 'delete':
+                mainTableGridApi.applyTransaction({
+                    remove: [
+                        {
+                            Ref: mainTableRow.Ref || mainTableRow.EquipRef,
+                        },
+                    ],
+                })
+                break
+            case 'create':
+                mainTableGridApi.applyTransaction({
+                    add: [
+                        {
+                            Ref: mainTableRow.Ref || mainTableRow.EquipRef,
+                            Section: mainTableRow.Section,
+                            Description: mainTableRow.Description,
+                            TotalHours: mainTableRow.TotalHours,
+                            RecoveredHours: mainTableRow.RecoveredHours,
+                            PercentComplete: mainTableRow.PercentComplete,
+                            Area: mainTableRow.Area,
+                        },
+                    ],
+                })
+                break
+            default:
+                console.error('Unknown action type:', actionType)
+                return
+        }
 
         setTimeout(() => {
             const allNodes = []
@@ -442,7 +489,7 @@ const DashboardView = () => {
             })
 
             const updatedRowNode = allNodes.find(
-                (node) => node.data.Ref === rowData.Ref
+                (node) => node.data.Ref === mainTableRow.Ref
             )
 
             if (updatedRowNode) {
@@ -509,14 +556,16 @@ const DashboardView = () => {
     }, [viewTableGridApi, isLoadingViewTable])
 
     useEffect(() => {
-        if (autoRefreshEnabled) {
+        if (dataHasChanged && autoRefreshEnabled) {
             setRefreshViewTableTrigger((prev) => !prev)
+            setDataHasChanged(false)
         }
-    }, [localMainTableData, autoRefreshEnabled])
-
-    useEffect(() => {
-        if (!autoRefreshEnabled) setDataHasChanged(true)
-    }, [localMainTableData, autoRefreshEnabled, setDataHasChanged])
+    }, [
+        autoRefreshEnabled,
+        dataHasChanged,
+        setDataHasChanged,
+        setRefreshViewTableTrigger,
+    ])
 
     useEffect(() => {
         const handleClickOutside = (event) => {
@@ -642,9 +691,9 @@ const DashboardView = () => {
                     />
                 )}
             </MainTableContainer>
-            {/* Displays EquipRefDialogBox when a row in main table is clicked */}
+            {/* Displays DetailsEquipmentDialogBox when a row in main table is clicked */}
             {equipRef && (
-                <EquipRefDialogBox
+                <DetailsEquipmentDialogBox
                     key={`${jobNo}-${equipRef}`}
                     jobNo={jobNo}
                     equipRef={equipRef}
@@ -652,6 +701,28 @@ const DashboardView = () => {
                     onClose={() => {
                         setEquipRef(null)
                     }}
+                    updateDashboardTablesAndSummary={
+                        updateDashboardTablesAndSummary
+                    }
+                />
+            )}
+            {/* Displays EditEquipmentDialogBox when "Edit" context menu option is clicked in MainTable */}
+            {isEditEquipmentDialogBoxOpen && (
+                <EditEquipmentDialogBox
+                    jobNo={jobNo}
+                    equipmentData={currentEquipmentData}
+                    onClose={() => setIsEditEquipmentDialogBoxOpen(false)}
+                    updateDashboardTablesAndSummary={
+                        updateDashboardTablesAndSummary
+                    }
+                />
+            )}
+            {/* Displays DeleteEquipmentDialogBox when "Delete" context menu option is clicked in MainTable */}
+            {isDeleteEquipmentDialogBoxOpen && (
+                <DeleteEquipmentDialogBox
+                    jobNo={jobNo}
+                    equipmentData={currentEquipmentData}
+                    onClose={() => setIsDeleteEquipmentDialogBoxOpen(false)}
                     updateDashboardTablesAndSummary={
                         updateDashboardTablesAndSummary
                     }
@@ -682,9 +753,12 @@ const DashboardView = () => {
                         overlayNoRowsTemplate="&#8203;"
                     />
                     <ViewTableOptionsContainer>
-                        <LabelValueContainer onClick={toggleViewDropdown}>
+                        <LabelValueContainer>
                             Change View:
-                            <span className="value">
+                            <span
+                                className="value"
+                                onClick={toggleViewDropdown}
+                            >
                                 {viewType}
                                 <img src={upArrow} alt="arrow-drop-up-line" />
                             </span>
@@ -709,13 +783,14 @@ const DashboardView = () => {
                                 </DropdownMenu>
                             )}
                         </LabelValueContainer>
-                        <LabelValueContainer
-                            onClick={() =>
-                                setAutoRefreshEnabled((prev) => !prev)
-                            }
-                        >
+                        <LabelValueContainer>
                             Automatic Refresh:
-                            <span className="value">
+                            <span
+                                className="value"
+                                onClick={() =>
+                                    setAutoRefreshEnabled((prev) => !prev)
+                                }
+                            >
                                 {autoRefreshEnabled ? 'ON' : 'OFF'}
                             </span>
                         </LabelValueContainer>

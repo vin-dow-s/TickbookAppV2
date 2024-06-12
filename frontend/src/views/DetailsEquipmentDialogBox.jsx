@@ -19,10 +19,7 @@ import { columnsEquipRef } from '../constants/dialog-box-tables-columns'
 import { StyledAGGrid } from '../styles/tables'
 
 //Utils
-import {
-    bulkUpdateEquipmentCompletionByComponentsURL,
-    generateEquipmentURL,
-} from '../utils/apiConfig'
+import { generateEquipmentURL } from '../utils/apiConfig'
 import { restrictInputToNumbersInRange } from '../utils/completionFieldsInputRestrictions'
 
 //Components
@@ -32,7 +29,7 @@ import FormButton from '../components/Common/FormButton'
 import { FormField } from '../components/Common/FormBase'
 
 //Styled components declarations
-const EquipRefDialogBoxContainer = styled(DialogBoxContainer)`
+const DetailsEquipmentDialogBoxContainer = styled(DialogBoxContainer)`
     width: 80%;
     min-width: 50em;
     max-width: 70em;
@@ -40,7 +37,7 @@ const EquipRefDialogBoxContainer = styled(DialogBoxContainer)`
     background-color: ${colors.tablesBackground};
 `
 
-const EquipRefDialogBoxHeader = styled(DialogHeader)`
+const DetailsEquipmentDialogBoxHeader = styled(DialogHeader)`
     position: relative;
     color: black;
     background: ${colors.lightBlueBgenTransparent};
@@ -49,7 +46,7 @@ const EquipRefDialogBoxHeader = styled(DialogHeader)`
     ${fonts.regular16}
 `
 
-const EquipRefDialogBoxContent = styled(DialogContent)`
+const DetailsEquipmentDialogBoxContent = styled(DialogContent)`
     height: 55vh;
     background-color: white;
 
@@ -71,8 +68,13 @@ const TableWrapper = styled.div`
     margin-bottom: 3em;
 `
 
+const EquipRefFormField = styled(FormField)`
+    justify-content: center;
+    gap: 10px;
+`
+
 //Main component of the file
-const EquipRefDialogBox = ({
+const DetailsEquipmentDialogBox = ({
     jobNo,
     equipRef,
     isOpen,
@@ -120,25 +122,23 @@ const EquipRefDialogBox = ({
 
         let idToUpdate = rowData.ID
 
-        //Remove the last letter for cables AGland, ZGland and Test (added in the query to give them a unique ID)
         if (['CableA', 'CableZ', 'CableT'].includes(rowData.Type)) {
             idToUpdate = idToUpdate.slice(0, -1)
         }
 
         try {
-            const { updatedAvgCompletion, updatedItem } =
-                await onEquipmentCompletionUpdate(
-                    jobNo,
-                    idToUpdate,
-                    newValue,
-                    rowData
-                )
-            if (updatedItem.CabNum)
+            const recalculatedRow = await onEquipmentCompletionUpdate(
+                jobNo,
+                idToUpdate,
+                finalValue,
+                rowData
+            )
+            if (rowData.CabNum)
                 toast.success(
                     'Equipment and Cable Completions successfully updated.'
                 )
             else toast.success('Equipment Completion successfully updated.')
-            updateDashboardTablesAndSummary(updatedAvgCompletion, updatedItem)
+            updateDashboardTablesAndSummary(recalculatedRow, 'update')
         } catch (error) {
             console.error('Failed during onInputBlur:', error)
             throw error
@@ -163,10 +163,14 @@ const EquipRefDialogBox = ({
                 }
 
                 const finalValue = parseFloat(completionInput)
-                if (!isNaN(finalValue)) {
+                if (
+                    !isNaN(finalValue) &&
+                    data.LabNorm !== 0 &&
+                    data.LabNorm !== null
+                ) {
                     data.PercentComplete = finalValue
-                    const newCurrentRecovery = (finalValue / 100) * data.LabNorm
-                    data.CurrentRecovery = newCurrentRecovery
+                    const newCurrentRecovery = finalValue * data.LabNorm
+                    data.CurrentRecovery = newCurrentRecovery / 100
 
                     return {
                         id: idToUpdate,
@@ -181,33 +185,21 @@ const EquipRefDialogBox = ({
 
         if (updates.length > 0) {
             try {
-                const response = await fetch(
-                    bulkUpdateEquipmentCompletionByComponentsURL(jobNo),
-                    {
-                        method: 'PUT',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify({ updates }),
-                    }
-                )
-
-                if (response.ok) {
-                    const updatedEquipmentFromServer = await response.json()
-                    onEquipmentCompletionByComponentsBulkUpdate(
-                        updatedEquipmentFromServer
+                const recalculatedRow =
+                    await onEquipmentCompletionByComponentsBulkUpdate(
+                        jobNo,
+                        updates
                     )
 
+                if (updates.some((update) => update.type === 'Cable'))
+                    toast.success(
+                        `${updates.length} Equipment and Cable Completions successfully updated.`
+                    )
+                else
                     toast.success(
                         `${updates.length} Equipment Completions successfully updated.`
                     )
-                } else {
-                    console.error(
-                        'Failed to update items:',
-                        await response.text()
-                    )
-                    toast.error('Failed to update completions.')
-                }
+                updateDashboardTablesAndSummary(recalculatedRow, 'update')
             } catch (error) {
                 console.error('Error while updating the completion:', error)
                 toast.error('An error occurred while updating completions.')
@@ -344,13 +336,13 @@ const EquipRefDialogBox = ({
     }
 
     return (
-        <EquipRefDialogBoxContainer ref={dialogRef}>
-            <EquipRefDialogBoxHeader ref={headerRef}>
-                Equip Ref: &#8203;
-                <span style={{ fontSize: '1em' }}>{equipRef}</span>
+        <DetailsEquipmentDialogBoxContainer ref={dialogRef}>
+            <DetailsEquipmentDialogBoxHeader ref={headerRef}>
+                Details Equip Ref: &#8203;
+                <span>{equipRef}</span>
                 <CloseIcon $variant="black" onClose={onClose} />
-            </EquipRefDialogBoxHeader>
-            <EquipRefDialogBoxContent>
+            </DetailsEquipmentDialogBoxHeader>
+            <DetailsEquipmentDialogBoxContent>
                 <TableWrapper>
                     <div
                         style={{
@@ -365,7 +357,7 @@ const EquipRefDialogBox = ({
                         />
                     </div>
                 </TableWrapper>
-                <FormField>
+                <EquipRefFormField>
                     <input
                         type="number"
                         value={completionInput}
@@ -381,13 +373,13 @@ const EquipRefDialogBox = ({
                     >
                         Apply to Selected
                     </FormButton>
-                </FormField>
-            </EquipRefDialogBoxContent>
-        </EquipRefDialogBoxContainer>
+                </EquipRefFormField>
+            </DetailsEquipmentDialogBoxContent>
+        </DetailsEquipmentDialogBoxContainer>
     )
 }
 
-EquipRefDialogBox.propTypes = {
+DetailsEquipmentDialogBox.propTypes = {
     jobNo: PropTypes.string.isRequired,
     equipRef: PropTypes.string,
     isOpen: PropTypes.bool.isRequired,
@@ -395,8 +387,8 @@ EquipRefDialogBox.propTypes = {
     updateDashboardTablesAndSummary: PropTypes.func.isRequired,
 }
 
-EquipRefDialogBox.defaultProps = {
+DetailsEquipmentDialogBox.defaultProps = {
     equipRef: '',
 }
 
-export default EquipRefDialogBox
+export default DetailsEquipmentDialogBox

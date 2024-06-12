@@ -118,11 +118,6 @@ const ComponentsDataContainer = styled.div`
 const CreateComponentForm = styled(FormBase)`
     position: relative;
 
-    input,
-    select {
-        margin-left: 10px;
-    }
-
     .CreateComponentForm-label {
         position: absolute;
         top: -8px;

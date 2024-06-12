@@ -8,6 +8,9 @@ import {
     generateProjectEquipmentURL,
     generateProjectTemplatesURL,
     updateEquipRecoveryAndCompletionURL,
+    bulkUpdateEquipmentCompletionByComponentsURL,
+    deleteEquipmentURL,
+    updateEquipmentURL,
 } from '../utils/apiConfig'
 
 const useStore = create((set) => ({
@@ -17,7 +20,7 @@ const useStore = create((set) => ({
     projectsList: [],
     codesList: [],
     componentsList: [],
-    templatesData: [],
+    templatesList: [],
     equipmentList: [],
     cabschedsList: [],
     isLoading: false,
@@ -81,7 +84,7 @@ const useStore = create((set) => ({
         try {
             const response = await fetch(generateProjectTemplatesURL(jobNo))
             const data = await response.json()
-            set({ templatesData: data })
+            set({ templatesList: data })
         } catch (error) {
             console.error(error)
         } finally {
@@ -236,35 +239,47 @@ const useStore = create((set) => ({
 
             if (response.ok) {
                 const result = await response.json()
+                const recalculatedRow = result.recalculatedRow
 
-                //Update equipmentList if it's a Component
-                if (result.updatedItem.Component) {
-                    set((state) => ({
-                        equipmentList: state.equipmentList.map((equip) =>
-                            equip.ID === ID
-                                ? { ...equip, ...result.updatedItem }
-                                : equip
-                        ),
+                // Update state for equipmentList and cabschedsList as needed
+                set((state) => {
+                    const updatedEquipmentList = state.equipmentList.map(
+                        (equip) => {
+                            const updatedEquip = result.updatedEquipments.find(
+                                (updated) => updated.ID === equip.ID
+                            )
+                            if (updatedEquip) {
+                                return {
+                                    ...equip,
+                                    Complete: updatedEquip.Complete,
+                                    Description: updatedEquip.Description,
+                                    Template: updatedEquip.Template,
+                                    Area: updatedEquip.Area,
+                                }
+                            }
+                            return equip
+                        }
+                    )
+
+                    const updatedCabschedsList = state.cabschedsList.map(
+                        (existingCable) => {
+                            const cableToUpdate = result.updatedCabscheds.find(
+                                (updatedCableFromServer) =>
+                                    updatedCableFromServer.CabNum ===
+                                    existingCable.CabNum
+                            )
+                            return cableToUpdate || existingCable
+                        }
+                    )
+
+                    return {
+                        equipmentList: updatedEquipmentList,
+                        cabschedsList: updatedCabschedsList,
                         dataHasChanged: true,
-                    }))
-                }
+                    }
+                })
 
-                //Update cabschedsList if it's a Cable
-                if (result.updatedItem.CabNum) {
-                    set((state) => ({
-                        cabschedsList: state.cabschedsList.map((cable) =>
-                            cable.CabNum === result.updatedItem.CabNum
-                                ? result.updatedItem
-                                : cable
-                        ),
-                        dataHasChanged: true,
-                    }))
-                }
-
-                return {
-                    updatedAvgCompletion: result.avgCompletion,
-                    updatedItem: result.updatedItem,
-                }
+                return recalculatedRow
             } else {
                 console.error('Failed to update item:', await response.text())
                 throw new Error('Failed to update item.')
@@ -275,66 +290,164 @@ const useStore = create((set) => ({
         }
     },
 
-    onEquipmentCompletionByComponentsBulkUpdate: async (
-        updatedEquipmentFromServer
-    ) => {
-        const updatedItemsArray = updatedEquipmentFromServer.updatedItems
-        const updatedEquipmentsArray =
-            updatedEquipmentFromServer.updatedEquipments
-        const updatedCabschedsArray =
-            updatedEquipmentFromServer.updatedCabscheds
-
-        set((state) => {
-            const updatedMainTableData = state.localMainTableData.map(
-                (item) => {
-                    const updatedItem = updatedItemsArray.find(
-                        (updated) => updated.Ref === item.Ref
-                    )
-                    if (updatedItem) {
-                        return {
-                            ...item,
-                            PercentComplete: updatedItem.PercentComplete,
-                            RecoveredHours: updatedItem.RecoveredHours,
-                            TotalHours: updatedItem.TotalHours,
-                        }
-                    }
-                    return item
+    onEquipmentCompletionByComponentsBulkUpdate: async (jobNo, updates) => {
+        try {
+            const response = await fetch(
+                bulkUpdateEquipmentCompletionByComponentsURL(jobNo),
+                {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ updates }),
                 }
             )
 
-            const updatedEquipmentList = state.equipmentList.map((equip) => {
-                const updatedEquip = updatedEquipmentsArray.find(
-                    (updated) => updated.ID === equip.ID
-                )
-                if (updatedEquip) {
+            if (response.ok) {
+                const result = await response.json()
+                const recalculatedRow = result.recalculatedRow[0]
+
+                // Update state for equipmentList and cabschedsList as needed
+                set((state) => {
+                    const updatedEquipmentList = state.equipmentList.map(
+                        (equip) => {
+                            const updatedEquip = result.updatedEquipments.find(
+                                (updated) => updated.ID === equip.ID
+                            )
+                            if (updatedEquip) {
+                                return {
+                                    ...equip,
+                                    Complete: updatedEquip.Complete,
+                                    Description: updatedEquip.Description,
+                                    Template: updatedEquip.Template,
+                                    Area: updatedEquip.Area,
+                                }
+                            }
+                            return equip
+                        }
+                    )
+
+                    const updatedCabschedsList = state.cabschedsList.map(
+                        (existingCable) => {
+                            const cableToUpdate = result.updatedCabscheds.find(
+                                (updatedCableFromServer) =>
+                                    updatedCableFromServer.CabNum ===
+                                    existingCable.CabNum
+                            )
+                            return cableToUpdate || existingCable
+                        }
+                    )
+
                     return {
-                        ...equip,
-                        Complete: updatedEquip.Complete,
-                        Description: updatedEquip.Description,
-                        Template: updatedEquip.Template,
-                        Area: updatedEquip.Area,
+                        equipmentList: updatedEquipmentList,
+                        cabschedsList: updatedCabschedsList,
+                        dataHasChanged: true,
                     }
-                }
-                return equip
+                })
+
+                return recalculatedRow
+            } else {
+                console.error('Failed to update items:', await response.text())
+                throw new Error('Failed to update items.')
+            }
+        } catch (error) {
+            console.error('Error while updating the completion:', error)
+            throw error
+        }
+    },
+
+    onEquipmentUpdate: async (jobNo, oldRef, fieldValuesToUpdate) => {
+        try {
+            const url = updateEquipmentURL(jobNo, oldRef)
+
+            const response = await fetch(url, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(fieldValuesToUpdate),
             })
 
-            const updatedCabschedsList = state.cabschedsList.map(
-                (existingCable) => {
-                    const cableToUpdate = updatedCabschedsArray.find(
-                        (updatedCableFromServer) =>
-                            updatedCableFromServer.CabNum ===
-                            existingCable.CabNum
+            if (response.ok) {
+                const updatedEquipmentFromServer = await response.json()
+
+                set((state) => {
+                    const updatedEquipmentList = state.equipmentList.map(
+                        (equip) =>
+                            equip.Ref === oldRef
+                                ? updatedEquipmentFromServer.updatedEquipment
+                                : equip
                     )
-                    return cableToUpdate || existingCable
-                }
+                    const updatedCabschedsList = state.cabschedsList.map(
+                        (cabsched) =>
+                            updatedEquipmentFromServer.updatedCabscheds.find(
+                                (updated) => updated.CabNum === cabsched.CabNum
+                            ) || cabsched
+                    )
+                    return {
+                        equipmentList: updatedEquipmentList,
+                        cabschedsList: updatedCabschedsList,
+                    }
+                })
+            } else {
+                console.error(
+                    'Failed to update equipment:',
+                    await response.text()
+                )
+                throw new Error('Failed to update equipment.')
+            }
+        } catch (error) {
+            console.error('Error while updating the equipment:', error)
+            throw error
+        }
+    },
+
+    onEquipmentDelete: async (
+        jobNo,
+        deletedEquipment,
+        deleteAssociatedCables
+    ) => {
+        try {
+            const requestOptions = {
+                method: 'DELETE',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    deleteAssociatedCables: deleteAssociatedCables,
+                }),
+            }
+
+            const response = await fetch(
+                deleteEquipmentURL(jobNo, deletedEquipment.Ref),
+                requestOptions
             )
 
-            return {
-                localMainTableData: updatedMainTableData,
-                equipmentList: updatedEquipmentList,
-                cabschedsList: updatedCabschedsList,
+            const result = await response.json()
+            if (response.ok) {
+                set((state) => ({
+                    equipmentList: state.equipmentList.filter(
+                        (equip) => equip.Ref !== deletedEquipment.Ref
+                    ),
+                    cabschedsList: deleteAssociatedCables
+                        ? state.cabschedsList.filter(
+                              (cable) =>
+                                  !result.deletedCabscheds.some(
+                                      (deletedCable) =>
+                                          deletedCable.CabNum === cable.CabNum
+                                  )
+                          )
+                        : state.cabschedsList,
+                    dataHasChanged: true,
+                }))
+
+                return {
+                    success: true,
+                    deletedCabschedsCount: result.deletedCabscheds.length,
+                }
+            } else {
+                return { success: false, message: result.message }
             }
-        })
+        } catch (error) {
+            console.error('Error:', error)
+            return { success: false, message: error.message }
+        }
     },
 }))
 

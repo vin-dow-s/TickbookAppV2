@@ -37,6 +37,7 @@ export const FormField = styled.div`
     select,
     textarea {
         flex-grow: 1;
+        margin-left: 10px;
         padding: 10px;
         border: 1px solid ${colors.tablesBorders};
         border-radius: 5px;
@@ -54,11 +55,26 @@ export const FormField = styled.div`
         }
 
         &.valid {
-            border-color: #07bc0c;
+            border-color: #10d317;
         }
 
         &.invalid {
             border-color: #e74c3c;
+        }
+
+        &.equipRef {
+            width: 7em;
+            flex-grow: 0;
+
+            &:hover {
+                border-color: #adadad;
+            }
+
+            &:focus {
+                border-color: #00cfb9;
+
+                box-shadow: 0 0 0 2px rgba(0, 207, 185, 0.1);
+            }
         }
     }
 
@@ -68,6 +84,7 @@ export const FormField = styled.div`
 `
 
 export const LabelInputContainer = styled.div`
+    width: 100%;
     display: flex;
     align-items: center;
 `

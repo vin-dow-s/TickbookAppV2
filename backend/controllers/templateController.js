@@ -8,10 +8,10 @@ const getProjectTemplates = async (req, res, next) => {
 
     try {
         const query = `
-        SELECT templates.ID AS ID, templates.Name, Component, ROUND(SUM(LabNorm), 3) AS Hours
+        SELECT templates.ID AS ID, templates.Name, ROUND(SUM(LabNorm), 3) AS Hours
         FROM templates
         INNER JOIN components ON components.ID = templates.Component_ID 
-        WHERE templates.jobNo = :jobNo AND components.jobNo = :jobNo
+        WHERE templates.jobNo = :jobNo
         GROUP BY Name
         ORDER BY Name;
         `

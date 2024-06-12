@@ -379,7 +379,6 @@ const getEquipmentListByAreaSectionComp = async (
             equip.TotalHours = Number(equip.TotalHours.toFixed(3))
         })
 
-        console.log('🚀 ~ equipmentList:', equipmentList)
         return equipmentList
     } catch (error) {
         console.error(
@@ -1207,13 +1206,13 @@ const updateEquipRecoveryAndCompletion = async (req, res, next) => {
             }
         )
 
-        const avgCompletionData = recalculatedData.find(
+        const recalculatedRow = recalculatedData.find(
             (item) => item.Ref === dataToUpdate.Ref
         )
 
         res.status(200).json({
             updatedItem: updatedItem.dataValues,
-            avgCompletion: avgCompletionData,
+            recalculatedRow: recalculatedRow,
         })
     } catch (error) {
         console.error('Error while editing the item:', error)
@@ -1255,7 +1254,7 @@ const bulkUpdateEquipmentCompletionByCodes = async (req, res, next) => {
             const updatedRef = selectedRefs.find((item) => item === Ref)
             if (updatedCode) {
                 await Equiplist.update(
-                    { Complete: updatedCode.PercentComplete / 100 },
+                    { Complete: updatedCode.PercentComplete },
                     { where: { Ref: updatedRef, Component_ID: component.id } }
                 )
                 updatedRefs.add(updatedRef)
@@ -1269,8 +1268,8 @@ const bulkUpdateEquipmentCompletionByCodes = async (req, res, next) => {
                 const recalculatedData = await sequelize.query(
                     `SELECT Ref, Section, Description, Template,
                     ROUND(SUM(LabNorm), 2) AS TotalHours, 
-                    ROUND(SUM(LabNorm * complete), 2) AS RecoveredHours,
-                    ROUND((SUM(LabNorm * complete)/SUM(LabNorm)), 2) * 100 AS PercentComplete,  
+                    ROUND(SUM(LabNorm * complete) / 100, 2) AS RecoveredHours,
+                    ROUND((SUM(LabNorm * complete)/SUM(LabNorm)), 2) AS PercentComplete,  
                     Area, 
                     IFNULL(equipRef, '')
                 FROM (
@@ -1430,7 +1429,7 @@ const bulkUpdateEquipmentCompletionByComponents = async (req, res, next) => {
                 }
 
                 const updateData = {}
-                updateData[fieldMap[type]] = percentComplete / 100
+                updateData[fieldMap[type]] = percentComplete
 
                 const updatedItem = await itemToUpdate.update(updateData)
 
@@ -1453,8 +1452,8 @@ const bulkUpdateEquipmentCompletionByComponents = async (req, res, next) => {
         const recalculatedData = await sequelize.query(
             `SELECT Ref, Section, Description, Template,
             ROUND(SUM(LabNorm), 2) AS TotalHours, 
-            ROUND(SUM(LabNorm * complete), 2) AS RecoveredHours,
-            ROUND((SUM(LabNorm * complete)/SUM(LabNorm)), 2) * 100 AS PercentComplete,  
+            ROUND(SUM(LabNorm * complete) / 100, 2) AS RecoveredHours,
+            ROUND((SUM(LabNorm * complete)/SUM(LabNorm)), 2) AS PercentComplete,  
             Area, 
             IFNULL(equipRef, '')
         FROM (
@@ -1533,7 +1532,7 @@ const bulkUpdateEquipmentCompletionByComponents = async (req, res, next) => {
         )
 
         res.status(200).json({
-            updatedItems: recalculatedData,
+            recalculatedRow: recalculatedData,
             updatedEquipments,
             updatedCabscheds,
         })

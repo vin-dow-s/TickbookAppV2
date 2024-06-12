@@ -138,14 +138,14 @@ export const GlobalStyle = createGlobalStyle`
             height: 30px;
             width: 15em;
             padding: 0 10px;
-            font-size: 14px;
+            padding-right: 30px;
             border: 1px solid #d9d9d9;
-            border-radius: 7px;
+            border-radius: 4px;
             outline: none;
             background-image: url('/search-line.svg');
             background-repeat: no-repeat;
             background-position: right 10px center;
-            padding-right: 30px;
+            font-size: 14px;
             transition: all 0.1s;
 
             &:hover {

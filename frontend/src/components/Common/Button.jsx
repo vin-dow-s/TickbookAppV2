@@ -9,7 +9,7 @@ const StyledButton = styled.button`
     ${fonts.narrowBold16}
     color: ${colors.purpleBgen};
     border: none;
-    border-radius: 8px;
+    border-radius: 5px;
     cursor: pointer;
     box-shadow: 2px 2px 2px ${colors.purpleBgenTransparent};
     transition: background-color 0.2s ease, color 0.1s ease, transform 50ms;

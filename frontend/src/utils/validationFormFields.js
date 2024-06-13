@@ -1,17 +1,30 @@
-export const validateField = (
-    validators,
-    fieldName,
-    value,
-    additionalContext = {}
-) => {
-    value = value.trim()
+import { componentsNamePattern, onlyFloatsPattern } from './regexPatterns'
 
-    if (fieldName === 'GlandNorm' || fieldName === 'TestNorm') {
-        if (additionalContext.code === 'cbs') {
-            return validators[fieldName] ? validators[fieldName](value) : ''
-        }
-        return '' // Skip validation for these fields unless the code is 'cbs'
-    }
+export const componentValidators = {
+    Name: (value) =>
+        componentsNamePattern.test(value)
+            ? ''
+            : 'Name must be 3-180 characters long and contain no invalid character.',
+    LabNorm: (value) =>
+        onlyFloatsPattern.test(value) ? '' : 'Lab Norm must be a number.',
+    LabUplift: (value) =>
+        onlyFloatsPattern.test(value) ? '' : 'Lab Uplift must be a number.',
+    MatNorm: (value) =>
+        onlyFloatsPattern.test(value) ? '' : 'Mat Norm must be a number.',
+    SubConCost: (value) =>
+        onlyFloatsPattern.test(value) ? '' : 'S/C Cost must be a number.',
+    SubConNorm: (value) =>
+        onlyFloatsPattern.test(value) ? '' : 'S/C Norm must be a number.',
+    PlantCost: (value) =>
+        onlyFloatsPattern.test(value) ? '' : 'Plant Cost must be a number.',
+    GlandNorm: (value) =>
+        onlyFloatsPattern.test(value) ? '' : 'must be a number.',
+    TestNorm: (value) =>
+        onlyFloatsPattern.test(value) ? '' : 'must be a number.',
+}
+
+export const validateField = (validators, fieldName, value) => {
+    value = value.trim()
 
     if (validators[fieldName]) {
         return validators[fieldName](value)
@@ -24,8 +37,7 @@ export const validateFormFields = (
     fieldNames,
     validators,
     setIsValid,
-    setFieldErrors,
-    additionalContext = {}
+    setFieldErrors
 ) => {
     let hasErrors = false
     let newIsValid = {}
@@ -36,12 +48,7 @@ export const validateFormFields = (
         const fieldValue = e.target.elements[fieldName].value
         fieldValues[fieldName] = fieldValue
 
-        const errorMessage = validateField(
-            validators,
-            fieldName,
-            fieldValue,
-            additionalContext
-        )
+        const errorMessage = validateField(validators, fieldName, fieldValue)
 
         newIsValid[fieldName] = !errorMessage
         newFieldErrors[fieldName] = errorMessage

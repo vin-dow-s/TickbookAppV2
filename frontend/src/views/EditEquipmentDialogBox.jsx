@@ -253,7 +253,7 @@ const EditEquipmentDialogBox = ({
         if (!isValid) return
 
         await onEquipmentUpdate(jobNo, Ref, validatedFieldValues)
-        updateDashboardTablesAndSummary(validatedFieldValues, 'update')
+        updateDashboardTablesAndSummary(validatedFieldValues, 'full-refresh')
 
         onClose()
     }

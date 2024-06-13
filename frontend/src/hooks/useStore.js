@@ -11,7 +11,11 @@ import {
     bulkUpdateEquipmentCompletionByComponentsURL,
     deleteEquipmentURL,
     updateEquipmentURL,
+    updateComponentURL,
+    deleteComponentURL,
+    generateProjectComponentsBulkURL,
 } from '../utils/apiConfig'
+import { readExcelFile } from '../utils/readExcelFile'
 
 const useStore = create((set) => ({
     jobNo: '',
@@ -131,34 +135,250 @@ const useStore = create((set) => ({
         }))
     },
 
-    onComponentCreate: (component) => {
-        set((state) => ({
-            componentsList: [...state.componentsList, component],
-        }))
+    onComponentCreate: async (jobNo, componentData) => {
+        if (componentData.Name) {
+            componentData.Name = componentData.Name.trim()
+        }
+
+        if (componentData.Code === 'ttl') {
+            componentData = {
+                ...componentData,
+                LabNorm: 0,
+                LabUplift: 0,
+                MatNorm: 0,
+                SubConCost: 0,
+                SubConNorm: 0,
+                PlantCost: 0,
+            }
+        }
+
+        const dataToSend = {
+            ...componentData,
+            LabNorm: parseFloat(componentData.LabNorm),
+            LabUplift: parseFloat(componentData.LabUplift),
+            MatNorm: parseFloat(componentData.MatNorm),
+            SubConCost: parseFloat(componentData.SubConCost),
+            SubConNorm: parseFloat(componentData.SubConNorm),
+            PlantCost: parseFloat(componentData.PlantCost),
+        }
+
+        if (componentData.Code !== 'cbs') {
+            delete dataToSend.GlandNorm
+            delete dataToSend.TestNorm
+        }
+
+        try {
+            const response = await fetch(generateProjectComponentsURL(jobNo), {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(dataToSend),
+            })
+
+            if (response.status === 409) {
+                const responseBody = await response.json()
+                console.error('Conflict Error:', responseBody.message)
+                return {
+                    success: false,
+                    error: responseBody.message,
+                    statusCode: response.status,
+                }
+            } else if (!response.ok) {
+                console.error(
+                    'Error:',
+                    'An error occurred while creating a new Component.'
+                )
+                const responseBody = await response.json()
+                console.error('Error:', responseBody.message)
+                return { success: false, error: responseBody.message }
+            } else if (response.ok) {
+                const newComponent = await response.json()
+                set((state) => ({
+                    componentsList: [...state.componentsList, newComponent],
+                }))
+                return { success: true, component: newComponent }
+            }
+        } catch (error) {
+            console.error('Error:', error)
+            return { success: false, error: error.message }
+        }
     },
 
-    onComponentsBulkCreate: (components) => {
-        set((state) => ({
-            componentsList: [...state.componentsList, ...components],
-        }))
+    onComponentsBulkCreate: async (jobNo, componentsData) => {
+        const processedData = componentsData.map((componentData) => {
+            const defaultComponentData = {
+                Code: componentData.Code,
+                Name: componentData.Name,
+                LabUplift: componentData.LabUplift || 0,
+                MatNorm: componentData.MatNorm || 0,
+                SubConCost: componentData.SubConCost || 0,
+                SubConNorm: componentData.SubConNorm || 0,
+                PlantCost: componentData.PlantCost || 0,
+            }
+
+            if (componentData.Name) {
+                componentData.Name = componentData.Name.trim()
+            }
+
+            return {
+                ...defaultComponentData,
+                ...componentData,
+            }
+        })
+
+        try {
+            const response = await fetch(
+                generateProjectComponentsBulkURL(jobNo),
+                {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(processedData),
+                }
+            )
+
+            const responseBody = await response.json()
+            if (response.ok) {
+                if (
+                    responseBody?.success &&
+                    Array.isArray(responseBody.success)
+                ) {
+                    set((state) => ({
+                        componentsList: [
+                            ...state.componentsList,
+                            ...responseBody.success,
+                        ],
+                    }))
+                    return {
+                        success: true,
+                        results: responseBody,
+                    }
+                } else {
+                    return {
+                        success: false,
+                        error: 'Unexpected response format',
+                    }
+                }
+            } else {
+                return {
+                    success: false,
+                    error: responseBody.message,
+                    statusCode: response.status,
+                }
+            }
+        } catch (error) {
+            console.error('Error:', error)
+            return { success: false, error: error.message }
+        }
     },
 
-    onComponentUpdate: (updatedComponent) => {
-        set((state) => ({
-            componentsList: state.componentsList.map((component) =>
-                component.ID === updatedComponent.ID
-                    ? updatedComponent
-                    : component
-            ),
-        }))
+    onComponentUpdate: async (
+        jobNo,
+        componentToUpdate,
+        fieldValuesToUpdate
+    ) => {
+        try {
+            const url = updateComponentURL(jobNo, componentToUpdate)
+
+            const response = await fetch(url, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(fieldValuesToUpdate),
+            })
+
+            if (response.ok) {
+                const updatedComponent = await response.json()
+                set((state) => ({
+                    componentsList: state.componentsList.map((component) =>
+                        component.ID === componentToUpdate
+                            ? updatedComponent
+                            : component
+                    ),
+                }))
+                return updatedComponent
+            } else {
+                const responseBody = await response.json()
+                console.error('Updating Error:', responseBody.message)
+                return null
+            }
+        } catch (error) {
+            console.error('Error:', error)
+            return null
+        }
     },
 
-    onComponentDelete: (deletedComponent) => {
-        set((state) => ({
-            componentsList: state.componentsList.filter(
-                (component) => component.ID !== deletedComponent.ID
-            ),
-        }))
+    onComponentDelete: async (jobNo, componentId) => {
+        try {
+            const response = await fetch(
+                deleteComponentURL(jobNo, componentId),
+                {
+                    method: 'DELETE',
+                }
+            )
+
+            if (response.ok) {
+                set((state) => ({
+                    componentsList: state.componentsList.filter(
+                        (component) => component.ID !== componentId
+                    ),
+                }))
+                return { success: true }
+            } else {
+                const responseBody = await response.json()
+                return {
+                    success: false,
+                    error: responseBody.message,
+                }
+            }
+        } catch (error) {
+            console.error('Error:', error)
+            return {
+                success: false,
+                error: error.message,
+            }
+        }
+    },
+
+    handleComponentFileUpload: async (
+        jobNo,
+        file,
+        codesList,
+        setCreationStepMessage
+    ) => {
+        try {
+            setCreationStepMessage('Reading Excel file...')
+            const jsonData = await readExcelFile(file)
+            let finalComponentsData = []
+            const nonExistingCodes = new Set()
+
+            for (const componentData of jsonData) {
+                const codeExists = codesList.some(
+                    (item) => item.Code === componentData.Code
+                )
+
+                if (!codeExists) {
+                    nonExistingCodes.add(componentData.Code)
+                    continue
+                }
+
+                finalComponentsData.push({
+                    ...componentData,
+                    lineNumber: componentData.__rowNum__ + 1,
+                })
+            }
+
+            setCreationStepMessage('Creating Components...')
+            const bulkCreateResult = await useStore
+                .getState()
+                .onComponentsBulkCreate(jobNo, finalComponentsData)
+
+            return {
+                bulkCreateResult,
+                jsonDataLength: jsonData.length,
+                nonExistingCodes,
+            }
+        } catch (error) {
+            console.error('Error during file processing:', error)
+            return { success: false, error: error.message }
+        }
     },
 
     onEquipmentCompletionUpdate: async (
@@ -385,6 +605,7 @@ const useStore = create((set) => ({
                     return {
                         equipmentList: updatedEquipmentList,
                         cabschedsList: updatedCabschedsList,
+                        dataHasChanged: true,
                     }
                 })
             } else {

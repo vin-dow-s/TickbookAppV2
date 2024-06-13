@@ -192,6 +192,7 @@ const DashboardView = () => {
         position: { x: 0, y: 0 },
         rowData: null,
     })
+    const [refreshDataTrigger, setRefreshDataTrigger] = useState(false)
     const [refreshViewTableTrigger, setRefreshViewTableTrigger] =
         useState(false)
     const [summaryValues, setSummaryValues] = useState({
@@ -218,7 +219,7 @@ const DashboardView = () => {
         data: mainTableData = [],
         isLoading: isLoadingMainTable,
         error: mainTableError,
-    } = useFetch(generateMainTableDataURL(jobNo))
+    } = useFetch(generateMainTableDataURL(jobNo), refreshDataTrigger)
 
     //Fetches data for the "view table" based on the user-selected jobNo and viewType
     const {
@@ -438,6 +439,21 @@ const DashboardView = () => {
 
     const updateDashboardTablesAndSummary = (mainTableRow, actionType) => {
         switch (actionType) {
+            case 'create':
+                mainTableGridApi.applyTransaction({
+                    add: [
+                        {
+                            Ref: mainTableRow.Ref || mainTableRow.EquipRef,
+                            Section: mainTableRow.Section,
+                            Description: mainTableRow.Description,
+                            TotalHours: mainTableRow.TotalHours,
+                            RecoveredHours: mainTableRow.RecoveredHours,
+                            PercentComplete: mainTableRow.PercentComplete,
+                            Area: mainTableRow.Area,
+                        },
+                    ],
+                })
+                break
             case 'update':
                 mainTableGridApi.applyTransaction({
                     update: [
@@ -462,20 +478,8 @@ const DashboardView = () => {
                     ],
                 })
                 break
-            case 'create':
-                mainTableGridApi.applyTransaction({
-                    add: [
-                        {
-                            Ref: mainTableRow.Ref || mainTableRow.EquipRef,
-                            Section: mainTableRow.Section,
-                            Description: mainTableRow.Description,
-                            TotalHours: mainTableRow.TotalHours,
-                            RecoveredHours: mainTableRow.RecoveredHours,
-                            PercentComplete: mainTableRow.PercentComplete,
-                            Area: mainTableRow.Area,
-                        },
-                    ],
-                })
+            case 'full-refresh':
+                setRefreshDataTrigger((prevFlag) => !prevFlag)
                 break
             default:
                 console.error('Unknown action type:', actionType)

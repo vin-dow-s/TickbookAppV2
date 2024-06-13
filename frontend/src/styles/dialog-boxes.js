@@ -14,7 +14,7 @@ export const DialogBoxContainer = styled.div`
     position: fixed;
     top: 50%;
     left: 50%;
-    width: 40em;
+    width: 45em;
     background-color: transparent;
     color: black;
     z-index: 1000;

@@ -1,3 +1,13 @@
+export const onCellContextMenu = (params, setContextMenuState) => {
+    const event = params.event
+    event.preventDefault()
+    setContextMenuState({
+        visible: true,
+        position: { x: event.clientX, y: event.clientY },
+        rowData: params.node.data,
+    })
+}
+
 export const restrictInputToNumbersInRange = () => {
     setTimeout(() => {
         const inputElement = document.activeElement

@@ -1,6 +1,6 @@
 //Modules
 import PropTypes from 'prop-types'
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef } from 'react'
 import styled from 'styled-components'
 import { toast } from 'react-toastify'
 
@@ -13,23 +13,30 @@ import {
     DialogContent,
     DialogHeader,
 } from '../styles/dialog-boxes'
+import { fonts } from '../styles/global-styles'
 
 //Components
 import CloseIcon from '../components/Common/CloseIcon'
 import { ButtonsContainer, FormBase } from '../components/Common/FormBase'
 import FormButton from '../components/Common/FormButton'
-import { fonts } from '../styles/global-styles'
 
-const DeleteEquipmentDialogBoxHeader = styled(DialogHeader)`
+const DeleteComponentDialogBoxHeader = styled(DialogHeader)`
     position: relative;
     color: black;
     background: #ff4437;
     background-repeat: no-repeat;
     cursor: move;
     ${fonts.regular16}
+
+    span {
+        width: 380px;
+        overflow: hidden;
+        text-wrap: nowrap;
+        text-overflow: ellipsis;
+    }
 `
 
-const DeleteEquipmentForm = styled(FormBase)`
+const DeleteComponentForm = styled(FormBase)`
     position: relative;
     justify-content: space-evenly;
     align-items: center;
@@ -46,45 +53,77 @@ const DeleteMessage = styled.h4`
 `
 
 //Main component of the file
-const DeleteEquipmentDialogBox = ({
+const DeleteComponentDialogBox = ({
     jobNo,
-    equipmentData,
+    componentData,
     onClose,
-    updateDashboardTablesAndSummary,
+    setRestoreTableFocus,
 }) => {
-    const onEquipmentDelete = useStore((state) => state.onEquipmentDelete)
-    const [deleteAssociatedCables, setDeleteAssociatedCables] = useState(false)
-
+    const { componentsList, onComponentDelete } = useStore((state) => ({
+        componentsList: state.componentsList,
+        onComponentDelete: state.onComponentDelete,
+    }))
     const dialogRef = useRef(null)
     const headerRef = useRef(null)
 
-    const handleCheckboxChange = (e) => {
-        setDeleteAssociatedCables(e.target.checked)
+    const findAssociatedCableComponents = (componentName, componentsList) => {
+        const termName = componentName + ' Term'
+        const testName = componentName + ' Test'
+
+        const associatedComponents = componentsList.filter(
+            (component) =>
+                component.Name === termName || component.Name === testName
+        )
+
+        return associatedComponents
     }
 
     const handleFormSubmit = async (e) => {
         e.preventDefault()
-        if (!equipmentData) {
-            toast.error('No equipment data available.')
+        if (!componentData) {
+            toast.error('No component data available.')
             return
         }
 
-        const result = await onEquipmentDelete(
-            jobNo,
-            equipmentData,
-            deleteAssociatedCables
+        const rowIndex = componentsList.findIndex(
+            (c) => c.ID === componentData.ID
         )
-        if (result.success) {
-            toast.success('Equipment successfully deleted!')
-            if (result.deletedCabschedsCount > 0) {
-                toast.success(
-                    `${result.deletedCabschedsCount} associated Cables successfully deleted.`
+        if (rowIndex === -1) return
+
+        // Handle deletion of associated components if it's a CBS component
+        if (componentData.Code === 'cbs') {
+            const associatedComponents = findAssociatedCableComponents(
+                componentData.Name,
+                componentsList
+            )
+
+            for (const associatedComponent of associatedComponents) {
+                const result = await onComponentDelete(
+                    jobNo,
+                    associatedComponent.ID
                 )
+                if (!result.success) {
+                    toast.error(
+                        `Failed to delete associated component with ID: ${associatedComponent.ID}`
+                    )
+                    return
+                }
             }
-            updateDashboardTablesAndSummary(equipmentData, 'delete')
+        }
+
+        // Delete the main component
+        const result = await onComponentDelete(jobNo, componentData.ID)
+        if (result.success) {
+            toast.success('Component successfully deleted!')
             onClose()
+
+            const previousRowIndex = Math.max(0, rowIndex - 1)
+            setRestoreTableFocus({
+                rowIndex: previousRowIndex,
+                column: 'Name',
+            })
         } else {
-            toast.error(result.message)
+            toast.error(result.error)
         }
     }
 
@@ -127,12 +166,13 @@ const DeleteEquipmentDialogBox = ({
 
     return (
         <DialogBoxContainer ref={dialogRef}>
-            <DeleteEquipmentDialogBoxHeader ref={headerRef}>
-                {`Delete Equip Ref: ${equipmentData.Ref}`}
+            <DeleteComponentDialogBoxHeader ref={headerRef}>
+                Delete Component:
+                <span>&#8203; {componentData.Name}</span>
                 <CloseIcon $variant="black" onClose={onClose} />
-            </DeleteEquipmentDialogBoxHeader>
+            </DeleteComponentDialogBoxHeader>
             <DialogContent>
-                <DeleteEquipmentForm onSubmit={handleFormSubmit}>
+                <DeleteComponentForm onSubmit={handleFormSubmit}>
                     <DeleteMessage>
                         <svg
                             xmlns="http://www.w3.org/2000/svg"
@@ -145,18 +185,9 @@ const DeleteEquipmentDialogBox = ({
                                 fill="rgba(231,76,60,1)"
                             ></path>
                         </svg>
-                        Are you sure you want to delete this Equipment?
+                        Are you sure you want to delete this Component?
                         <br />
                     </DeleteMessage>
-                    <label>
-                        <input
-                            type="checkbox"
-                            checked={deleteAssociatedCables}
-                            onChange={handleCheckboxChange}
-                            style={{ marginRight: '5px' }}
-                        />
-                        Delete associated Cables
-                    </label>
                     <ButtonsContainer>
                         <FormButton type="submit" variant="submit">
                             Delete
@@ -169,17 +200,17 @@ const DeleteEquipmentDialogBox = ({
                             Cancel
                         </FormButton>
                     </ButtonsContainer>
-                </DeleteEquipmentForm>
+                </DeleteComponentForm>
             </DialogContent>
         </DialogBoxContainer>
     )
 }
 
-DeleteEquipmentDialogBox.propTypes = {
+DeleteComponentDialogBox.propTypes = {
     jobNo: PropTypes.string.isRequired,
-    equipmentData: PropTypes.object.isRequired,
+    componentData: PropTypes.object.isRequired,
     onClose: PropTypes.func.isRequired,
-    updateDashboardTablesAndSummary: PropTypes.func.isRequired,
+    setRestoreTableFocus: PropTypes.func.isRequired,
 }
 
-export default DeleteEquipmentDialogBox
+export default DeleteComponentDialogBox

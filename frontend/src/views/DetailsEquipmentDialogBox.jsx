@@ -20,7 +20,7 @@ import { StyledAGGrid } from '../styles/tables'
 
 //Utils
 import { generateEquipmentURL } from '../utils/apiConfig'
-import { restrictInputToNumbersInRange } from '../utils/completionFieldsInputRestrictions'
+import { restrictInputToNumbersInRange } from '../utils/gridUtils'
 
 //Components
 import CloseIcon from '../components/Common/CloseIcon'

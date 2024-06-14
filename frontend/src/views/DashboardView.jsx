@@ -52,10 +52,10 @@ import {
     DropdownItem,
     DropdownMenu,
 } from '../components/Common/Dropdown'
-import DetailsEquipmentDialogBox from './DetailsEquipmentDialogBox'
-import ViewTableDialogBox from './ViewTableDialogBox'
-import DeleteEquipmentDialogBox from './DeleteEquipmentDialogBox'
-import EditEquipmentDialogBox from './EditEquipmentDialogBox'
+import DetailsEquipmentDialogBox from '../components/DialogBoxes/DetailsEquipmentDialogBox'
+import ViewTableDialogBox from '../components/DialogBoxes/ViewTableDialogBox'
+import DeleteEquipmentDialogBox from '../components/DialogBoxes/DeleteEquipmentDialogBox'
+import EditEquipmentDialogBox from '../components/DialogBoxes/EditEquipmentDialogBox'
 
 //Styled components declarations
 const DashboardViewContainer = styled.div`

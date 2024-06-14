@@ -8,8 +8,17 @@ import useStore from '../hooks/useStore'
 
 //Utils
 import { isComponentUsedInTemplateURL } from '../utils/apiConfig'
-
+import { onCellContextMenu } from '../utils/gridUtils'
 import { componentValidators } from '../utils/validationFormFields'
+
+//Helpers
+import {
+    createCbsComponents,
+    fieldClasses,
+    isNameUsedByCbsComponent,
+    normalizeNumericFields,
+    validateComponentFields,
+} from '../helpers/componentHelpers'
 
 //Styles and constants
 import { Overlay } from '../styles/dialog-boxes'
@@ -32,15 +41,7 @@ import FormButton from '../components/Common/FormButton'
 import MainLoader from '../components/Common/MainLoader'
 import { overlayLoadingTemplatePurple } from '../components/Common/Loader'
 import ContextMenu from '../components/Common/ContextMenu'
-import DeleteComponentDialogBox from './DeleteComponentDialogBox'
-import { onCellContextMenu } from '../utils/gridUtils'
-import {
-    createCbsComponents,
-    fieldClasses,
-    isNameUsedByCbsComponent,
-    normalizeNumericFields,
-    validateComponentFields,
-} from '../helpers/componentHelpers'
+import DeleteComponentDialogBox from '../components/DialogBoxes/DeleteComponentDialogBox'
 
 //Styled components declarations
 const MainLoaderOverlayContainer = styled.div`

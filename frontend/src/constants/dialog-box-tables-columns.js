@@ -588,8 +588,8 @@ export const columnsTemplates = [
 
 export const columnsComponentsInSelectedTemplate = [
     {
-        headerName: 'Components in selected Template',
-        field: 'Name',
+        headerName: 'Name',
+        field: 'Component',
         filter: false,
         sortable: false,
         flex: 0.75,

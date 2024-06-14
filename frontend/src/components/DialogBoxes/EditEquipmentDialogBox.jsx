@@ -5,7 +5,7 @@ import { toast } from 'react-toastify'
 import styled from 'styled-components'
 
 //Hooks
-import useStore from '../hooks/useStore'
+import useStore from '../../hooks/useStore'
 
 //Utils
 import {
@@ -14,23 +14,23 @@ import {
     equipmentRefPattern,
     equipmentAreaPattern,
     equipmentTendSectionPattern,
-} from '../utils/regexPatterns'
+} from '../../utils/regexPatterns'
 import {
     getClassForField,
     validateField,
     validateFormFields,
-} from '../utils/validationFormFields'
+} from '../../utils/validationFormFields'
 
 //Styles and constants
 import {
     DialogBoxContainer,
     DialogContent,
     DialogHeader,
-} from '../styles/dialog-boxes'
-import { colors, fonts } from '../styles/global-styles'
+} from '../../styles/dialog-boxes'
+import { colors, fonts } from '../../styles/global-styles'
 
 //Components
-import CloseIcon from '../components/Common/CloseIcon'
+import CloseIcon from '../Common/CloseIcon'
 import {
     ButtonsContainer,
     ErrorMessage,
@@ -38,8 +38,8 @@ import {
     FormBase,
     FormField,
     LabelInputContainer,
-} from '../components/Common/FormBase'
-import FormButton from '../components/Common/FormButton'
+} from '../Common/FormBase'
+import FormButton from '../Common/FormButton'
 
 //Styled components declarations
 const EditEquipmentDialogBoxContainer = styled(DialogBoxContainer)`

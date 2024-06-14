@@ -184,6 +184,10 @@ export const GlobalStyle = createGlobalStyle`
             color: #5e6066;
             font-size: smaller;
             font-style: italic;
+
+            &.left {
+                align-self: start;
+            }
         }
     }
 `

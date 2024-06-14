@@ -5,28 +5,28 @@ import { toast } from 'react-toastify'
 import styled from 'styled-components'
 
 //Hooks
-import { useFetch } from '../hooks/useFetch'
-import useStore from '../hooks/useStore'
+import { useFetch } from '../../hooks/useFetch'
+import useStore from '../../hooks/useStore'
 
 //Styles and constants
 import {
     DialogBoxContainer,
     DialogContent,
     DialogHeader,
-} from '../styles/dialog-boxes'
-import { colors, fonts } from '../styles/global-styles'
-import { columnsEquipRef } from '../constants/dialog-box-tables-columns'
-import { StyledAGGrid } from '../styles/tables'
+} from '../../styles/dialog-boxes'
+import { colors, fonts } from '../../styles/global-styles'
+import { columnsEquipRef } from '../../constants/dialog-box-tables-columns'
+import { StyledAGGrid } from '../../styles/tables'
 
 //Utils
-import { generateEquipmentURL } from '../utils/apiConfig'
-import { restrictInputToNumbersInRange } from '../utils/gridUtils'
+import { generateEquipmentURL } from '../../utils/apiConfig'
+import { restrictInputToNumbersInRange } from '../../utils/gridUtils'
 
 //Components
-import CloseIcon from '../components/Common/CloseIcon'
-import { overlayLoadingTemplateLightBlue } from '../components/Common/Loader'
-import FormButton from '../components/Common/FormButton'
-import { FormField } from '../components/Common/FormBase'
+import CloseIcon from '../Common/CloseIcon'
+import { overlayLoadingTemplateLightBlue } from '../Common/Loader'
+import FormButton from '../Common/FormButton'
+import { FormField } from '../Common/FormBase'
 
 //Styled components declarations
 const DetailsEquipmentDialogBoxContainer = styled(DialogBoxContainer)`

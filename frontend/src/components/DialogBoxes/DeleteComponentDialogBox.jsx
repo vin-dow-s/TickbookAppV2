@@ -5,20 +5,20 @@ import styled from 'styled-components'
 import { toast } from 'react-toastify'
 
 //Hooks
-import useStore from '../hooks/useStore'
+import useStore from '../../hooks/useStore'
 
 //Styles and constants
 import {
     DialogBoxContainer,
     DialogContent,
     DialogHeader,
-} from '../styles/dialog-boxes'
-import { fonts } from '../styles/global-styles'
+} from '../../styles/dialog-boxes'
+import { fonts } from '../../styles/global-styles'
 
 //Components
-import CloseIcon from '../components/Common/CloseIcon'
-import { ButtonsContainer, FormBase } from '../components/Common/FormBase'
-import FormButton from '../components/Common/FormButton'
+import CloseIcon from '../Common/CloseIcon'
+import { ButtonsContainer, FormBase } from '../Common/FormBase'
+import FormButton from '../Common/FormButton'
 
 const DeleteComponentDialogBoxHeader = styled(DialogHeader)`
     position: relative;

@@ -4,16 +4,16 @@ import { useEffect, useRef, useState } from 'react'
 import styled from 'styled-components'
 
 //Hooks
-import { useFetch } from '../hooks/useFetch'
+import { useFetch } from '../../hooks/useFetch'
 
 //Styles and constants
-import { DialogBoxContainer, DialogHeader } from '../styles/dialog-boxes'
-import { colors, fonts } from '../styles/global-styles'
-import { StyledAGGrid } from '../styles/tables'
+import { DialogBoxContainer, DialogHeader } from '../../styles/dialog-boxes'
+import { colors, fonts } from '../../styles/global-styles'
+import { StyledAGGrid } from '../../styles/tables'
 
 //Components
-import CloseIcon from '../components/Common/CloseIcon'
-import { overlayLoadingTemplateDarkBlue } from '../components/Common/Loader'
+import CloseIcon from '../Common/CloseIcon'
+import { overlayLoadingTemplateDarkBlue } from '../Common/Loader'
 
 //Styled components declarations
 const ViewTableDialogBoxContainer = styled(DialogBoxContainer)`

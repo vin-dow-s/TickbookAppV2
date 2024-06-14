@@ -16,6 +16,7 @@ import {
     generateProjectSummaryValues,
     generateViewTableURL,
 } from '../utils/apiConfig'
+import { onCellContextMenu } from '../utils/gridUtils'
 
 //Styles and constants
 import { StyledAGGrid } from '../styles/tables'
@@ -233,16 +234,6 @@ const DashboardView = () => {
     )
 
     // 3. Helper Functions
-    const onCellContextMenu = (params) => {
-        const event = params.event
-        event.preventDefault()
-        setContextMenuState({
-            visible: true,
-            position: { x: event.clientX, y: event.clientY },
-            rowData: params.node.data,
-        })
-    }
-
     const mainTableGridOptions = {
         defaultColDef: {
             resizable: true,
@@ -252,7 +243,8 @@ const DashboardView = () => {
         columnDefs: columnsMainTable,
         rowSelection: 'single',
         getRowId: (params) => params.data.Ref,
-        onCellContextMenu: onCellContextMenu,
+        onCellContextMenu: (params) =>
+            onCellContextMenu(params, setContextMenuState),
         overlayLoadingTemplate: overlayLoadingTemplateLightBlue,
         onGridReady: (params) => {
             setMainTableGridApi(params.api)
@@ -609,22 +601,6 @@ const DashboardView = () => {
     useEffect(() => {
         fetchSummaryValues()
     }, [jobNo, fetchSummaryValues, localMainTableData])
-
-    useEffect(() => {
-        const clickOutside = (event) => {
-            // Close the context menu if clicking outside
-            if (
-                contextMenuState.visible &&
-                !event.target.closest('.context-menu-class')
-            ) {
-                setContextMenuState({ ...contextMenuState, visible: false })
-            }
-        }
-        document.addEventListener('click', clickOutside)
-        return () => {
-            document.removeEventListener('click', clickOutside)
-        }
-    }, [contextMenuState])
 
     useEffect(() => {
         if (mainTableGridApi?.getDisplayedRowCount() > 0) {

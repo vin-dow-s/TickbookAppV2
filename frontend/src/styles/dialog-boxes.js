@@ -1,4 +1,5 @@
 import styled from 'styled-components'
+import { colors, fonts } from './global-styles'
 
 export const Overlay = styled.div`
     position: fixed;
@@ -28,13 +29,11 @@ export const DialogHeader = styled.div`
     display: flex;
     flex-direction: row;
     padding: 20px 20px 20px 40px;
-    background: linear-gradient(
-        180deg,
-        rgba(120, 111, 255, 1) 0%,
-        rgba(65, 60, 140, 1) 100%
-    );
+    background: ${colors.purpleBgenTransparent};
     background-repeat: no-repeat;
-    color: white;
+    color: black;
+    ${fonts.regular16}
+    cursor: move;
 `
 
 export const DialogContent = styled.div`

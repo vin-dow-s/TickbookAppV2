@@ -695,7 +695,13 @@ const bulkCreateEquipment = async (req, res) => {
         const processedRefs = new Set()
 
         for (const equipment of equipmentsData) {
-            const { Ref, Description, Section, Area, Template } = equipment
+            const {
+                Ref,
+                Description,
+                Section,
+                Area,
+                Template: templateName,
+            } = equipment
             const trimmedDescription = Description.trim()
 
             if (processedRefs.has(Ref)) {
@@ -717,7 +723,7 @@ const bulkCreateEquipment = async (req, res) => {
 
             // Fetch the list of components for the selected Template
             const templateData = await Template.findAll({
-                where: { JobNo: jobNo, Name: Template },
+                where: { JobNo: jobNo, Name: templateName },
                 include: [
                     {
                         model: Component,
@@ -747,7 +753,7 @@ const bulkCreateEquipment = async (req, res) => {
                         JobNo: jobNo,
                         Ref: Ref,
                         Description: trimmedDescription,
-                        Template: Template,
+                        Template: templateName,
                         Section: Section,
                         Area: Area,
                         Component: name,

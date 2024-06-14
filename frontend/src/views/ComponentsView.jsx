@@ -254,16 +254,6 @@ const FileUploadContainer = styled.div`
     color: black;
     border-radius: 10px;
 
-    .file-label {
-        position: absolute;
-        top: -8px;
-        left: 10px;
-        padding: 0 5px;
-        background-color: ${colors.mainFrameBackground};
-        color: ${colors.purpleBgen};
-        font-style: italic;
-    }
-
     .file-content {
         width: 100%;
         height: calc(100% - 24px);
@@ -664,7 +654,7 @@ const ComponentsView = () => {
         }
     }
 
-    // 4. useEffects
+    //4. useEffects
     useEffect(() => {
         if (componentsTableGridApi && quickFilterText !== null) {
             componentsTableGridApi.updateGridOptions({ quickFilterText })

@@ -14,8 +14,17 @@ import {
     updateComponentURL,
     deleteComponentURL,
     generateProjectComponentsBulkURL,
+    generateProjectTemplatesBulkURL,
+    generateTemplateComponentsURL,
+    generateProjectEquipmentBulkURL,
+    updateTemplateURL,
 } from '../utils/apiConfig'
 import { readExcelFile } from '../utils/readExcelFile'
+import {
+    deduplicateComponents,
+    groupComponentsByTemplateAndReturnsComponentsToCreate,
+    validateTemplatesFileData,
+} from '../helpers/templateHelpers'
 
 const useStore = create((set) => ({
     jobNo: '',
@@ -93,6 +102,22 @@ const useStore = create((set) => ({
             console.error(error)
         } finally {
             set({ isLoading: false })
+        }
+    },
+
+    fetchTemplateComponents: async (jobNo, template) => {
+        try {
+            const response = await fetch(
+                generateTemplateComponentsURL(jobNo, template)
+            )
+            if (!response.ok) {
+                throw new Error(`HTTP error! Status: ${response.status}`)
+            }
+            const componentsInTemplate = await response.json()
+            return componentsInTemplate
+        } catch (error) {
+            console.error('Failed to fetch template components:', error)
+            return []
         }
     },
 
@@ -204,26 +229,16 @@ const useStore = create((set) => ({
     },
 
     onComponentsBulkCreate: async (jobNo, componentsData) => {
-        const processedData = componentsData.map((componentData) => {
-            const defaultComponentData = {
-                Code: componentData.Code,
-                Name: componentData.Name,
-                LabUplift: componentData.LabUplift || 0,
-                MatNorm: componentData.MatNorm || 0,
-                SubConCost: componentData.SubConCost || 0,
-                SubConNorm: componentData.SubConNorm || 0,
-                PlantCost: componentData.PlantCost || 0,
-            }
-
-            if (componentData.Name) {
-                componentData.Name = componentData.Name.trim()
-            }
-
-            return {
-                ...defaultComponentData,
-                ...componentData,
-            }
-        })
+        const processedData = componentsData.map((componentData) => ({
+            Code: 'acc',
+            Name: componentData.Component.trim(),
+            LabUplift: 0,
+            MatNorm: 0,
+            SubConCost: 0,
+            SubConNorm: 0,
+            PlantCost: 0,
+            ...componentData,
+        }))
 
         try {
             const response = await fetch(
@@ -378,6 +393,324 @@ const useStore = create((set) => ({
         } catch (error) {
             console.error('Error during file processing:', error)
             return { success: false, error: error.message }
+        }
+    },
+
+    onTemplateCreate: async (jobNo, templateData) => {
+        try {
+            const response = await fetch(generateProjectTemplatesURL(jobNo), {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(templateData),
+            })
+
+            if (!response.ok) {
+                const responseBody = await response.json()
+                throw new Error(responseBody.message)
+            }
+
+            const newTemplate = await response.json()
+            set((state) => ({
+                templatesList: [...state.templatesList, newTemplate],
+            }))
+            return { success: true, template: newTemplate }
+        } catch (error) {
+            console.error('Error:', error)
+            return { success: false, error: error.message }
+        }
+    },
+
+    onTemplatesBulkCreate: async (jobNo, templatesMap) => {
+        const templatesData = Array.from(templatesMap.entries()).map(
+            ([template, components]) => ({
+                Name: template,
+                components: components.map((component) => ({
+                    compName: component.component,
+                    compLabNorm: component.labNorm,
+                    inOrder: component.inOrder,
+                })),
+                JobNo: jobNo,
+            })
+        )
+
+        try {
+            const response = await fetch(
+                generateProjectTemplatesBulkURL(jobNo),
+                {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(templatesData),
+                }
+            )
+
+            const responseBody = await response.json()
+            if (!response.ok) {
+                throw new Error(responseBody.message)
+            }
+
+            set((state) => ({
+                templatesList: [
+                    ...state.templatesList,
+                    ...responseBody.success,
+                ],
+            }))
+
+            const { success, alreadyExists, failures } = responseBody
+
+            return {
+                successCount: success.length,
+                templatesAlreadyExisting: alreadyExists.length,
+                failureCount: failures.length,
+            }
+        } catch (error) {
+            console.error('Error creating templates in bulk:', error)
+            return {
+                successCount: 0,
+                templatesAlreadyExisting: 0,
+                failureCount: 0,
+            }
+        }
+    },
+
+    onTemplateUpdate: async (jobNo, templateName, components) => {
+        const bodyData = {
+            jobNo,
+            components,
+        }
+
+        try {
+            const response = await fetch(
+                updateTemplateURL(jobNo, templateName),
+                {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(bodyData),
+                }
+            )
+
+            if (response.status === 409) {
+                const responseBody = await response.json()
+                console.error('Conflict Error:', responseBody.message)
+                return { success: false, error: responseBody.message }
+            } else if (!response.ok) {
+                const responseBody = await response.json()
+                console.error('Error:', responseBody.message)
+                return { success: false, error: responseBody.message }
+            } else {
+                const updatedTemplate = await response.json()
+
+                set((state) => ({
+                    templatesList: state.templatesList.map((template) =>
+                        template.Name === templateName
+                            ? updatedTemplate
+                            : template
+                    ),
+                }))
+
+                return { success: true, template: updatedTemplate }
+            }
+        } catch (error) {
+            console.error('Error:', error)
+            return { success: false, error: error.message }
+        }
+    },
+
+    onTemplateDuplicate: async (jobNo, templateData) => {
+        try {
+            const response = await fetch(
+                generateTemplateComponentsURL(jobNo, templateData.Name)
+            )
+
+            if (!response.ok) {
+                throw new Error('Failed to fetch components for the template')
+            }
+
+            const componentsInTemplate = await response.json()
+            const componentsData = componentsInTemplate.map((comp) => ({
+                compName: comp.Component,
+                compLabNorm: comp.LabNorm,
+            }))
+            const newTemplateName = `${templateData.Name}x`
+            const newTemplateData = {
+                jobNo,
+                WholeEstimate: false,
+                Name: newTemplateName,
+                components: componentsData,
+            }
+
+            const createResponse = await fetch(
+                generateProjectTemplatesURL(jobNo),
+                {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(newTemplateData),
+                }
+            )
+            if (createResponse.status === 409) {
+                const responseBody = await createResponse.json()
+                throw new Error(responseBody.message)
+            } else if (!createResponse.ok) {
+                throw new Error(
+                    'An error occurred while duplicating the Template.'
+                )
+            } else {
+                const newTemplate = await createResponse.json()
+
+                set((state) => ({
+                    templatesList: [...state.templatesList, newTemplate],
+                }))
+
+                return { success: true, template: newTemplate }
+            }
+        } catch (error) {
+            console.error('Error:', error)
+            return { success: false, error: error.message }
+        }
+    },
+
+    handleTemplateFileUpload: async (jobNo, event, setCreationStepMessage) => {
+        setCreationStepMessage('Reading Excel file...')
+
+        try {
+            const file = event.target.files[0]
+            const jsonData = await readExcelFile(file)
+
+            const componentsInProject = await useStore.getState().componentsList
+
+            const errorMessages = validateTemplatesFileData(jsonData)
+
+            if (errorMessages.length > 0) {
+                return { success: false, errors: errorMessages }
+            }
+
+            setCreationStepMessage('Creating Components...')
+
+            const result =
+                groupComponentsByTemplateAndReturnsComponentsToCreate(
+                    jsonData,
+                    componentsInProject
+                )
+
+            if (result.error) {
+                return { success: false, errors: [result.error] }
+            }
+
+            const { componentsToCreate, templatesMap } = result
+
+            const deduplicatedComponents =
+                deduplicateComponents(componentsToCreate)
+            const componentsCreated = await useStore
+                .getState()
+                .onComponentsBulkCreate(jobNo, deduplicatedComponents)
+
+            setCreationStepMessage('Creating Templates...')
+
+            const { successCount, templatesAlreadyExisting, failureCount } =
+                await useStore
+                    .getState()
+                    .onTemplatesBulkCreate(jobNo, templatesMap)
+
+            const hasValidEquipQty = Array.from(templatesMap.values()).some(
+                (components) =>
+                    components.some(
+                        (component) =>
+                            component.equipQty && component.equipQty > 0
+                    )
+            )
+            let equipmentCreated = { uniqueEquipmentCount: 0 }
+
+            if (hasValidEquipQty) {
+                setCreationStepMessage('Creating Equipment...')
+                equipmentCreated = await useStore
+                    .getState()
+                    .onEquipmentBulkCreate(jobNo, templatesMap)
+            }
+
+            return {
+                success: true,
+                jsonDataLength: jsonData.length,
+                successCount,
+                componentsCreated: componentsCreated.results.success,
+                componentsCreatedCount:
+                    componentsCreated.results.success.length,
+                equipmentCreatedCount: equipmentCreated.uniqueEquipmentCount,
+                templatesAlreadyExisting,
+                failureCount,
+                errors: [],
+            }
+        } catch (error) {
+            console.error('Error during file processing:', error)
+            return { success: false, errors: [error.message] }
+        } finally {
+            setCreationStepMessage('')
+        }
+    },
+
+    onEquipmentBulkCreate: async (jobNo, templatesMap) => {
+        const equipmentData = []
+
+        for (const [template, componentsArray] of templatesMap.entries()) {
+            const equipQty = isNaN(componentsArray[0].equipQty)
+                ? 0
+                : componentsArray[0].equipQty
+
+            for (let i = 1; i <= equipQty; i++) {
+                const equipRef =
+                    equipQty !== 1
+                        ? `${template}-${String(i).padStart(2, '0')}`
+                        : template
+                const existingEquipment = await useStore
+                    .getState()
+                    .equipmentList.find((equip) => equip.Ref === equipRef)
+
+                if (!existingEquipment) {
+                    equipmentData.push({
+                        JobNo: jobNo,
+                        Ref: equipRef,
+                        Description: 't.b.a',
+                        Template: template,
+                        Components: componentsArray.map((c) => c.component),
+                        Section: 't.b.a',
+                        Area: 't.b.a',
+                    })
+                }
+            }
+        }
+
+        try {
+            const response = await fetch(
+                generateProjectEquipmentBulkURL(jobNo),
+                {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(equipmentData),
+                }
+            )
+
+            const responseBody = await response.json()
+            if (!response.ok) {
+                throw new Error(responseBody.message)
+            }
+
+            set((state) => ({
+                equipmentList: [
+                    ...state.equipmentList,
+                    ...responseBody.success,
+                ],
+            }))
+
+            const { success, failures, uniqueEquipmentCount } = responseBody
+            return {
+                successCount: success.length,
+                failureCount: failures.length,
+                uniqueEquipmentCount,
+            }
+        } catch (error) {
+            console.error('Error creating Equipment in bulk:', error)
+            return {
+                successCount: 0,
+                failureCount: 0,
+            }
         }
     },
 

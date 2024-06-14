@@ -1,4 +1,8 @@
-import { componentsNamePattern, onlyFloatsPattern } from './regexPatterns'
+import {
+    componentsNamePattern,
+    onlyFloatsPattern,
+    templatesNamePattern,
+} from './regexPatterns'
 
 export const componentValidators = {
     Name: (value) =>
@@ -21,6 +25,13 @@ export const componentValidators = {
         onlyFloatsPattern.test(value) ? '' : 'must be a number.',
     TestNorm: (value) =>
         onlyFloatsPattern.test(value) ? '' : 'must be a number.',
+}
+
+export const templateValidators = {
+    Name: (value) =>
+        templatesNamePattern.test(value)
+            ? ''
+            : 'should be between 3 and 80 characters long.',
 }
 
 export const validateField = (validators, fieldName, value) => {

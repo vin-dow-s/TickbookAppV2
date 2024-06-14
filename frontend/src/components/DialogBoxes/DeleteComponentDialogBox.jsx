@@ -13,7 +13,6 @@ import {
     DialogContent,
     DialogHeader,
 } from '../../styles/dialog-boxes'
-import { fonts } from '../../styles/global-styles'
 
 //Components
 import CloseIcon from '../Common/CloseIcon'
@@ -25,8 +24,6 @@ const DeleteComponentDialogBoxHeader = styled(DialogHeader)`
     color: black;
     background: #ff4437;
     background-repeat: no-repeat;
-    cursor: move;
-    ${fonts.regular16}
 
     span {
         width: 380px;

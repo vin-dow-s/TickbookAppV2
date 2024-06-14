@@ -8,7 +8,7 @@ import { useFetch } from '../../hooks/useFetch'
 
 //Styles and constants
 import { DialogBoxContainer, DialogHeader } from '../../styles/dialog-boxes'
-import { colors, fonts } from '../../styles/global-styles'
+import { colors } from '../../styles/global-styles'
 import { StyledAGGrid } from '../../styles/tables'
 
 //Components
@@ -32,8 +32,6 @@ const ViewTableDialogBoxHeader = styled(DialogHeader)`
     background: ${colors.darkBlueBgen};
     background-repeat: no-repeat;
     color: white;
-    cursor: move;
-    ${fonts.regular16}
 `
 
 const TableWrapper = styled.div`

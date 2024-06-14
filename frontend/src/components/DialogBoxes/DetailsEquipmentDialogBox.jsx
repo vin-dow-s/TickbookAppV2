@@ -14,7 +14,7 @@ import {
     DialogContent,
     DialogHeader,
 } from '../../styles/dialog-boxes'
-import { colors, fonts } from '../../styles/global-styles'
+import { colors } from '../../styles/global-styles'
 import { columnsEquipRef } from '../../constants/dialog-box-tables-columns'
 import { StyledAGGrid } from '../../styles/tables'
 
@@ -42,8 +42,6 @@ const DetailsEquipmentDialogBoxHeader = styled(DialogHeader)`
     color: black;
     background: ${colors.lightBlueBgenTransparent};
     background-repeat: no-repeat;
-    cursor: move;
-    ${fonts.regular16}
 `
 
 const DetailsEquipmentDialogBoxContent = styled(DialogContent)`

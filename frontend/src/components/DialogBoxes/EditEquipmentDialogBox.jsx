@@ -27,7 +27,7 @@ import {
     DialogContent,
     DialogHeader,
 } from '../../styles/dialog-boxes'
-import { colors, fonts } from '../../styles/global-styles'
+import { colors } from '../../styles/global-styles'
 
 //Components
 import CloseIcon from '../Common/CloseIcon'
@@ -44,8 +44,8 @@ import FormButton from '../Common/FormButton'
 //Styled components declarations
 const EditEquipmentDialogBoxContainer = styled(DialogBoxContainer)`
     width: 90%;
-    min-width: 40em;
-    max-width: 60em;
+    min-width: 50em;
+    max-width: 70em;
     background-color: ${colors.mainFrameBackground};
 `
 
@@ -54,8 +54,6 @@ const EditDetailsEquipmentDialogBoxHeader = styled(DialogHeader)`
     color: black;
     background: ${colors.lightBlueBgenTransparent};
     background-repeat: no-repeat;
-    cursor: move;
-    ${fonts.regular16}
 `
 
 const EditEquipmentDialogBoxContent = styled(DialogContent)`

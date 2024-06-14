@@ -18,15 +18,12 @@ import {
 import CloseIcon from '../Common/CloseIcon'
 import { ButtonsContainer, FormBase } from '../Common/FormBase'
 import FormButton from '../Common/FormButton'
-import { fonts } from '../../styles/global-styles'
 
 const DeleteEquipmentDialogBoxHeader = styled(DialogHeader)`
     position: relative;
     color: black;
     background: #ff4437;
     background-repeat: no-repeat;
-    cursor: move;
-    ${fonts.regular16}
 `
 
 const DeleteEquipmentForm = styled(FormBase)`

@@ -7,28 +7,19 @@ import styled from 'styled-components'
 import useStore from '../hooks/useStore'
 
 //Utils
-import {
-    generateProjectComponentsBulkURL,
-    generateProjectEquipmentBulkURL,
-    generateProjectNonCBSComponentsWithLabnormsURL,
-    generateProjectTemplatesBulkURL,
-    generateProjectTemplatesURL,
-    generateTemplateComponentsURL,
-} from '../utils/apiConfig'
 import { onCellContextMenu } from '../utils/gridUtils'
 import {
-    getClassForField,
+    templateValidators,
     validateField,
     validateFormFields,
 } from '../utils/validationFormFields'
-import {
-    componentsNamePattern,
-    onlyFloatsPattern,
-    templatesNamePattern,
-} from '../utils/regexPatterns'
-import { readExcelFile } from '../utils/readExcelFile'
 
 //Helpers
+import {
+    displayToastMessagesOnFileUpload,
+    fetchComponentsInProject,
+    fieldClasses,
+} from '../helpers/templateHelpers'
 
 //Styles and constants
 import { Overlay } from '../styles/dialog-boxes'
@@ -59,6 +50,7 @@ import FormButton from '../components/Common/FormButton'
 import MainLoader from '../components/Common/MainLoader'
 import { overlayLoadingTemplatePurple } from '../components/Common/Loader'
 import ContextMenu from '../components/Common/ContextMenu'
+import EditTemplateDialogBox from '../components/DialogBoxes/EditTemplateDialogBox'
 
 //Styled components declarations
 const MainLoaderOverlayContainer = styled.div`
@@ -164,6 +156,23 @@ const SelectComponentMessage = styled.div`
     margin: 0;
     color: darkgray;
     text-align: center;
+
+    .file-content {
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        margin-top: 10px;
+    }
+
+    .file-loaded-indicator {
+        margin-top: 10px;
+        text-align: center;
+        font-style: italic;
+        font-size: smaller;
+        color: rgba(0, 0, 0, 0.5);
+    }
 `
 
 const SelectedComponentRow = styled.div`
@@ -299,25 +308,21 @@ const TemplatesView = () => {
     const {
         jobNo,
         templatesList,
-        equipmentList,
         isLoading,
         fetchTemplatesList,
-        fetchEquipmentList,
-        fetchCodesList,
-        onComponentCreate,
-        onComponentUpdate,
-        handleComponentFileUpload,
+        fetchTemplateComponents,
+        onTemplateCreate,
+        onTemplateDuplicate,
+        handleTemplateFileUpload,
     } = useStore((state) => ({
         jobNo: state.jobNo,
         templatesList: state.templatesList,
-        equipmentList: state.equipmentList,
         isLoading: state.isLoading,
         fetchTemplatesList: state.fetchTemplatesList,
-        fetchEquipmentList: state.fetchEquipmentList,
-        onComponentCreate: state.onComponentCreate,
-        onComponentsBulkCreate: state.onComponentsBulkCreate,
-        onComponentUpdate: state.onComponentUpdate,
-        handleComponentFileUpload: state.handleComponentFileUpload,
+        fetchTemplateComponents: state.fetchTemplateComponents,
+        onTemplateCreate: state.onTemplateCreate,
+        onTemplateDuplicate: state.onTemplateDuplicate,
+        handleTemplateFileUpload: state.handleTemplateFileUpload,
     }))
     const [
         componentsInProjectTableGridApi,
@@ -330,20 +335,22 @@ const TemplatesView = () => {
         position: { x: 0, y: 0 },
         rowData: null,
     })
+    const fieldNames = ['Name']
     const [, setIsValid] = useState({
-        EquipTemplate: null,
+        Name: null,
         Component: null,
     })
     const [fieldErrors, setFieldErrors] = useState({
-        EquipTemplate: '',
+        Name: '',
         Component: '',
     })
     const [fieldValues, setFieldValues] = useState({
         Name: '',
         WholeEstimate: false,
     })
-    const fieldNames = ['Name']
-    const [componentsInProject, setComponentsInProject] = useState([])
+    const [nonCbsComponentsInProject, setNonCbsComponentsInProject] = useState(
+        []
+    )
     const [isLoadingComponents, setIsLoadingComponents] = useState(true)
     const [selectedComponents, setSelectedComponents] = useState([])
     const [selectedTemplate, setSelectedTemplate] = useState(null)
@@ -353,8 +360,6 @@ const TemplatesView = () => {
     const selectedComponentsWrapperRef = useRef(null)
     const [isEditTemplateDialogBoxOpen, setIsEditTemplateDialogBoxOpen] =
         useState(false)
-    const [templateUpdated, setTemplateUpdated] = useState(false)
-    const [isFileUploadOpen, setIsFileUploadOpen] = useState(false)
     const [isCreatingItems, setIsCreatingItems] = useState(false)
     const [creationStepMessage, setCreationStepMessage] = useState('')
 
@@ -385,7 +390,27 @@ const TemplatesView = () => {
     const handleTemplateSelect = async (event) => {
         const selectedTemplateData = event.data
         setSelectedTemplate(selectedTemplateData)
-        getTemplateComponents(selectedTemplateData.Name)
+        fetchTemplateComponents(selectedTemplateData.Name)
+    }
+
+    const templatesTableGridOptions = {
+        defaultColDef: {
+            resizable: true,
+            sortable: true,
+            filter: true,
+        },
+        columnDefs: columnsTemplates,
+        rowSelection: 'single',
+        getRowId: (params) => params.data.Name,
+        overlayLoadingTemplate: overlayLoadingTemplatePurple,
+        onGridReady: (params) => {
+            setTemplatesTableGridApi(params.api)
+            params.api.updateGridOptions({ rowData: templatesList })
+        },
+        onRowClicked: handleTemplateSelect,
+        onCellContextMenu: (params) => {
+            onCellContextMenu(params, setContextMenuState)
+        },
     }
 
     const componentsInProjectTableGridOptions = {
@@ -399,36 +424,9 @@ const TemplatesView = () => {
         overlayLoadingTemplate: overlayLoadingTemplatePurple,
         onGridReady: (params) => {
             setComponentsInProjectTableGridApi(params.api)
-            params.api.updateGridOptions({ rowData: componentsInProject })
+            params.api.updateGridOptions({ rowData: nonCbsComponentsInProject })
         },
         onRowClicked: handleComponentSelect,
-    }
-
-    const onCellContextMenu = (params) => {
-        const event = params.event
-        event.preventDefault()
-        setContextMenuState({
-            visible: true,
-            position: { x: event.clientX, y: event.clientY },
-            rowData: params.node.data,
-        })
-    }
-
-    const templatesTableGridOptions = {
-        defaultColDef: {
-            resizable: true,
-            sortable: true,
-            filter: true,
-        },
-        columnDefs: columnsTemplates,
-        rowSelection: 'single',
-        overlayLoadingTemplate: overlayLoadingTemplatePurple,
-        onGridReady: (params) => {
-            setTemplatesTableGridApi(params.api)
-            params.api.updateGridOptions({ rowData: templatesList })
-        },
-        onRowClicked: handleTemplateSelect,
-        onCellContextMenu: onCellContextMenu,
     }
 
     const componentsInSelectedTemplateTableGridOptions = {
@@ -444,436 +442,41 @@ const TemplatesView = () => {
         overlayNoRowsTemplate: 'Select a Template.',
     }
 
-    const signalTemplateUpdate = () => {
-        setTemplateUpdated((prevState) => !prevState)
-    }
+    const updateTemplatesTable = async (updatedTemplate) => {
+        if (templatesTableGridApi) {
+            const updatedTemplates = templatesList.map((template) =>
+                template.Name === updatedTemplate.Name
+                    ? updatedTemplate
+                    : template
+            )
+            templatesTableGridApi.applyTransactionAsync({
+                update: updatedTemplates,
+            })
 
-    //Opens the loading file box
-    const toggleFileUpload = () => {
-        setIsFileUploadOpen(!isFileUploadOpen)
-    }
-
-    const groupComponentsByTempNameAndReturnsComponentsToCreate = (
-        jsonData
-    ) => {
-        let componentsToCreate = []
-        const templatesMap = new Map()
-        const equipQtyConsistencyMap = new Map()
-        const inconsistentTemplateEquipQty = new Set()
-
-        jsonData.forEach((row) => {
-            // Add to componentsToCreate if the component does not exist
             if (
-                !componentsInProject.some(
-                    (comp) =>
-                        comp.Name === row.Component &&
-                        comp.LabNorm === row.LabNorm
-                )
+                selectedTemplate &&
+                updatedTemplate.Name === selectedTemplate.Name
             ) {
-                componentsToCreate.push({ ...row, LabNorm: row.LabNorm })
+                setSelectedTemplate(updatedTemplate)
+                await refreshComponentsInSelectedTemplate(updatedTemplate.Name)
             }
-
-            // Group components by Template Name
-            const templateComponents = templatesMap.get(row.Name) || []
-            templateComponents.push({
-                component: row.Component,
-                labNorm: row.LabNorm,
-                equipQty: row.EquipQty,
-                inOrder: row.InOrder,
-                rowNum: row.__rowNum__,
-            })
-            templatesMap.set(row.Name, templateComponents)
-
-            // Check EquipQty consistency
-            if (equipQtyConsistencyMap.has(row.Name)) {
-                if (equipQtyConsistencyMap.get(row.Name) !== row.EquipQty) {
-                    inconsistentTemplateEquipQty.add(row.Name)
-                }
-            } else {
-                equipQtyConsistencyMap.set(row.Name, row.EquipQty)
-            }
-        })
-
-        return {
-            componentsToCreate,
-            templatesMap,
-            inconsistentTemplateEquipQty,
         }
     }
 
-    const deduplicateComponents = (components) => {
-        const uniqueComponents = new Map()
-
-        components.forEach((component) => {
-            const uniqueKey = `${component.Component}-${component.LabNorm}`
-
-            if (!uniqueComponents.has(uniqueKey)) {
-                uniqueComponents.set(uniqueKey, component)
-            }
-        })
-        return Array.from(uniqueComponents.values())
-    }
-
-    //CREATE Components + Templates + Equipment on file upload
-    const handleFileUpload = async (event) => {
-        setIsCreatingItems(true)
-        setCreationStepMessage('Reading Excel file...')
-
-        try {
-            const file = event.target.files[0]
-            const jsonData = await readExcelFile(file)
-
-            let missingValues = []
-            let invalidComponentFormat = []
-            let invalidLabNormFormat = []
-            let invalidTempNameFormat = []
-            let errorMessages = []
-            let componentsMap = new Map()
-
-            //Validate each row before proceeding with the creation
-            jsonData.forEach((row, index) => {
-                Object.keys(row).forEach((key) => {
-                    if (typeof row[key] === 'string') {
-                        row[key] = row[key].trim()
-                    }
-                })
-
-                const uniqueKey = `${row.Name}-${row.Component}-${row.LabNorm}`
-                if (!row.Name || !row.Component || row.LabNorm === undefined) {
-                    missingValues.push(index + 2)
-                } else if (!templatesNamePattern.test(row.Name)) {
-                    invalidTempNameFormat.push(index + 2)
-                } else if (!componentsNamePattern.test(row.Component)) {
-                    invalidComponentFormat.push(index + 2)
-                } else if (!onlyFloatsPattern.test(row.LabNorm.toString())) {
-                    invalidLabNormFormat.push(index + 2)
-                } else {
-                    componentsMap.set(uniqueKey, row)
-                }
-            })
-
-            if (missingValues.length > 0) {
-                errorMessages.push(
-                    `missing values on lines ${missingValues.join(', ')}`
-                )
-            }
-
-            if (invalidComponentFormat.length > 0) {
-                errorMessages.push(
-                    `invalid Component name on lines ${invalidComponentFormat.join(
-                        ', '
-                    )}`
-                )
-            }
-            if (invalidLabNormFormat.length > 0) {
-                errorMessages.push(
-                    `invalid LabNorm on lines ${invalidLabNormFormat.join(
-                        ', '
-                    )}`
-                )
-            }
-            if (invalidTempNameFormat.length > 0) {
-                errorMessages.push(
-                    `invalid Name on lines ${invalidTempNameFormat.join(', ')}`
-                )
-            }
-
-            if (errorMessages.length > 0) {
-                toast.error(
-                    `Creation aborted because of the following errors: ${errorMessages.join(
-                        '; '
-                    )}.`
-                )
-                setIsCreatingItems(false)
-                return
-            }
-
-            setCreationStepMessage('Creating Components...')
-
-            const {
-                componentsToCreate,
-                templatesMap,
-                inconsistentTemplateEquipQty,
-            } = groupComponentsByTempNameAndReturnsComponentsToCreate(jsonData)
-
-            if (inconsistentTemplateEquipQty.size > 0) {
-                toast.error(
-                    `Inconsistent EquipQty found in Templates: ${Array.from(
-                        inconsistentTemplateEquipQty
-                    ).join(', ')}`
-                )
-                ;(', ')
-                setIsCreatingItems(false)
-                return
-            }
-
-            const deduplicatedComponents =
-                deduplicateComponents(componentsToCreate)
-
-            const componentsCreated = await createComponentsOnFileUpload(
-                deduplicatedComponents
-            )
-
-            setCreationStepMessage('Creating Templates...')
-
-            const { successCount, templatesAlreadyExisting, failureCount } =
-                await createTemplatesOnFileUpload(templatesMap)
-
-            //Check if there are any valid EquipQty in the Excel file
-            const hasValidEquipQty = Array.from(templatesMap.values()).some(
-                (components) =>
-                    components.some(
-                        (component) =>
-                            component.equipQty && component.equipQty > 0
-                    )
-            )
-
-            let equipmentCreated = { uniqueEquipmentCount: 0 }
-
-            if (hasValidEquipQty) {
-                setCreationStepMessage('Creating Equipment...')
-
-                equipmentCreated = await createEquipmentOnFileUpload(
-                    templatesMap
-                )
-            }
-
-            displayToastMessagesOnFileUpload(
-                jsonData.length,
-                successCount,
-                componentsCreated.results.success.length,
-                equipmentCreated.uniqueEquipmentCount,
-                templatesAlreadyExisting,
-                failureCount
-            )
-
-            if (componentsCreated.results.success.length > 0) {
-                setComponentsInProject((prevComponents) => [
-                    ...prevComponents,
-                    ...componentsCreated.results.success,
-                ])
-            }
-        } catch (error) {
-            console.error('Error during file processing:', error)
-            toast.error('Error processing file.')
-        } finally {
-            setIsCreatingItems(false)
-            setIsFileUploadOpen(false)
-            setCreationStepMessage('')
-        }
-    }
-
-    //CREATE new Components
-    const createComponentsOnFileUpload = async (componentsToCreate) => {
-        const processedData = componentsToCreate.map((componentData) => {
-            const defaultComponentData = {
-                Code: 'acc',
-                Name: componentData.Component,
-                LabUplift: 0,
-                MatNorm: 0,
-                SubConCost: 0,
-                SubConNorm: 0,
-                PlantCost: 0,
-            }
-
-            if (componentData.Name) {
-                componentData.Name = componentData.Name.trim()
-            }
-
-            return {
-                ...defaultComponentData,
-                ...componentData,
-            }
-        })
-
-        try {
-            const response = await fetch(
-                generateProjectComponentsBulkURL(jobNo),
-                {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(processedData),
-                }
-            )
-
-            const responseBody = await response.json()
-            if (response.ok) {
-                /*                 onComponentsBulkCreate(responseBody.success)
-                 */ return { success: true, results: responseBody }
-            } else {
-                return {
-                    success: false,
-                    error: responseBody.message,
-                    statusCode: response.status,
-                }
-            }
-        } catch (error) {
-            console.error('Error:', error)
-            toast.error(`Error: ${error.message}`)
-            return { success: false, error: error.message }
-        }
-    }
-
-    //CREATE new Templates
-    const createTemplatesOnFileUpload = async (templatesMap) => {
-        // Prepare the data for bulk creation
-        const templatesData = Array.from(templatesMap.entries()).map(
-            ([tempName, components]) => ({
-                Name: tempName,
-                components: components.map((component) => ({
-                    compName: component.component,
-                    compLabNorm: component.labNorm,
-                    inOrder: component.inOrder,
-                })),
-                JobNo: jobNo,
-            })
+    const refreshComponentsInSelectedTemplate = async (templateName) => {
+        const updatedComponents = await fetchTemplateComponents(
+            jobNo,
+            templateName
         )
-
-        try {
-            const response = await fetch(
-                generateProjectTemplatesBulkURL(jobNo),
-                {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(templatesData),
-                }
-            )
-
-            const responseBody = await response.json()
-            if (!response.ok) {
-                throw new Error(responseBody.message)
-            }
-
-            /* if (responseBody.success.length > 0)
-                                onTemplatesBulkCreate(responseBody.success)  */
-            const { success, alreadyExists, failures } = responseBody
-            return {
-                successCount: success.length,
-                templatesAlreadyExisting: alreadyExists.length,
-                failureCount: failures.length,
-            }
-        } catch (error) {
-            console.error('Error creating templates in bulk:', error)
-            toast.error(`Error: ${error.message}`)
-            return {
-                successCount: 0,
-                templatesAlreadyExisting: 0,
-                failureCount: 0,
-            }
-        }
+        setComponentsInTemplate(updatedComponents || [])
     }
 
-    //CREATE new Equipment based on the EquipQty for each Template in the Excel file
-    const createEquipmentOnFileUpload = async (templatesMap) => {
-        const equipmentData = []
-
-        for (const [tempName, componentsArray] of templatesMap.entries()) {
-            const equipQty = isNaN(componentsArray[0].equipQty)
-                ? 0
-                : componentsArray[0].equipQty
-
-            for (let i = 1; i <= equipQty; i++) {
-                const equipRef =
-                    equipQty !== 1
-                        ? `${tempName}-${String(i).padStart(2, '0')}`
-                        : tempName
-                const existingEquipment = equipmentList.find(
-                    (equip) => equip.Ref === equipRef
-                )
-
-                if (!existingEquipment) {
-                    equipmentData.push({
-                        JobNo: jobNo,
-                        Ref: equipRef,
-                        Description: 't.b.a',
-                        Name: tempName,
-                        Components: componentsArray.map((c) => c.component),
-                        ProgID: 't.b.a',
-                        TendID: 't.b.a',
-                    })
-                }
-            }
-        }
-
-        // Sending bulk request
-        try {
-            const response = await fetch(
-                generateProjectEquipmentBulkURL(jobNo),
-                {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(equipmentData),
-                }
-            )
-
-            const responseBody = await response.json()
-            if (!response.ok) {
-                throw new Error(responseBody.message)
-            }
-
-            /*             if (responseBody.success.length > 0)
-                onEquipmentBulkCreate(responseBody.success) */
-            const { success, failures, uniqueEquipmentCount } = responseBody
-            return {
-                successCount: success.length,
-                failureCount: failures.length,
-                uniqueEquipmentCount,
-            }
-        } catch (error) {
-            console.error('Error creating Equipment in bulk:', error)
-            toast.error(`Error: ${error.message}`)
-            return {
-                successCount: 0,
-                failureCount: 0,
-            }
-        }
-    }
-
-    const displayToastMessagesOnFileUpload = (
-        numberOfLines,
-        successCount,
-        componentsCreated,
-        equipmentCreated,
-        templatesAlreadyExisting,
-        failureCount
-    ) => {
-        toast.info(`Processed ${numberOfLines} lines.`)
-        if (componentsCreated > 0)
-            toast.success(`Created ${componentsCreated} Component(s).`)
-        if (successCount > 0)
-            toast.success(`Created ${successCount} Template(s).`)
-        if (equipmentCreated > 0)
-            toast.success(`Created ${equipmentCreated} Equipment.`)
-        if (templatesAlreadyExisting > 0) {
-            toast.warning(
-                `${templatesAlreadyExisting} Template(s) already exist.`
-            )
-        }
-        if (failureCount > 0 && failureCount !== numberOfLines) {
-            toast.error(
-                `${failureCount} lines failed, please check your Excel file.`
-            )
-        }
-    }
-
-    // 2. Helper Functions
-    const validators = {
-        Name: (value) =>
-            templatesNamePattern.test(value)
-                ? ''
-                : 'should be between 3 and 80 characters long.',
-    }
-
-    const fieldClasses = {
-        Name: getClassForField('Name', fieldErrors, fieldValues),
-    }
-
-    // 3. Event handlers
+    //3. Event handlers
     const handleInputChange = (e) => {
         const { id, value } = e.target
         setFieldValues((prevValues) => ({ ...prevValues, [id]: value }))
 
-        const errorMessage = validateField(validators, id, value)
+        const errorMessage = validateField(templateValidators, id, value)
         setFieldErrors((prevErrors) => ({ ...prevErrors, [id]: errorMessage }))
     }
 
@@ -910,7 +513,7 @@ const TemplatesView = () => {
             validateFormFields(
                 e,
                 fieldNames,
-                validators,
+                templateValidators,
                 setIsValid,
                 setFieldErrors
             )
@@ -918,180 +521,84 @@ const TemplatesView = () => {
         if (!isValid) return
 
         //Data of the new Component
-        const newTemplateData = { jobNo, ...validatedFieldValues }
+        const newTemplateData = {
+            jobNo,
+            ...validatedFieldValues,
+            components: selectedComponents.map((component) => ({
+                compName: component.Name,
+                compLabNorm: component.LabNorm,
+            })),
+        }
 
-        await handleCreateTemplate(newTemplateData)
+        const result = await onTemplateCreate(jobNo, newTemplateData)
+        if (result.success) {
+            toast.success('Template successfully created!')
+        } else if (result.statusCode === 409) {
+            toast.warning('This Template already exists.')
+        } else {
+            toast.error('An error occurred while creating new Template.')
+        }
     }
 
-    //CREATE Template logic
-    const handleCreateTemplate = async (templateData, fileUpload = false) => {
-        if (!fileUpload && selectedComponents.length === 0) {
-            toast.info(
-                'Please select at least one Component to create a Template.'
+    //CREATE Components + Templates + Equipment on file upload
+    const handleFileUpload = async (event) => {
+        setIsCreatingItems(true)
+
+        const result = await handleTemplateFileUpload(
+            jobNo,
+            event,
+            setCreationStepMessage
+        )
+
+        if (result.success) {
+            displayToastMessagesOnFileUpload(
+                result.jsonDataLength,
+                result.successCount,
+                result.componentsCreatedCount,
+                result.equipmentCreatedCount,
+                result.templatesAlreadyExisting,
+                result.failureCount
             )
-            return
-        }
 
-        let componentsData
-
-        if (fileUpload) {
-            componentsData = templateData.components.map((comp) => ({
-                compName: comp.component,
-                compLabNorm: comp.labNorm,
-            }))
-        } else {
-            componentsData = selectedComponents.map((comp) => ({
-                compName: comp.Name,
-                compLabNorm: comp.LabNorm,
-            }))
-        }
-
-        const requestData = {
-            ...templateData,
-            components: componentsData,
-        }
-
-        try {
-            const response = await fetch(generateProjectTemplatesURL(jobNo), {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(requestData),
-            })
-
-            if (response.status === 409) {
-                const responseBody = await response.json()
-                console.error('Conflict Error:', responseBody.message)
-                if (!fileUpload) toast.warning('This Template already exists.')
-                return {
-                    success: false,
-                    error: responseBody.message,
-                    statusCode: response.status,
-                }
-            } else if (!response.ok) {
-                const responseBody = await response.json()
-                console.error(
-                    'Error:',
-                    'An error occurred while creating new Template.'
-                )
-                if (!fileUpload)
-                    toast.error(
-                        'An error occurred while creating new Template.'
-                    )
-                return { success: false, error: responseBody.message }
-            } else if (response.ok) {
-                const newTemplate = await response.json()
-                if (!fileUpload) toast.success('Template successfully created!')
-                /*                 onTemplateCreate(newTemplate)
-                 */ return { success: true, template: newTemplate }
+            if (componentsInProjectTableGridApi) {
+                const newComponents = result.componentsCreated
+                componentsInProjectTableGridApi.applyTransactionAsync({
+                    add: newComponents,
+                })
             }
-        } catch (error) {
-            console.error('Error:', error)
-            if (!fileUpload) toast.error(`Error: ${error.message}`)
-            return { success: false, error: error.message }
+        } else {
+            result.errors.forEach((error) => toast.error(error))
         }
+
+        setIsCreatingItems(false)
     }
 
     //DUPLICATE Template logic
     const handleDuplicateTemplate = async (templateData) => {
-        try {
-            //Fetch the components of the template to be duplicated
-            const componentsResponse = await fetch(
-                generateTemplateComponentsURL(jobNo, templateData.Name)
+        const result = await onTemplateDuplicate(jobNo, templateData)
+        if (result.success) {
+            toast.success(
+                `Template successfully duplicated! (${result.template.Name})`
             )
-            if (!componentsResponse.ok) {
-                throw new Error('Failed to fetch components for the template')
-            }
-            const componentsInTemplate = await componentsResponse.json()
-
-            //Extract component names from the response
-            const componentsData = componentsInTemplate.map((comp) => ({
-                compName: comp.Component,
-                compLabNorm: comp.LabNorm,
-            }))
-
-            //Create a new template name by appending 'x' to the existing name
-            const newTemplateName = `${templateData.Name}x`
-            const newTemplateData = {
-                jobNo,
-                WholeEstimate: false,
-                Name: newTemplateName,
-                components: componentsData,
-            }
-
-            try {
-                const response = await fetch(
-                    generateProjectTemplatesURL(jobNo),
-                    {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(newTemplateData),
-                    }
-                )
-
-                if (response.status === 409) {
-                    const responseBody = await response.json()
-                    console.error('Conflict Error:', responseBody.message)
-                    toast.warning('This Template already exists.')
-                } else if (!response.ok) {
-                    console.error(
-                        'Error:',
-                        'An error occurred while duplicating the Template.'
-                    )
-                    toast.error(
-                        'An error occurred while duplicating the Template.'
-                    )
-                } else if (response.ok) {
-                    const newTemplate = await response.json()
-                    toast.success(
-                        `Template successfully duplicated! (${newTemplate.Name})`
-                    )
-                    /*                     onTemplateCreate(newTemplate)
-                     */
-                }
-            } catch (error) {
-                console.error('Error:', error)
-                toast.error(`Error: ${error.message}`)
-            }
-        } catch (error) {
-            console.error('Error:', error)
-            toast.error(`Error: ${error.message}`)
+        } else {
+            toast.error(`${result.error}`)
         }
     }
 
-    //EDIT Template logic
     const openEditTemplateDialogBox = async (rowData) => {
-        const selectedTemplateComponents = await getTemplateComponents(
+        const selectedTemplateComponents = await fetchTemplateComponents(
             jobNo,
             rowData.Name
         )
+        setSelectedTemplate(rowData)
         setComponentsInTemplate(selectedTemplateComponents)
         setIsEditTemplateDialogBoxOpen(true)
-    }
-
-    //Displays the list of Components present in the selected Template
-    const getTemplateComponents = async (jobNo, tempName) => {
-        try {
-            const response = await fetch(
-                generateTemplateComponentsURL(jobNo, tempName)
-            )
-
-            if (!response.ok) {
-                throw new Error(`HTTP error! Status: ${response.status}`)
-            }
-
-            const componentsInTemplate = await response.json()
-
-            return componentsInTemplate
-        } catch (error) {
-            console.error('Failed to fetch template components:', error)
-            return
-        }
     }
 
     //Returns Components present in the selected Template (ordered by templates.inOrder column)
     const filteredComponents = componentsInTemplate.map((templateComponent) => {
         //Find the corresponding Component in the template
-        const component = componentsInProject.find(
+        const component = nonCbsComponentsInProject.find(
             (c) => c.ID === templateComponent.Component_ID
         )
 
@@ -1114,16 +621,32 @@ const TemplatesView = () => {
         setContextMenuState({ ...contextMenuState, visible: false })
     }
 
+    const handleCancelClick = () => {
+        setIsValid({
+            Name: null,
+            Component: null,
+        })
+        setFieldValues({
+            Name: '',
+            WholeEstimate: false,
+        })
+        setFieldErrors({})
+        setSelectedComponents([])
+    }
+
     //Moves a Component up in the list
     const moveComponentUp = (index) => {
         if (index === 0) return
         setSelectedComponents((prevComponents) => {
-            const componentsInProject = [...prevComponents]
-            ;[componentsInProject[index - 1], componentsInProject[index]] = [
-                componentsInProject[index],
-                componentsInProject[index - 1],
+            const nonCbsComponentsInProject = [...prevComponents]
+            ;[
+                nonCbsComponentsInProject[index - 1],
+                nonCbsComponentsInProject[index],
+            ] = [
+                nonCbsComponentsInProject[index],
+                nonCbsComponentsInProject[index - 1],
             ]
-            return componentsInProject
+            return nonCbsComponentsInProject
         })
     }
 
@@ -1131,77 +654,48 @@ const TemplatesView = () => {
     const moveComponentDown = (index) => {
         if (index === selectedComponents.length - 1) return
         setSelectedComponents((prevComponents) => {
-            const componentsInProject = [...prevComponents]
-            ;[componentsInProject[index], componentsInProject[index + 1]] = [
-                componentsInProject[index + 1],
-                componentsInProject[index],
+            const nonCbsComponentsInProject = [...prevComponents]
+            ;[
+                nonCbsComponentsInProject[index],
+                nonCbsComponentsInProject[index + 1],
+            ] = [
+                nonCbsComponentsInProject[index + 1],
+                nonCbsComponentsInProject[index],
             ]
-            return componentsInProject
+            return nonCbsComponentsInProject
         })
     }
 
-    // 4. useEffects
+    //4. useEffects
     useEffect(() => {
         if (jobNo && isLoadingComponents) {
             componentsInProjectTableGridApi?.showLoadingOverlay()
         } else if (componentsInProjectTableGridApi) {
             componentsInProjectTableGridApi?.hideOverlay()
         }
-    }, [
-        jobNo,
-        componentsInProject,
-        componentsInProjectTableGridApi,
-        isLoadingComponents,
-    ])
+    }, [jobNo, isLoadingComponents, componentsInProjectTableGridApi])
 
     useEffect(() => {
-        const fetchComponentsInProject = async () => {
-            try {
-                setIsLoadingComponents(true)
-                const response = await fetch(
-                    generateProjectNonCBSComponentsWithLabnormsURL(jobNo)
-                )
-                const data = await response.json()
-                setComponentsInProject(data)
-            } catch (error) {
-                console.error('Failed to fetch components:', error)
-                toast.error('Failed to load components.')
-            } finally {
-                setIsLoadingComponents(false)
-            }
-        }
-
         if (jobNo) {
-            fetchComponentsInProject()
+            fetchComponentsInProject(
+                jobNo,
+                setNonCbsComponentsInProject,
+                setIsLoadingComponents
+            )
             fetchTemplatesList(jobNo)
         }
     }, [jobNo, fetchTemplatesList])
 
-    /*     useEffect(() => {
-        const fetchComponentsInProject = async () => {
-            try {
-                setIsLoadingComponents(true)
-                const response = await fetch(
-                    generateProjectNonCBSComponentsWithLabnormsURL(jobNo)
-                )
-                const data = await response.json()
-                setComponentsInProject(data)
-            } catch (error) {
-                console.error('Failed to fetch components:', error)
-                toast.error('Failed to load components.')
-            } finally {
-                setIsLoadingComponents(false)
-            }
-        }
-    }, [jobNo]) */
-
     useEffect(() => {
-        if (componentsInProjectTableGridApi && componentsInProject.length > 0) {
+        if (
+            componentsInProjectTableGridApi &&
+            nonCbsComponentsInProject.length > 0
+        ) {
             componentsInProjectTableGridApi.updateGridOptions({
-                rowData: componentsInProject,
+                rowData: nonCbsComponentsInProject,
             })
         }
-    }, [componentsInProject, componentsInProjectTableGridApi])
+    }, [nonCbsComponentsInProject, componentsInProjectTableGridApi])
 
     useEffect(() => {
         if (isLoading) {
@@ -1213,11 +707,11 @@ const TemplatesView = () => {
 
     useEffect(() => {
         if (selectedTemplate) {
-            getTemplateComponents(jobNo, selectedTemplate.Name).then((data) =>
+            fetchTemplateComponents(jobNo, selectedTemplate.Name).then((data) =>
                 setComponentsInTemplate(data || [])
             )
         }
-    }, [jobNo, selectedTemplate, templateUpdated])
+    }, [jobNo, selectedTemplate, fetchTemplateComponents])
 
     useEffect(() => {
         setComponentAnimations((prevAnimations) => {
@@ -1351,7 +845,7 @@ const TemplatesView = () => {
                                     gridOptions={
                                         componentsInProjectTableGridOptions
                                     }
-                                    rowData={componentsInProject}
+                                    rowData={nonCbsComponentsInProject}
                                 />
                             </div>
                         </ComponentsWrapper>
@@ -1385,20 +879,21 @@ const TemplatesView = () => {
                             >
                                 {selectedComponents.length === 0 ? (
                                     <SelectComponentMessage>
-                                        Select Components to compose a Template
+                                        <div style={{ marginBottom: '10px' }}>
+                                            Select Components to compose a
+                                            Template
+                                        </div>
                                         <br />
                                         OR
                                         <br />
-                                        <div
-                                            className="file-label"
-                                            onClick={toggleFileUpload}
-                                            style={{
-                                                paddingTop: '5px',
-                                            }}
-                                        >
+                                        <div className="file-content">
                                             <FileUploadButton
                                                 onChange={handleFileUpload}
                                             />
+                                            <span className="file-loaded-indicator">
+                                                File should be
+                                                ComponentsTemplatesEquipment_Template.xlsx
+                                            </span>
                                         </div>
                                     </SelectComponentMessage>
                                 ) : (
@@ -1485,7 +980,7 @@ const TemplatesView = () => {
                     </TemplatesAndComponentsContainer>
                     <FieldsWrapper>
                         <TemplatesFieldsContainer>
-                            <TemplatesFormField className="tempNameField">
+                            <TemplatesFormField className="nameField">
                                 <LabelInputContainer>
                                     <label htmlFor="Name">Template Name</label>
                                     <input
@@ -1509,26 +1004,29 @@ const TemplatesView = () => {
                             <FormButton type="submit" variant="submit">
                                 Create
                             </FormButton>
-                            <FormButton type="reset" variant="cancel">
+                            <FormButton
+                                type="reset"
+                                variant="cancel"
+                                onClick={handleCancelClick}
+                            >
                                 Cancel
                             </FormButton>
                         </ButtonsContainer>
                     </FieldsWrapper>
                 </CreateTemplateForm>
 
-                {/*                 {/* Displays EditTemplateDialogBox when "Edit" context menu option is clicked in TemplatesTable 
+                {/* Displays EditTemplateDialogBox when "Edit" context menu option is clicked in TemplatesTable */}
                 {isEditTemplateDialogBoxOpen && (
                     <EditTemplateDialogBox
                         jobNo={jobNo}
                         componentsInTemplate={componentsInTemplate}
-                        componentsInProject={componentsInProject}
+                        nonCbsComponentsInProject={nonCbsComponentsInProject}
                         handleComponentSelect={handleComponentSelect}
                         handleComponentDeselect={handleComponentDeselect}
-                        onTemplateUpdate={onTemplateUpdate}
-                        onTemplateUpdateRefreshComponents={signalTemplateUpdate}
+                        updateTemplatesTable={updateTemplatesTable}
                         onClose={() => setIsEditTemplateDialogBoxOpen(false)}
                     />
-                )} */}
+                )}
             </TemplatesViewContainer>
         </>
     )

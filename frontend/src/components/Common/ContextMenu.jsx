@@ -8,7 +8,7 @@ const StyledContextMenu = styled.ul`
     position: fixed;
     top: ${(props) => props.$top}px;
     left: ${(props) => props.$left}px;
-    width: 180px;
+    width: 15em;
     margin-top: 7px;
     padding: 0;
     color: black;

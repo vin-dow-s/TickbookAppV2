@@ -223,6 +223,40 @@ const updateComponent = async (req, res, next) => {
     }
 }
 
+const bulkUpdateComponentsCodes = async (req, res) => {
+    const { jobNo } = req.params
+    const { componentIds, newCode } = req.body
+
+    if (!componentIds || componentIds.length === 0 || !newCode) {
+        return res.status(400).json({ message: 'Invalid request data' })
+    }
+
+    try {
+        const updatedComponents = await Component.update(
+            { Code: newCode },
+            {
+                where: {
+                    ID: {
+                        [Op.in]: componentIds,
+                    },
+                    JobNo: jobNo,
+                },
+            }
+        )
+
+        if (updatedComponents > 0) {
+            res.status(200).json(updatedComponents)
+        } else {
+            res.status(404).json({ message: 'No components found to update' })
+        }
+    } catch (error) {
+        console.error('Failed to update components:', error)
+        res.status(500).json({
+            message: 'Failed to update components due to an error',
+        })
+    }
+}
+
 const deleteComponent = async (req, res, next) => {
     const { jobNo, id } = req.params
 
@@ -319,6 +353,7 @@ module.exports = {
     createComponent,
     bulkCreateComponents,
     updateComponent,
+    bulkUpdateComponentsCodes,
     deleteComponent,
     isComponentUsedInTemplate,
 }

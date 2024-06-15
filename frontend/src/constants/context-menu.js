@@ -30,6 +30,11 @@ export const contextMenuOptions = {
             icon: '/delete-bin-line.svg',
             action: 'deleteComponent',
         },
+        {
+            label: 'Update Multiple Codes',
+            icon: '/edit-line.svg',
+            action: 'updateMultipleCodes',
+        },
     ],
     templatesTable: [
         {

@@ -287,6 +287,7 @@ const ComponentsView = () => {
         fetchCodesList,
         onComponentCreate,
         onComponentUpdate,
+        onComponentsCodesBulkUpdate,
         handleComponentFileUpload,
     } = useStore((state) => ({
         jobNo: state.jobNo,
@@ -298,6 +299,7 @@ const ComponentsView = () => {
         onComponentCreate: state.onComponentCreate,
         onComponentsBulkCreate: state.onComponentsBulkCreate,
         onComponentUpdate: state.onComponentUpdate,
+        onComponentsCodesBulkUpdate: state.onComponentsCodesBulkUpdate,
         handleComponentFileUpload: state.handleComponentFileUpload,
     }))
     const [componentsTableGridApi, setComponentsTableGridApi] = useState(null)
@@ -313,6 +315,7 @@ const ComponentsView = () => {
     const [creationStepMessage, setCreationStepMessage] = useState('')
     const [currentComponentData, setCurrentComponentData] = useState(null)
     const [isEditable, setIsEditable] = useState(true)
+    const [updateMultiple, setUpdateMultiple] = useState(false)
     const [isDeleteComponentDialogBoxOpen, setIsDeleteComponentDialogBoxOpen] =
         useState(false)
     const [restoreTableFocus, setRestoreTableFocus] = useState(null)
@@ -477,24 +480,27 @@ const ComponentsView = () => {
     const handleFormSubmit = async (e) => {
         e.preventDefault()
 
-        if (
-            !validateComponentFields(
-                e,
-                fieldNames,
-                componentValidators,
-                setIsValid,
-                setFieldErrors,
-                fieldValues
+        if (updateMultiple) handleComponentsCodesBulkUpdate()
+        else {
+            if (
+                !validateComponentFields(
+                    e,
+                    fieldNames,
+                    componentValidators,
+                    setIsValid,
+                    setFieldErrors,
+                    fieldValues
+                )
             )
-        )
-            return
+                return
 
-        const normalizedValues = normalizeNumericFields(fieldValues)
+            const normalizedValues = normalizeNumericFields(fieldValues)
 
-        if (selectedComponent) {
-            handleComponentUpdate(selectedComponent.ID, normalizedValues)
-        } else {
-            handleComponentCreate(normalizedValues)
+            if (selectedComponent) {
+                handleComponentUpdate(selectedComponent.ID, normalizedValues)
+            } else {
+                handleComponentCreate(normalizedValues)
+            }
         }
     }
 
@@ -519,6 +525,39 @@ const ComponentsView = () => {
             toast.error('Error updating the Component.')
             return false
         }
+    }
+
+    const handleComponentsCodesBulkUpdate = () => {
+        const selectedNodes = componentsTableGridApi.getSelectedNodes()
+        const componentIds = selectedNodes.map((node) => node.data.ID)
+
+        const newCode = fieldValues.Code
+
+        if (componentIds.length === 0) {
+            toast.warning('No components selected.')
+            return
+        }
+
+        onComponentsCodesBulkUpdate(jobNo, componentIds, newCode)
+            .then(() => {
+                toast.success(
+                    `${componentIds.length} Components successfully updated.`
+                )
+                componentsTableGridApi.deselectAll()
+                setFieldValues(DEFAULT_VALUES)
+                setUpdateMultiple(false)
+
+                setRestoreTableFocus({
+                    rowIndex: componentsList.findIndex(
+                        (c) => c.ID === componentIds[0]
+                    ),
+                    column: 'Name',
+                })
+            })
+            .catch((error) => {
+                toast.error('Error updating components.')
+                console.error('Error updating components:', error)
+            })
     }
 
     const handleComponentCreate = async (componentData) => {
@@ -611,12 +650,22 @@ const ComponentsView = () => {
         setFieldErrors({})
         setSelectedComponent(null)
         setIsUsedInTemplate(false)
+        setUpdateMultiple(false)
     }
 
     const handleContextMenuOptionClick = async (option, rowData) => {
         switch (option.action) {
             case 'editComponent':
                 handleEditClick(rowData)
+                break
+            case 'updateMultipleCodes':
+                setUpdateMultiple((prev) => !prev)
+                setIsEditable(true)
+
+                setFieldValues((prevValues) => ({
+                    ...prevValues,
+                    Code: rowData.Code,
+                }))
                 break
             case 'deleteComponent':
                 if (
@@ -686,6 +735,14 @@ const ComponentsView = () => {
         }
     }, [restoreTableFocus, componentsTableGridApi])
 
+    useEffect(() => {
+        if (componentsTableGridApi) {
+            componentsTableGridApi.updateGridOptions({
+                rowSelection: updateMultiple ? 'multiple' : 'single',
+            })
+        }
+    }, [updateMultiple, componentsTableGridApi])
+
     return (
         <>
             {isCreatingItems && (
@@ -743,8 +800,10 @@ const ComponentsView = () => {
                     <CreateComponentContainer>
                         <div className="purple-label">
                             {' '}
-                            {!selectedComponent
+                            {!selectedComponent && !updateMultiple
                                 ? 'Create a new Component'
+                                : updateMultiple
+                                ? 'Update Multiple Components Codes'
                                 : 'Edit Component'}
                         </div>
                         <CreateComponentForm onSubmit={handleFormSubmit}>
@@ -824,7 +883,8 @@ const ComponentsView = () => {
                                                     maxLength={180}
                                                     disabled={
                                                         !isEditable ||
-                                                        isUsedInTemplate
+                                                        isUsedInTemplate ||
+                                                        updateMultiple
                                                     }
                                                 />
                                             </LabelInputContainer>
@@ -856,7 +916,8 @@ const ComponentsView = () => {
                                                     disabled={
                                                         fieldValues.Code ===
                                                             'ttl' ||
-                                                        isUsedInTemplate
+                                                        isUsedInTemplate ||
+                                                        updateMultiple
                                                     }
                                                 />
                                             </LabelInputContainer>
@@ -892,7 +953,8 @@ const ComponentsView = () => {
                                                     disabled={
                                                         fieldValues.Code ===
                                                             'ttl' ||
-                                                        isUsedInTemplate
+                                                        isUsedInTemplate ||
+                                                        updateMultiple
                                                     }
                                                 />
                                             </LabelInputContainer>
@@ -924,7 +986,8 @@ const ComponentsView = () => {
                                                     disabled={
                                                         fieldValues.Code ===
                                                             'ttl' ||
-                                                        isUsedInTemplate
+                                                        isUsedInTemplate ||
+                                                        updateMultiple
                                                     }
                                                 />
                                             </LabelInputContainer>
@@ -958,7 +1021,8 @@ const ComponentsView = () => {
                                                     disabled={
                                                         fieldValues.Code ===
                                                             'ttl' ||
-                                                        isUsedInTemplate
+                                                        isUsedInTemplate ||
+                                                        updateMultiple
                                                     }
                                                 />
                                             </LabelInputContainer>
@@ -992,7 +1056,8 @@ const ComponentsView = () => {
                                                     disabled={
                                                         fieldValues.Code ===
                                                             'ttl' ||
-                                                        isUsedInTemplate
+                                                        isUsedInTemplate ||
+                                                        updateMultiple
                                                     }
                                                 />
                                             </LabelInputContainer>
@@ -1026,7 +1091,8 @@ const ComponentsView = () => {
                                                     disabled={
                                                         fieldValues.Code ===
                                                             'ttl' ||
-                                                        isUsedInTemplate
+                                                        isUsedInTemplate ||
+                                                        updateMultiple
                                                     }
                                                 />
                                             </LabelInputContainer>
@@ -1072,7 +1138,8 @@ const ComponentsView = () => {
                                                 disabled={
                                                     fieldValues.Code !==
                                                         'cbs' ||
-                                                    selectedComponent
+                                                    selectedComponent ||
+                                                    updateMultiple
                                                 }
                                             />
                                         </LabelInputContainer>
@@ -1106,7 +1173,8 @@ const ComponentsView = () => {
                                                 disabled={
                                                     fieldValues.Code !==
                                                         'cbs' ||
-                                                    selectedComponent
+                                                    selectedComponent ||
+                                                    updateMultiple
                                                 }
                                             />
                                         </LabelInputContainer>
@@ -1129,7 +1197,9 @@ const ComponentsView = () => {
                             </FieldsWrapper>
                             <ButtonsContainer>
                                 <FormButton type="submit" variant="submit">
-                                    {selectedComponent ? 'Update' : 'Create'}
+                                    {selectedComponent || updateMultiple
+                                        ? 'Update'
+                                        : 'Create'}
                                 </FormButton>
                                 <FormButton
                                     type="reset"

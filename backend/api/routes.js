@@ -41,6 +41,10 @@ router.get(
 router.post('/:jobNo/components', componentController.createComponent)
 router.post('/:jobNo/components/bulk', componentController.bulkCreateComponents)
 router.put('/:jobNo/components/:id', componentController.updateComponent)
+router.put(
+    '/:jobNo/components/bulk/update',
+    componentController.bulkUpdateComponentsCodes
+)
 router.delete('/:jobNo/components/:id', componentController.deleteComponent)
 
 //Templates

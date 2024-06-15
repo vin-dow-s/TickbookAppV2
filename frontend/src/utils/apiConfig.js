@@ -77,6 +77,11 @@ export const generateProjectComponentsBulkURL = (jobNo) =>
 export const updateComponentURL = (jobNo, id) =>
     jobNo ? `${BASE_URL}/${encodeURIComponent(jobNo)}/components/${id}` : null
 
+export const bulkUpdateComponentsURL = (jobNo) =>
+    jobNo
+        ? `${BASE_URL}/${encodeURIComponent(jobNo)}/components/bulk/update`
+        : null
+
 export const deleteComponentURL = (jobNo, id) =>
     jobNo ? `${BASE_URL}/${encodeURIComponent(jobNo)}/components/${id}` : null
 

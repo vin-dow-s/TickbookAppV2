@@ -18,6 +18,7 @@ import {
     generateTemplateComponentsURL,
     generateProjectEquipmentBulkURL,
     updateTemplateURL,
+    bulkUpdateComponentsURL,
 } from '../utils/apiConfig'
 import { readExcelFile } from '../utils/readExcelFile'
 import {
@@ -317,6 +318,30 @@ const useStore = create((set) => ({
         } catch (error) {
             console.error('Error:', error)
             return null
+        }
+    },
+
+    onComponentsCodesBulkUpdate: async (jobNo, componentIds, newCode) => {
+        try {
+            const response = await fetch(bulkUpdateComponentsURL(jobNo), {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ componentIds, newCode }),
+            })
+
+            if (response.ok) {
+                set((state) => ({
+                    componentsList: state.componentsList.map((component) =>
+                        componentIds.includes(component.ID)
+                            ? { ...component, Code: newCode }
+                            : component
+                    ),
+                }))
+            } else {
+                throw new Error('Failed to update components')
+            }
+        } catch (error) {
+            console.error('Error updating components:', error)
         }
     },
 

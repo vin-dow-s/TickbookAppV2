@@ -661,11 +661,6 @@ const ComponentsView = () => {
             case 'updateMultipleCodes':
                 setUpdateMultiple((prev) => !prev)
                 setIsEditable(true)
-
-                setFieldValues((prevValues) => ({
-                    ...prevValues,
-                    Code: rowData.Code,
-                }))
                 break
             case 'deleteComponent':
                 if (
@@ -741,6 +736,8 @@ const ComponentsView = () => {
                 rowSelection: updateMultiple ? 'multiple' : 'single',
             })
         }
+        if (updateMultiple)
+            toast.info('Select rows with Ctrl or Shift then use the form.')
     }, [updateMultiple, componentsTableGridApi])
 
     return (
@@ -873,7 +870,8 @@ const ComponentsView = () => {
                                                     value={fieldValues.Name}
                                                     onChange={handleInputChange}
                                                     className={
-                                                        isUsedInTemplate
+                                                        isUsedInTemplate ||
+                                                        updateMultiple
                                                             ? 'disabled-field'
                                                             : fieldClassesComputed.Name
                                                     }
@@ -906,7 +904,8 @@ const ComponentsView = () => {
                                                     className={
                                                         fieldValues.Code ===
                                                             'ttl' ||
-                                                        isUsedInTemplate
+                                                        isUsedInTemplate ||
+                                                        updateMultiple
                                                             ? 'disabled'
                                                             : fieldClassesComputed.LabNorm
                                                     }
@@ -943,7 +942,8 @@ const ComponentsView = () => {
                                                     className={
                                                         fieldValues.Code ===
                                                             'ttl' ||
-                                                        isUsedInTemplate
+                                                        isUsedInTemplate ||
+                                                        updateMultiple
                                                             ? 'disabled'
                                                             : fieldClassesComputed.LabUplift
                                                     }
@@ -976,7 +976,8 @@ const ComponentsView = () => {
                                                     className={
                                                         fieldValues.Code ===
                                                             'ttl' ||
-                                                        isUsedInTemplate
+                                                        isUsedInTemplate ||
+                                                        updateMultiple
                                                             ? 'disabled'
                                                             : fieldClassesComputed.MatNorm
                                                     }
@@ -1011,7 +1012,8 @@ const ComponentsView = () => {
                                                     className={
                                                         fieldValues.Code ===
                                                             'ttl' ||
-                                                        isUsedInTemplate
+                                                        isUsedInTemplate ||
+                                                        updateMultiple
                                                             ? 'disabled'
                                                             : fieldClassesComputed.SubConCost
                                                     }
@@ -1046,7 +1048,8 @@ const ComponentsView = () => {
                                                     className={
                                                         fieldValues.Code ===
                                                             'ttl' ||
-                                                        isUsedInTemplate
+                                                        isUsedInTemplate ||
+                                                        updateMultiple
                                                             ? 'disabled'
                                                             : fieldClassesComputed.SubConNorm
                                                     }
@@ -1081,7 +1084,8 @@ const ComponentsView = () => {
                                                     className={
                                                         fieldValues.Code ===
                                                             'ttl' ||
-                                                        isUsedInTemplate
+                                                        isUsedInTemplate ||
+                                                        updateMultiple
                                                             ? 'disabled'
                                                             : fieldClassesComputed.PlantCost
                                                     }

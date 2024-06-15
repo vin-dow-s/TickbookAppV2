@@ -8,15 +8,16 @@ export const contextMenuOptions = {
             icon: '/edit-line.svg',
             action: 'editEquipment',
         },
-        {
-            label: 'Add CC',
-            icon: '/add-line.svg',
-            action: 'addCC',
-        },
+
         {
             label: 'Delete Equipment',
             icon: '/delete-bin-line.svg',
             action: 'deleteEquipment',
+        },
+        {
+            label: 'Add CC',
+            icon: '/add-line.svg',
+            action: 'addCC',
         },
     ],
     componentsTable: [
@@ -32,7 +33,7 @@ export const contextMenuOptions = {
         },
         {
             label: 'Update Multiple Codes',
-            icon: '/edit-line.svg',
+            icon: '/checkbox-multiple-line.svg',
             action: 'updateMultipleCodes',
         },
     ],

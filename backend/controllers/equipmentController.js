@@ -552,11 +552,17 @@ const createEquipment = async (req, res, next) => {
     const { equipmentCreatedOnFileUpload, CurrentRevision } = req.body
 
     try {
-        const { Ref, Description, Section, Area, Template } = req.body
+        const {
+            Ref,
+            Description,
+            Section,
+            Area,
+            Template: templateName,
+        } = req.body
 
         const trimmedDescription = Description.trim()
 
-        if (!Ref || !trimmedDescription || !Section || !Area || !Template) {
+        if (!Ref || !trimmedDescription || !Section || !Area || !templateName) {
             return res.status(400).json({ message: 'All fields are required.' })
         }
 
@@ -579,7 +585,7 @@ const createEquipment = async (req, res, next) => {
 
         //Fetch the list of components for the selected Template
         const templateData = await Template.findAll({
-            where: { JobNo: jobNo, Name: Template },
+            where: { JobNo: jobNo, Name: templateName },
             include: [
                 {
                     model: Component,
@@ -623,7 +629,7 @@ const createEquipment = async (req, res, next) => {
                 JobNo: jobNo,
                 Ref: Ref,
                 Description: trimmedDescription,
-                Template: Template,
+                Template: templateName,
                 Section: Section,
                 Area: Area,
                 Component: name,
@@ -669,7 +675,10 @@ const createEquipment = async (req, res, next) => {
 
         res.status(201).json(newEquipments)
     } catch (error) {
-        if (error.name === 'SequelizeUniqueConstraintError') {
+        if (
+            error.name === 'SequelizeUniqueConstraintError' ||
+            error.message === 'This Equipment already exists.'
+        ) {
             return res
                 .status(409)
                 .json({ message: 'This Equipment already exists.' })

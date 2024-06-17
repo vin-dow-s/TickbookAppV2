@@ -19,6 +19,11 @@ export const ButtonsContainer = styled.div`
     justify-content: center;
     padding: 15px;
     gap: 15px;
+    margin-top: auto;
+
+    @media screen and (max-width: 800px) {
+        margin-top: 10px;
+    }
 `
 
 export const FormField = styled.div`

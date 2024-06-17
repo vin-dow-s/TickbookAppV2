@@ -70,7 +70,7 @@ const DashboardViewContainer = styled.div`
 const MainTableContainer = styled.div`
     height: calc(100% - 500px);
     position: relative;
-    flex: 1.6;
+    flex: 1.3;
     background-color: white;
     color: black;
     border-radius: 10px;
@@ -110,8 +110,8 @@ const ViewTableOptionsContainer = styled.div`
     justify-content: space-around;
     background-color: white;
     color: gray;
-    padding-top: 20px;
-    padding-bottom: 10px;
+    padding-top: 25px;
+    padding-bottom: 15px;
 `
 
 const LabelValueContainer = styled.div`

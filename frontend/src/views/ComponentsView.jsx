@@ -9,10 +9,10 @@ import useStore from '../hooks/useStore'
 //Utils
 import { isComponentUsedInTemplateURL } from '../utils/apiConfig'
 import { onCellContextMenu } from '../utils/gridUtils'
-import { componentValidators } from '../utils/validationFormFields'
 
 //Helpers
 import {
+    componentValidators,
     createCbsComponents,
     fieldClasses,
     isNameUsedByCbsComponent,
@@ -57,6 +57,17 @@ const MainLoaderOverlayContainer = styled.div`
     background: rgba(0, 0, 0, 0.5);
 `
 
+const CreationStepMessageContainer = styled.div`
+    position: absolute;
+    top: 58%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: white;
+    font-size: 1.2em;
+    z-index: 50001;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+`
+
 const ComponentsViewContainer = styled.div`
     display: flex;
     flex-direction: column;
@@ -69,6 +80,16 @@ const ComponentsViewContainer = styled.div`
         font-size: small;
         font-style: italic;
     }
+`
+
+const ComponentsDataContainer = styled.div`
+    display: flex;
+    flex-direction: column;
+    flex: 1.5;
+    background-color: white;
+    color: black;
+    border-radius: 10px;
+    padding: 10px;
 `
 
 const LabelAndInputContainer = styled.div`
@@ -85,37 +106,37 @@ const CreateComponentAndFileUploadContainer = styled.div`
     background-color: #f7f6f3;
     color: black;
     border-radius: 10px;
+    flex-wrap: wrap;
+
+    @media screen and (max-width: 1017px) {
+        flex-direction: column;
+        > div {
+            flex: 1;
+        }
+    }
 `
 
 const CreateComponentContainer = styled.div`
+    display: flex;
+    flex-direction: column;
     flex: 0.8;
+    padding: 10px;
     background-color: white;
     color: black;
     border-radius: 10px;
-    padding: 10px;
-`
 
-const CreationStepMessageContainer = styled.div`
-    position: absolute;
-    top: 58%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    color: white;
-    font-size: 1.2em;
-    z-index: 50001;
-    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
-`
-
-const ComponentsDataContainer = styled.div`
-    flex: 1.5;
-    background-color: white;
-    color: black;
-    border-radius: 10px;
-    padding: 10px;
+    @media screen and (max-width: 800px) {
+        flex: 1;
+        width: 100%;
+    }
 `
 
 const CreateComponentForm = styled(FormBase)`
     position: relative;
+    height: 100%;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 20px;
 
     @media screen and (max-width: 1500px), screen and (max-height: 700px) {
         font-size: smaller;
@@ -125,11 +146,19 @@ const CreateComponentForm = styled(FormBase)`
 const FieldsWrapper = styled.div`
     display: flex;
     flex-direction: row;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 10px;
+
+    @media screen and (max-width: 800px) {
+        flex-direction: column;
+    }
 `
 
 const CreateComponentFormFieldsContainer = styled(FieldsContainer)`
-    flex-direction: column;
+    display: flex;
     flex: 1;
+    flex-wrap: wrap;
     gap: 10px;
 
     .disabled {
@@ -137,83 +166,13 @@ const CreateComponentFormFieldsContainer = styled(FieldsContainer)`
     }
 `
 
-const CreateComponentExtraFieldsContainer = styled(FieldsContainer)`
-    position: relative;
-    flex-direction: column;
-    align-items: center;
-    padding: 10px;
-    margin-left: 25px;
-    gap: 0;
-    border-radius: 10px;
-    border: 1px solid ${colors.tablesBorders};
-    font-size: smaller;
-
-    .cableFields {
-        flex-direction: column;
-        margin-top: 0;
-        font-size: smaller;
-
-        input {
-            font-size: small;
-            margin-left: 0;
-        }
-
-        > label {
-            width: max-content;
-            margin-right: 0;
-            padding-bottom: 3px;
-        }
-    }
-
-    .createComponentForm-label {
-        position: absolute;
-        top: -8px;
-        padding: 0 5px;
-        background-color: white;
-        color: ${colors.purpleBgenDarker};
-        font-style: italic;
-
-        &.inactive {
-            color: grey;
-            cursor: default;
-        }
-    }
-
-    .createComponentForm-label--bottom {
-        position: absolute;
-        bottom: -6px;
-        padding: 0 5px;
-        background-color: white;
-        color: ${colors.purpleBgenDarker};
-        font-style: italic;
-
-        &.inactive {
-            color: grey;
-            cursor: default;
-        }
-    }
-`
-
-const FirstRowContainer = styled.div`
-    display: flex;
-    flex-direction: row;
-    justify-content: space-around;
-`
-
-const SecondRowContainer = styled.div`
-    display: flex;
-    justify-content: space-between;
-    margin-top: 25px;
-`
-
 const CreateComponentFormField = styled(FormField)`
-    position: relative;
+    display: flex;
     flex-direction: column;
     align-items: flex-start;
 
     label {
-        display: flex;
-        flex-direction: row;
+        margin-bottom: 5px;
     }
 
     input {
@@ -247,6 +206,92 @@ const CreateComponentFormField = styled(FormField)`
     }
 `
 
+const FirstRowContainer = styled.div`
+    display: flex;
+    flex-direction: row;
+    justify-content: space-around;
+    width: 100%;
+`
+
+const SecondRowContainer = styled.div`
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+    margin-top: 25px;
+`
+
+const CreateComponentExtraFieldsContainer = styled(FieldsContainer)`
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 10px;
+    border-radius: 10px;
+    border: 1px solid ${colors.tablesBorders};
+    font-size: smaller;
+
+    @media screen and (max-width: 1259px) {
+        display: flex;
+        flex-direction: row;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: space-evenly;
+        width: 100%;
+    }
+
+    .cableFields {
+        display: flex;
+        flex-direction: column;
+
+        input {
+            width: 30px;
+            margin-left: 0;
+        }
+
+        > label {
+            width: max-content;
+        }
+
+        @media screen and (max-width: 1259px) {
+            flex-direction: row;
+            gap: 10px;
+            width: 100%;
+        }
+    }
+
+    .createComponentForm-label {
+        position: absolute;
+        top: -8px;
+        padding: 0 5px;
+        background-color: white;
+        color: ${colors.purpleBgenDarker};
+        font-style: italic;
+
+        &.inactive {
+            color: grey;
+            cursor: default;
+        }
+    }
+
+    .createComponentForm-label--bottom {
+        position: absolute;
+        bottom: -6px;
+        padding: 0 5px;
+        background-color: white;
+        color: ${colors.purpleBgenDarker};
+        font-style: italic;
+
+        &.inactive {
+            color: grey;
+            cursor: default;
+        }
+    }
+
+    .disabled {
+        color: ${colors.tablesBorders};
+    }
+`
+
 const FileUploadContainer = styled.div`
     flex: 0.2;
     padding: 10px;
@@ -261,6 +306,10 @@ const FileUploadContainer = styled.div`
         flex-direction: column;
         justify-content: center;
         align-items: center;
+
+        @media screen and (max-width: 1017px) {
+            height: auto;
+        }
     }
 
     .file-loaded-indicator {
@@ -269,10 +318,6 @@ const FileUploadContainer = styled.div`
         font-style: italic;
         font-size: smaller;
         color: rgba(0, 0, 0, 0.5);
-    }
-
-    @media screen and (max-width: 1120px), screen and (max-height: 700px) {
-        font-size: smaller;
     }
 `
 
@@ -859,9 +904,7 @@ const ComponentsView = () => {
                                             </span>
                                         </CreateComponentFormField>
                                         <CreateComponentFormField className="nameField">
-                                            <LabelInputContainer
-                                                style={{ width: '100%' }}
-                                            >
+                                            <LabelInputContainer>
                                                 <label htmlFor="Name">
                                                     Name
                                                 </label>

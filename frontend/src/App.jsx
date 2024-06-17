@@ -19,6 +19,7 @@ import CodesView from './views/CodesView'
 import ComponentsView from './views/ComponentsView'
 import { useEffect } from 'react'
 import TemplatesView from './views/TemplatesView'
+import EquipmentView from './views/EquipmentView'
 
 const AppContainer = styled.div`
     width: 100svw;
@@ -144,7 +145,10 @@ const App = () => {
                                 path="/templates"
                                 element={<TemplatesView />}
                             />
-                            <Route path="/equipment" />
+                            <Route
+                                path="/equipment"
+                                element={<EquipmentView />}
+                            />
                             <Route path="/cable-schedules" />
                             <Route path="/multi-prog" />
                             <Route path="/revisions" />

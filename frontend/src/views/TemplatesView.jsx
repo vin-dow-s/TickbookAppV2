@@ -9,7 +9,6 @@ import useStore from '../hooks/useStore'
 //Utils
 import { onCellContextMenu } from '../utils/gridUtils'
 import {
-    templateValidators,
     validateField,
     validateFormFields,
 } from '../utils/validationFormFields'
@@ -19,6 +18,7 @@ import {
     displayToastMessagesOnFileUpload,
     fetchComponentsInProject,
     fieldClasses,
+    templateValidators,
 } from '../helpers/templateHelpers'
 
 //Styles and constants
@@ -66,6 +66,17 @@ const MainLoaderOverlayContainer = styled.div`
     background: rgba(0, 0, 0, 0.5);
 `
 
+const CreationStepMessageContainer = styled.div`
+    position: absolute;
+    top: 58%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: white;
+    font-size: 1.2em;
+    z-index: 50001;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+`
+
 const TemplatesViewContainer = styled.div`
     display: flex;
     flex-direction: column;
@@ -80,40 +91,22 @@ const TemplatesViewContainer = styled.div`
     }
 `
 
-const CreationStepMessageContainer = styled.div`
-    position: absolute;
-    top: 58%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    color: white;
-    font-size: 1.2em;
-    z-index: 50001;
-    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
-`
-
-const TemplatesAndComponentsContainer = styled.div`
-    position: relative;
+const ShowTemplatesContainer = styled.div`
     display: flex;
     flex-direction: row;
     flex: 1;
-    gap: 25px;
-    width: 100%;
-
-    label {
-        width: 300px;
-        top: 45px;
-        font-size: small;
-        font-style: italic;
-        color: ${colors.purpleBgenDarker};
-    }
-`
-
-const CreateTemplateForm = styled(FormBase)`
-    flex: 1.5;
+    gap: 10px;
+    padding: 10px;
     background-color: white;
     color: black;
     border-radius: 10px;
-    padding: 10px;
+`
+
+const TemplatesWrapper = styled.div`
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    height: 100%;
 `
 
 const ComponentsInTemplateWrapper = styled.div`
@@ -123,10 +116,34 @@ const ComponentsInTemplateWrapper = styled.div`
     height: 160px;
 `
 
-const FieldsWrapper = styled.div`
+const CreateTemplateForm = styled(FormBase)`
+    flex: 1.5;
+    background-color: white;
+    color: black;
+    border-radius: 10px;
+    padding: 10px;
+
+    @media screen and (max-width: 1500px), screen and (max-height: 700px) {
+        font-size: smaller;
+    }
+`
+
+const TemplatesAndComponentsContainer = styled.div`
+    position: relative;
     display: flex;
     flex-direction: row;
-    justify-content: center;
+    flex: 0.7;
+    width: 100%;
+    gap: 25px;
+    margin-bottom: 25px;
+
+    label {
+        width: 300px;
+        top: 45px;
+        font-size: small;
+        font-style: italic;
+        color: ${colors.purpleBgenDarker};
+    }
 `
 
 const ComponentsWrapper = styled.div`
@@ -145,6 +162,13 @@ const SelectedComponentsWrapper = styled.div`
     overflow-x: hidden;
     border: 1px dashed ${colors.tablesBorders};
     scroll-behavior: smooth;
+`
+
+const FieldsWrapper = styled.div`
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    margin-bottom: 25px;
 `
 
 const SelectComponentMessage = styled.div`
@@ -267,13 +291,6 @@ const TemplatesFormField = styled(FormField)`
     }
 `
 
-const TemplatesWrapper = styled.div`
-    display: flex;
-    flex-direction: column;
-    width: 100%;
-    height: 100%;
-`
-
 const ClearAllButton = styled.button`
     background-color: white;
     color: ${colors.purpleBgen};
@@ -290,17 +307,6 @@ const ClearAllButton = styled.button`
         color: #e74c3c;
         border-color: #e74c3c;
     }
-`
-
-const ShowTemplatesContainer = styled.div`
-    display: flex;
-    flex-direction: row;
-    flex: 1;
-    gap: 10px;
-    padding: 10px;
-    background-color: white;
-    color: black;
-    border-radius: 10px;
 `
 
 const TemplatesView = () => {

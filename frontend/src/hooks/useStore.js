@@ -19,6 +19,7 @@ import {
     generateProjectEquipmentBulkURL,
     updateTemplateURL,
     bulkUpdateComponentsURL,
+    bulkUpdateEquipmentURL,
 } from '../utils/apiConfig'
 import { readExcelFile } from '../utils/readExcelFile'
 import {
@@ -26,6 +27,7 @@ import {
     groupComponentsByTemplateAndReturnsComponentsToCreate,
     validateTemplatesFileData,
 } from '../helpers/templateHelpers'
+import { validateEquipmentFileData } from '../helpers/equipmentHelpers'
 
 const useStore = create((set) => ({
     jobNo: '',
@@ -435,9 +437,11 @@ const useStore = create((set) => ({
             }
 
             const newTemplate = await response.json()
+
             set((state) => ({
                 templatesList: [...state.templatesList, newTemplate],
             }))
+
             return { success: true, template: newTemplate }
         } catch (error) {
             console.error('Error:', error)
@@ -648,7 +652,7 @@ const useStore = create((set) => ({
                 setCreationStepMessage('Creating Equipment...')
                 equipmentCreated = await useStore
                     .getState()
-                    .onEquipmentBulkCreate(jobNo, templatesMap)
+                    .onEquipmentBulkCreateOnTemplateUpload(jobNo, templatesMap)
             }
 
             return {
@@ -671,7 +675,35 @@ const useStore = create((set) => ({
         }
     },
 
-    onEquipmentBulkCreate: async (jobNo, templatesMap) => {
+    onEquipmentCreate: async (jobNo, equipmentData) => {
+        try {
+            const response = await fetch(generateProjectEquipmentURL(jobNo), {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(equipmentData),
+            })
+
+            const responseBody = await response.json()
+            if (!response.ok) {
+                const error = new Error(responseBody.message)
+                error.statusCode = response.status
+                throw error
+            }
+
+            set((state) => ({
+                equipmentList: [...state.equipmentList, responseBody],
+            }))
+
+            return { success: true, equipment: responseBody }
+        } catch (error) {
+            if (error.statusCode === 409) {
+                return { success: false, error: error.message, type: 'exists' }
+            }
+            return { success: false, error: error.message, type: 'general' }
+        }
+    },
+
+    onEquipmentBulkCreateOnTemplateUpload: async (jobNo, templatesMap) => {
         const equipmentData = []
 
         for (const [template, componentsArray] of templatesMap.entries()) {
@@ -735,6 +767,415 @@ const useStore = create((set) => ({
             return {
                 successCount: 0,
                 failureCount: 0,
+            }
+        }
+    },
+
+    onEquipmentBulkCreateOnEquipmentUpload: async (
+        jobNo,
+        jsonData,
+        equipmentList
+    ) => {
+        let successCount = 0
+        let equipmentAlreadyExisting = []
+        let failureCount = 0
+        let equipmentData = []
+
+        const existingEquipmentRefs = new Set(equipmentList.map((e) => e.Ref))
+
+        jsonData.forEach((row) => {
+            const equipRefBase = row.Ref
+            const equipQty = isNaN(parseInt(row.EquipQty))
+                ? 1
+                : parseInt(row.EquipQty)
+
+            for (let i = 0; i < equipQty; i++) {
+                let equipRef = equipRefBase
+                if (equipQty !== 1) {
+                    const refSuffix = String(i + 1).padStart(2, '0')
+                    equipRef = `${equipRefBase}-${refSuffix}`
+                }
+
+                if (!existingEquipmentRefs.has(equipRef)) {
+                    equipmentData.push({
+                        JobNo: jobNo,
+                        Ref: equipRef,
+                        Description: row.Description,
+                        TempName: row.Template,
+                        ProgID: row.ProgID,
+                        TendID: row.TendID,
+                    })
+                } else {
+                    equipmentAlreadyExisting.push(equipRef)
+                }
+            }
+        })
+
+        // Sending bulk request
+        try {
+            const response = await fetch(
+                generateProjectEquipmentBulkURL(jobNo),
+                {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(equipmentData),
+                }
+            )
+
+            const responseBody = await response.json()
+
+            if (!response.ok) {
+                throw new Error(responseBody.message)
+            }
+
+            set((state) => ({
+                equipmentList: [
+                    ...state.equipmentList,
+                    ...responseBody.success,
+                ],
+            }))
+
+            const { success, failures, uniqueEquipmentCount } = responseBody
+
+            return {
+                successCount: success.length,
+                failureCount: failures.length,
+                uniqueEquipmentCount,
+                equipmentAlreadyExisting,
+            }
+        } catch (error) {
+            console.error('Error creating Equipment in bulk:', error)
+            failureCount = equipmentData.length
+        }
+
+        return { successCount, equipmentAlreadyExisting, failureCount }
+    },
+
+    onEquipmentUpdate: async (jobNo, oldRef, fieldValuesToUpdate) => {
+        try {
+            const url = updateEquipmentURL(jobNo, oldRef)
+
+            const response = await fetch(url, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(fieldValuesToUpdate),
+            })
+
+            if (response.ok) {
+                const updatedEquipmentFromServer = await response.json()
+
+                set((state) => {
+                    const updatedEquipmentList = state.equipmentList.map(
+                        (equip) =>
+                            equip.Ref === oldRef
+                                ? updatedEquipmentFromServer.updatedEquipment
+                                : equip
+                    )
+                    const updatedCabschedsList = state.cabschedsList.map(
+                        (cabsched) =>
+                            updatedEquipmentFromServer.updatedCabscheds.find(
+                                (updated) => updated.CabNum === cabsched.CabNum
+                            ) || cabsched
+                    )
+                    return {
+                        equipmentList: updatedEquipmentList,
+                        cabschedsList: updatedCabschedsList,
+                        dataHasChanged: true,
+                    }
+                })
+            } else {
+                console.error(
+                    'Failed to update equipment:',
+                    await response.text()
+                )
+                throw new Error('Failed to update equipment.')
+            }
+        } catch (error) {
+            console.error('Error while updating the equipment:', error)
+            throw error
+        }
+    },
+
+    onEquipmentDelete: async (
+        jobNo,
+        deletedEquipment,
+        deleteAssociatedCables
+    ) => {
+        try {
+            const requestOptions = {
+                method: 'DELETE',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    deleteAssociatedCables: deleteAssociatedCables,
+                }),
+            }
+
+            const response = await fetch(
+                deleteEquipmentURL(jobNo, deletedEquipment.Ref),
+                requestOptions
+            )
+
+            const result = await response.json()
+            if (response.ok) {
+                set((state) => ({
+                    equipmentList: state.equipmentList.filter(
+                        (equip) => equip.Ref !== deletedEquipment.Ref
+                    ),
+                    cabschedsList: deleteAssociatedCables
+                        ? state.cabschedsList.filter(
+                              (cable) =>
+                                  !result.deletedCabscheds.some(
+                                      (deletedCable) =>
+                                          deletedCable.CabNum === cable.CabNum
+                                  )
+                          )
+                        : state.cabschedsList,
+                    dataHasChanged: true,
+                }))
+
+                return {
+                    success: true,
+                    deletedCabschedsCount: result.deletedCabscheds.length,
+                }
+            } else {
+                return { success: false, message: result.message }
+            }
+        } catch (error) {
+            console.error('Error:', error)
+            return { success: false, message: error.message }
+        }
+    },
+
+    handleEquipmentFileUpload: async (jobNo, file) => {
+        set({ isLoading: true })
+        try {
+            const jsonData = await readExcelFile(file)
+            if (!jsonData || jsonData.length === 0)
+                throw new Error('The file is empty.')
+
+            const isUpdateOperation = Object.keys(jsonData[0]).includes(
+                'TotalHours'
+            )
+
+            if (!isUpdateOperation) {
+                const validatedData = await validateEquipmentFileData(
+                    jsonData,
+                    useStore.getState().templatesList
+                )
+
+                if (validatedData.nonExistentTemplates.length > 0) {
+                    return {
+                        success: false,
+                        errorMessages: [
+                            `The following Templates do not exist: ${validatedData.nonExistentTemplates.join(
+                                ', '
+                            )}.`,
+                        ],
+                    }
+                }
+
+                const creationResult = await useStore
+                    .getState()
+                    .createEquipmentOnFileUpload(
+                        validatedData.equipList,
+                        useStore.getState().equipmentList,
+                        jobNo
+                    )
+                console.log(
+                    '🚀 ~ handleEquipmentFileUpload: ~ creationResult:',
+                    creationResult
+                )
+
+                return {
+                    success: true,
+                    ...creationResult,
+                    errorMessages: validatedData.errorMessages,
+                    nonExistentTemplates: validatedData.nonExistentTemplates,
+                }
+            } else {
+                const updateResult = await useStore
+                    .getState()
+                    .updateEquipmentOnFileUpload(
+                        jsonData,
+                        useStore.getState().equipmentList,
+                        jobNo
+                    )
+                return { success: true, ...updateResult }
+            }
+        } catch (error) {
+            console.error('Error during file processing:', error)
+            return { success: false, error: error.message }
+        } finally {
+            set({ isLoading: false })
+        }
+    },
+
+    createEquipmentOnFileUpload: async (jsonData, equipmentList, jobNo) => {
+        let successCount = 0
+        let equipmentAlreadyExisting = []
+        let failureCount = 0
+        let equipmentData = []
+
+        const existingEquipmentRefs = new Set(equipmentList.map((e) => e.Ref))
+
+        jsonData.forEach((row) => {
+            const equipRefBase = row.Ref
+            const equipQty = isNaN(parseInt(row.EquipQty))
+                ? 1
+                : parseInt(row.EquipQty)
+
+            for (let i = 0; i < equipQty; i++) {
+                let equipRef = equipRefBase
+                if (equipQty !== 1) {
+                    const refSuffix = String(i + 1).padStart(2, '0')
+                    equipRef = `${equipRefBase}-${refSuffix}`
+                }
+
+                if (!existingEquipmentRefs.has(equipRef)) {
+                    equipmentData.push({
+                        JobNo: jobNo,
+                        Ref: equipRef,
+                        Description: row.Description,
+                        Template: row.Template,
+                        Section: row.Section,
+                        Area: row.Area,
+                    })
+                } else {
+                    equipmentAlreadyExisting.push(equipRef)
+                }
+            }
+        })
+
+        // Sending bulk request
+        try {
+            const response = await fetch(
+                generateProjectEquipmentBulkURL(jobNo),
+                {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(equipmentData),
+                }
+            )
+
+            const responseBody = await response.json()
+            console.log(
+                '🚀 ~ createEquipmentOnFileUpload: ~ responseBody:',
+                responseBody
+            )
+
+            if (!response.ok) {
+                throw new Error(responseBody.message)
+            }
+
+            if (responseBody.success.length > 0)
+                set((state) => ({
+                    equipmentList: [
+                        ...state.equipmentList,
+                        ...responseBody.success,
+                    ],
+                }))
+
+            const { success, failures, uniqueEquipmentCount } = responseBody
+
+            return {
+                successCount: success.length,
+                failureCount: failures.length,
+                uniqueEquipmentCount,
+                equipmentAlreadyExisting,
+            }
+        } catch (error) {
+            console.error('Error creating Equipment in bulk:', error)
+            return {
+                successCount: 0,
+                equipmentAlreadyExisting: equipmentData.map((e) => e.Ref),
+                failureCount: equipmentData.length,
+            }
+        }
+    },
+
+    updateEquipmentOnFileUpload: async (dataToUpdate, equipmentList, jobNo) => {
+        try {
+            const headers = Object.keys(dataToUpdate[0])
+            const fieldToUpdate = headers[1]
+
+            const bulkUpdateData = dataToUpdate
+                .map((row) => {
+                    const equipRef = row['Ref']
+                    const newValue = row[fieldToUpdate]
+
+                    if (newValue === undefined) {
+                        console.error(
+                            `Value for ${fieldToUpdate} is missing in reference ${equipRef}`
+                        )
+                        return null
+                    }
+
+                    const existingEquipment = equipmentList.some(
+                        (equipment) => equipment.Ref === equipRef
+                    )
+                    if (!existingEquipment) {
+                        console.error(
+                            `Equipment ${equipRef} not found in equipment list.`
+                        )
+                        return null
+                    }
+
+                    return {
+                        Ref: equipRef,
+                        [fieldToUpdate]: newValue,
+                    }
+                })
+                .filter((update) => update !== null)
+
+            if (bulkUpdateData.length === 0) {
+                return { success: false, error: 'No valid updates to send.' }
+            }
+
+            if (fieldToUpdate === 'Template') {
+                return {
+                    success: false,
+                    error: 'Templates have to be updated manually.',
+                }
+            }
+
+            const url = bulkUpdateEquipmentURL(jobNo)
+
+            const response = await fetch(url, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(bulkUpdateData),
+            })
+
+            if (response.ok) {
+                const updatedEquipmentFromServer = await response.json()
+                set((state) => ({
+                    equipmentList: state.equipmentList.map((equip) =>
+                        updatedEquipmentFromServer.updatedRefsArray.includes(
+                            equip.Ref
+                        )
+                            ? updatedEquipmentFromServer.updatedEquipmentLists.find(
+                                  (e) => e.Ref === equip.Ref
+                              )
+                            : equip
+                    ),
+                    cabschedsList: state.cabschedsList.map(
+                        (cabsched) =>
+                            updatedEquipmentFromServer.updatedCabscheds.find(
+                                (c) => c.CabNum === cabsched.CabNum
+                            ) || cabsched
+                    ),
+                }))
+                return { success: true }
+            } else {
+                throw new Error(
+                    'Server responded with an error for bulk update'
+                )
+            }
+        } catch (error) {
+            console.error('Error updating Equipment list:', error)
+            return {
+                success: false,
+                error: 'Error occurred while updating Equipment list.',
             }
         }
     },
@@ -931,101 +1372,6 @@ const useStore = create((set) => ({
         } catch (error) {
             console.error('Error while updating the completion:', error)
             throw error
-        }
-    },
-
-    onEquipmentUpdate: async (jobNo, oldRef, fieldValuesToUpdate) => {
-        try {
-            const url = updateEquipmentURL(jobNo, oldRef)
-
-            const response = await fetch(url, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(fieldValuesToUpdate),
-            })
-
-            if (response.ok) {
-                const updatedEquipmentFromServer = await response.json()
-
-                set((state) => {
-                    const updatedEquipmentList = state.equipmentList.map(
-                        (equip) =>
-                            equip.Ref === oldRef
-                                ? updatedEquipmentFromServer.updatedEquipment
-                                : equip
-                    )
-                    const updatedCabschedsList = state.cabschedsList.map(
-                        (cabsched) =>
-                            updatedEquipmentFromServer.updatedCabscheds.find(
-                                (updated) => updated.CabNum === cabsched.CabNum
-                            ) || cabsched
-                    )
-                    return {
-                        equipmentList: updatedEquipmentList,
-                        cabschedsList: updatedCabschedsList,
-                        dataHasChanged: true,
-                    }
-                })
-            } else {
-                console.error(
-                    'Failed to update equipment:',
-                    await response.text()
-                )
-                throw new Error('Failed to update equipment.')
-            }
-        } catch (error) {
-            console.error('Error while updating the equipment:', error)
-            throw error
-        }
-    },
-
-    onEquipmentDelete: async (
-        jobNo,
-        deletedEquipment,
-        deleteAssociatedCables
-    ) => {
-        try {
-            const requestOptions = {
-                method: 'DELETE',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    deleteAssociatedCables: deleteAssociatedCables,
-                }),
-            }
-
-            const response = await fetch(
-                deleteEquipmentURL(jobNo, deletedEquipment.Ref),
-                requestOptions
-            )
-
-            const result = await response.json()
-            if (response.ok) {
-                set((state) => ({
-                    equipmentList: state.equipmentList.filter(
-                        (equip) => equip.Ref !== deletedEquipment.Ref
-                    ),
-                    cabschedsList: deleteAssociatedCables
-                        ? state.cabschedsList.filter(
-                              (cable) =>
-                                  !result.deletedCabscheds.some(
-                                      (deletedCable) =>
-                                          deletedCable.CabNum === cable.CabNum
-                                  )
-                          )
-                        : state.cabschedsList,
-                    dataHasChanged: true,
-                }))
-
-                return {
-                    success: true,
-                    deletedCabschedsCount: result.deletedCabscheds.length,
-                }
-            } else {
-                return { success: false, message: result.message }
-            }
-        } catch (error) {
-            console.error('Error:', error)
-            return { success: false, message: error.message }
         }
     },
 }))

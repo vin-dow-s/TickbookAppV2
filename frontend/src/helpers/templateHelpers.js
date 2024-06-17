@@ -11,6 +11,13 @@ export const fieldClasses = (fieldErrors, fieldValues) => ({
     Name: getClassForField('Name', fieldErrors, fieldValues),
 })
 
+export const templateValidators = {
+    Name: (value) =>
+        templatesNamePattern.test(value)
+            ? ''
+            : 'should be between 3 and 80 characters long.',
+}
+
 export const fetchComponentsInProject = async (
     jobNo,
     setNonCbsComponentsInProject,
@@ -38,7 +45,7 @@ export const validateTemplatesFileData = (jsonData) => {
     const missingValues = []
     const invalidComponentFormat = []
     const invalidLabNormFormat = []
-    const invalidTempNameFormat = []
+    const invalidTemplateFormat = []
     const invalidEquipQtyFormat = []
     const errorMessages = []
 
@@ -57,7 +64,7 @@ export const validateTemplatesFileData = (jsonData) => {
         ) {
             missingValues.push(index + 2)
         } else if (!templatesNamePattern.test(row.Template)) {
-            invalidTempNameFormat.push(index + 2)
+            invalidTemplateFormat.push(index + 2)
         } else if (!componentsNamePattern.test(row.Component)) {
             invalidComponentFormat.push(index + 2)
         } else if (!onlyFloatsPattern.test(row.LabNorm.toString())) {
@@ -84,9 +91,9 @@ export const validateTemplatesFileData = (jsonData) => {
             `Invalid LabNorm on lines ${invalidLabNormFormat.join(', ')}`
         )
     }
-    if (invalidTempNameFormat.length > 0) {
+    if (invalidTemplateFormat.length > 0) {
         errorMessages.push(
-            `Invalid Template name on lines ${invalidTempNameFormat.join(', ')}`
+            `Invalid Template name on lines ${invalidTemplateFormat.join(', ')}`
         )
     }
     if (invalidEquipQtyFormat.length > 0) {

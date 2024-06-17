@@ -4,6 +4,10 @@ import {
     validateFormFields,
     getClassForField,
 } from '../utils/validationFormFields'
+import {
+    componentsNamePattern,
+    onlyFloatsPattern,
+} from '../utils/regexPatterns'
 
 export const fieldClasses = (fieldErrors, fieldValues) => ({
     Code: getClassForField('Code', fieldErrors, fieldValues),
@@ -17,6 +21,29 @@ export const fieldClasses = (fieldErrors, fieldValues) => ({
     GlandNorm: getClassForField('GlandNorm', fieldErrors, fieldValues),
     TestNorm: getClassForField('TestNorm', fieldErrors, fieldValues),
 })
+
+export const componentValidators = {
+    Name: (value) =>
+        componentsNamePattern.test(value)
+            ? ''
+            : 'Name must be 3-180 characters long and contain no invalid character.',
+    LabNorm: (value) =>
+        onlyFloatsPattern.test(value) ? '' : 'Lab Norm must be a number.',
+    LabUplift: (value) =>
+        onlyFloatsPattern.test(value) ? '' : 'Lab Uplift must be a number.',
+    MatNorm: (value) =>
+        onlyFloatsPattern.test(value) ? '' : 'Mat Norm must be a number.',
+    SubConCost: (value) =>
+        onlyFloatsPattern.test(value) ? '' : 'S/C Cost must be a number.',
+    SubConNorm: (value) =>
+        onlyFloatsPattern.test(value) ? '' : 'S/C Norm must be a number.',
+    PlantCost: (value) =>
+        onlyFloatsPattern.test(value) ? '' : 'Plant Cost must be a number.',
+    GlandNorm: (value) =>
+        onlyFloatsPattern.test(value) ? '' : 'must be a number.',
+    TestNorm: (value) =>
+        onlyFloatsPattern.test(value) ? '' : 'must be a number.',
+}
 
 export const validateComponentFields = (
     e,

@@ -957,8 +957,11 @@ const useStore = create((set) => ({
                 'TotalHours'
             )
 
+            const equipmentList = useStore.getState().equipmentList
+            let result
+
             if (!isUpdateOperation) {
-                const validatedData = await validateEquipmentFileData(
+                const validatedData = validateEquipmentFileData(
                     jsonData,
                     useStore.getState().templatesList
                 )
@@ -974,33 +977,29 @@ const useStore = create((set) => ({
                     }
                 }
 
-                const creationResult = await useStore
+                result = await useStore
                     .getState()
                     .createEquipmentOnFileUpload(
+                        jobNo,
                         validatedData.equipList,
-                        useStore.getState().equipmentList,
-                        jobNo
+                        equipmentList
                     )
-                console.log(
-                    '🚀 ~ handleEquipmentFileUpload: ~ creationResult:',
-                    creationResult
-                )
 
-                return {
-                    success: true,
-                    ...creationResult,
-                    errorMessages: validatedData.errorMessages,
-                    nonExistentTemplates: validatedData.nonExistentTemplates,
-                }
+                result.errorMessages = validatedData.errorMessages
+                result.nonExistentTemplates = validatedData.nonExistentTemplates
             } else {
-                const updateResult = await useStore
+                result = await useStore
                     .getState()
-                    .updateEquipmentOnFileUpload(
-                        jsonData,
-                        useStore.getState().equipmentList,
-                        jobNo
-                    )
-                return { success: true, ...updateResult }
+                    .updateEquipmentOnFileUpload(jobNo, jsonData, equipmentList)
+
+                result.errorMessages = result.errorMessages || []
+                result.nonExistentTemplates = []
+            }
+
+            return {
+                ...result,
+                linesProcessed: jsonData.length,
+                isUpdateOperation,
             }
         } catch (error) {
             console.error('Error during file processing:', error)
@@ -1010,10 +1009,8 @@ const useStore = create((set) => ({
         }
     },
 
-    createEquipmentOnFileUpload: async (jsonData, equipmentList, jobNo) => {
-        let successCount = 0
+    createEquipmentOnFileUpload: async (jobNo, jsonData, equipmentList) => {
         let equipmentAlreadyExisting = []
-        let failureCount = 0
         let equipmentData = []
 
         const existingEquipmentRefs = new Set(equipmentList.map((e) => e.Ref))
@@ -1046,6 +1043,16 @@ const useStore = create((set) => ({
             }
         })
 
+        // Ensure equipmentData is not empty before making the request
+        if (equipmentData.length === 0) {
+            return {
+                successCount: 0,
+                failureCount: 0,
+                uniqueEquipmentCount: 0,
+                equipmentAlreadyExisting,
+            }
+        }
+
         // Sending bulk request
         try {
             const response = await fetch(
@@ -1058,10 +1065,6 @@ const useStore = create((set) => ({
             )
 
             const responseBody = await response.json()
-            console.log(
-                '🚀 ~ createEquipmentOnFileUpload: ~ responseBody:',
-                responseBody
-            )
 
             if (!response.ok) {
                 throw new Error(responseBody.message)
@@ -1075,13 +1078,14 @@ const useStore = create((set) => ({
                     ],
                 }))
 
-            const { success, failures, uniqueEquipmentCount } = responseBody
+            const { success, failures, uniqueEquipmentCount, existingRefs } =
+                responseBody
 
             return {
                 successCount: success.length,
                 failureCount: failures.length,
                 uniqueEquipmentCount,
-                equipmentAlreadyExisting,
+                equipmentAlreadyExisting: existingRefs,
             }
         } catch (error) {
             console.error('Error creating Equipment in bulk:', error)
@@ -1093,10 +1097,12 @@ const useStore = create((set) => ({
         }
     },
 
-    updateEquipmentOnFileUpload: async (dataToUpdate, equipmentList, jobNo) => {
+    updateEquipmentOnFileUpload: async (jobNo, dataToUpdate, equipmentList) => {
         try {
             const headers = Object.keys(dataToUpdate[0])
             const fieldToUpdate = headers[1]
+
+            const errorMessages = []
 
             const bulkUpdateData = dataToUpdate
                 .map((row) => {
@@ -1104,19 +1110,19 @@ const useStore = create((set) => ({
                     const newValue = row[fieldToUpdate]
 
                     if (newValue === undefined) {
-                        console.error(
-                            `Value for ${fieldToUpdate} is missing in reference ${equipRef}`
-                        )
+                        const errorMessage = `Value for ${fieldToUpdate} is missing in reference ${equipRef}`
+                        console.error(errorMessage)
+                        errorMessages.push(errorMessage)
                         return null
                     }
 
-                    const existingEquipment = equipmentList.some(
+                    const existingEquipment = equipmentList.find(
                         (equipment) => equipment.Ref === equipRef
                     )
                     if (!existingEquipment) {
-                        console.error(
-                            `Equipment ${equipRef} not found in equipment list.`
-                        )
+                        const errorMessage = `Equipment ${equipRef} not found`
+                        console.error(errorMessage)
+                        errorMessages.push(errorMessage)
                         return null
                     }
 
@@ -1128,13 +1134,20 @@ const useStore = create((set) => ({
                 .filter((update) => update !== null)
 
             if (bulkUpdateData.length === 0) {
-                return { success: false, error: 'No valid updates to send.' }
+                return {
+                    success: false,
+                    error: 'No valid updates to send.',
+                    errorMessages,
+                }
             }
 
             if (fieldToUpdate === 'Template') {
+                const errorMessage =
+                    'Templates have to be updated manually (Dashboard -> Right click on the main table -> Edit Equipment).'
                 return {
                     success: false,
-                    error: 'Templates have to be updated manually.',
+                    error: errorMessage,
+                    errorMessages: [errorMessage, ...errorMessages],
                 }
             }
 
@@ -1148,6 +1161,7 @@ const useStore = create((set) => ({
 
             if (response.ok) {
                 const updatedEquipmentFromServer = await response.json()
+
                 set((state) => ({
                     equipmentList: state.equipmentList.map((equip) =>
                         updatedEquipmentFromServer.updatedRefsArray.includes(
@@ -1165,17 +1179,30 @@ const useStore = create((set) => ({
                             ) || cabsched
                     ),
                 }))
-                return { success: true }
+
+                const successCount =
+                    updatedEquipmentFromServer.updatedRefsArray.length
+                const failureCount = bulkUpdateData.length - successCount
+
+                return {
+                    success: true,
+                    successCount,
+                    failureCount,
+                    updatedRefsArray:
+                        updatedEquipmentFromServer.updatedRefsArray,
+                    errorMessages,
+                    message: updatedEquipmentFromServer.message,
+                }
             } else {
-                throw new Error(
-                    'Server responded with an error for bulk update'
-                )
+                const responseBody = await response.json()
+                throw new Error(responseBody.message || 'Error during update')
             }
         } catch (error) {
             console.error('Error updating Equipment list:', error)
             return {
                 success: false,
                 error: 'Error occurred while updating Equipment list.',
+                errorMessages: [error.message],
             }
         }
     },

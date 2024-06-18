@@ -266,6 +266,7 @@ const EquipmentView = () => {
         jobNo,
         templatesList,
         fetchTemplatesList,
+        fetchEquipmentList,
         onEquipmentCreate,
         handleEquipmentFileUpload,
     } = useStore((state) => ({
@@ -273,11 +274,15 @@ const EquipmentView = () => {
         templatesList: state.templatesList,
         isLoading: state.isLoading,
         fetchTemplatesList: state.fetchTemplatesList,
+        fetchEquipmentList: state.fetchEquipmentList,
         onEquipmentCreate: state.onEquipmentCreate,
         handleEquipmentFileUpload: state.handleEquipmentFileUpload,
     }))
     // 1. State declarations
-    const [, setComponentsInSelectedTemplateTableGridApi] = useState(null)
+    const [
+        componentsInSelectedTemplateTableGridApi,
+        setComponentsInSelectedTemplateTableGridApi,
+    ] = useState(null)
 
     const [, setIsValid] = useState({
         Ref: null,
@@ -390,7 +395,7 @@ const EquipmentView = () => {
         }))
     }
 
-    //CREATE Components + Templates + Equipment on file upload
+    //CREATE multiple Equipment on file upload
     const handleFileUpload = async (event) => {
         setIsCreatingItems(true)
         setCreationStepMessage('Reading Excel file...')
@@ -398,27 +403,34 @@ const EquipmentView = () => {
         try {
             const file = event.target.files[0]
             const result = await handleEquipmentFileUpload(jobNo, file)
-            console.log('🚀 ~ handleFileUpload ~ result:', result)
 
             if (!result.success) {
-                toast.error(result.error)
+                if (result.errorMessages && result.errorMessages.length > 0) {
+                    toast.error(result.errorMessages.join('; '))
+                } else {
+                    toast.error(result.error)
+                }
                 setIsCreatingItems(false)
                 return
             }
 
             const {
+                linesProcessed,
                 uniqueEquipmentCount,
                 successCount,
                 failureCount,
+                isUpdateOperation,
                 errorMessages,
                 equipmentAlreadyExisting,
                 nonExistentTemplates,
             } = result
 
             displayToastMessagesOnFileUpload(
+                linesProcessed,
                 uniqueEquipmentCount,
                 successCount,
                 failureCount,
+                isUpdateOperation,
                 errorMessages,
                 equipmentAlreadyExisting,
                 nonExistentTemplates
@@ -432,7 +444,7 @@ const EquipmentView = () => {
         }
     }
 
-    //FORM submit: CREATE only here
+    //CREATE one Equipment
     const handleFormSubmit = async (e) => {
         e.preventDefault()
 
@@ -451,7 +463,6 @@ const EquipmentView = () => {
         const newEquipmentData = { jobNo, ...validatedFieldValues }
 
         const result = await onEquipmentCreate(jobNo, newEquipmentData)
-        console.log('🚀 ~ handleFormSubmit ~ result:', result)
         if (result.success) {
             toast.success('Equipment successfully created!')
         } else if (result.type === 'exists') {
@@ -513,10 +524,19 @@ const EquipmentView = () => {
     }
 
     useEffect(() => {
+        if (jobNo && isLoadingComponents) {
+            componentsInSelectedTemplateTableGridApi?.showLoadingOverlay()
+        } else if (componentsInSelectedTemplateTableGridApi) {
+            componentsInSelectedTemplateTableGridApi?.hideOverlay()
+        }
+    }, [jobNo, isLoadingComponents, componentsInSelectedTemplateTableGridApi])
+
+    useEffect(() => {
         if (jobNo) {
             fetchTemplatesList(jobNo)
+            fetchEquipmentList(jobNo)
         }
-    }, [jobNo, fetchTemplatesList])
+    }, [jobNo, fetchTemplatesList, fetchEquipmentList])
 
     useEffect(() => {
         if (templatesList.length > 0 && !selectedTemplate) {

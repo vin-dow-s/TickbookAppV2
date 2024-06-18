@@ -697,6 +697,7 @@ const bulkCreateEquipment = async (req, res) => {
     let results = {
         success: [],
         failures: [],
+        existingRefs: [],
     }
     let newRefsCreated = new Set()
 
@@ -722,6 +723,7 @@ const bulkCreateEquipment = async (req, res) => {
             })
 
             if (existingRef) {
+                results.existingRefs.push(Ref)
                 results.failures.push({
                     Ref,
                     reason: 'This Equipment Ref already exists.',
@@ -806,6 +808,7 @@ const bulkCreateEquipment = async (req, res) => {
         res.status(200).json({
             ...results,
             uniqueEquipmentCount,
+            linesProcessed: equipmentsData.length,
         })
     } catch (error) {
         console.error('Bulk equipment creation failed:', error)
@@ -977,18 +980,20 @@ const bulkUpdateEquipment = async (req, res) => {
     let updatedEquipmentListsArrays = []
     let updatedCabschedsArrays = []
     let updatedRefsArray = []
+    let errorMessages = []
 
     try {
         for (const updateItem of dataToUpdate) {
             const { Ref, ...updateFields } = updateItem
             const decodedRef = decodeURIComponent(Ref)
-            updatedRefsArray.push(decodedRef)
             let [fieldToUpdate, newValue] = Object.entries(updateFields)[0]
 
             fieldToUpdate = fieldMapping[fieldToUpdate] || fieldToUpdate
 
             if (!fieldToUpdate || newValue === undefined) {
-                console.error('Missing required fields for update.')
+                const errorMessage = `Missing required fields for update in reference ${decodedRef}.`
+                console.error(errorMessage)
+                errorMessages.push(errorMessage)
                 continue
             }
 
@@ -997,13 +1002,20 @@ const bulkUpdateEquipment = async (req, res) => {
             })
 
             if (!equipmentList || equipmentList.length === 0) {
-                console.error('Equipment not found for Ref:', decodedRef)
+                const errorMessage = `Equipment not found for Ref: ${decodedRef}`
+                console.error(errorMessage)
+                errorMessages.push(errorMessage)
                 continue
             }
 
             const updatePromises = equipmentList.map((equipment) => {
-                equipment[fieldToUpdate] = newValue
-                return equipment.save()
+                if (equipment[fieldToUpdate] !== newValue) {
+                    equipment[fieldToUpdate] = newValue
+                    return equipment
+                        .save()
+                        .then(() => updatedRefsArray.push(decodedRef))
+                }
+                return Promise.resolve()
             })
 
             await Promise.all(updatePromises)
@@ -1071,7 +1083,9 @@ const bulkUpdateEquipment = async (req, res) => {
         }
 
         const updatedCabscheds = updatedCabschedsArrays.flat()
-        const updatedEquipmentLists = updatedEquipmentListsArrays.flat()
+        const updatedEquipmentLists = updatedEquipmentListsArrays.filter(
+            (equip) => updatedRefsArray.includes(equip.Ref)
+        )
 
         try {
             await Revision.create({
@@ -1090,7 +1104,11 @@ const bulkUpdateEquipment = async (req, res) => {
             updatedEquipmentLists,
             updatedCabscheds,
             updatedRefsArray,
-            message: 'Equipment list updated successfully.',
+            errorMessages,
+            message:
+                updatedRefsArray.length > 0
+                    ? 'Equipment list updated successfully.'
+                    : 'No Equipment to update.',
         })
     } catch (error) {
         console.error('Error while bulk updating equipment:', error)

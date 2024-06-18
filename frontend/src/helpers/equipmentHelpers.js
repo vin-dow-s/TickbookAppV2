@@ -71,6 +71,8 @@ export const validateEquipmentFileData = (jsonData, templatesList) => {
                 }
             })
 
+            let hasError = false
+
             // Check for missing values and test regex patterns
             if (
                 !row.Ref ||
@@ -80,22 +82,37 @@ export const validateEquipmentFileData = (jsonData, templatesList) => {
                 !row.Area
             ) {
                 missingValues.push(index + 2)
-            } else if (!equipmentRefPattern.test(row.Ref)) {
+                hasError = true
+            }
+            if (!equipmentRefPattern.test(row.Ref)) {
                 invalidRefFormat.push(index + 2)
-            } else if (!equipmentDescriptionPattern.test(row.Description)) {
+                hasError = true
+            }
+            if (!equipmentDescriptionPattern.test(row.Description)) {
                 invalidDescriptionFormat.push(index + 2)
-            } else if (!equipmentSectionPattern.test(row.Section)) {
+                hasError = true
+            }
+            if (!equipmentSectionPattern.test(row.Section)) {
                 invalidSectionFormat.push(index + 2)
-            } else if (!equipmentAreaPattern.test(row.Area)) {
+                hasError = true
+            }
+            if (!equipmentAreaPattern.test(row.Area)) {
                 invalidAreaFormat.push(index + 2)
-            } else if (!templatesNamePattern.test(row.Template)) {
+                hasError = true
+            }
+            if (!templatesNamePattern.test(row.Template)) {
                 invalidTemplateFormat.push(index + 2)
-            } else if (
+                hasError = true
+            }
+            if (
                 row.TenderSection &&
                 !equipmentTendSectionPattern.test(row.TenderSection)
             ) {
                 invalidTenderSectionFormat.push(index + 2)
-            } else {
+                hasError = true
+            }
+
+            if (!hasError) {
                 equipList.push(row)
             }
 
@@ -145,7 +162,11 @@ export const validateEquipmentFileData = (jsonData, templatesList) => {
             )
         }
     } catch (error) {
-        return { equipList: [], nonExistentTemplates: [] }
+        return {
+            equipList: [],
+            nonExistentTemplates: [],
+            errorMessages: ['Error processing file'],
+        }
     }
 
     return {
@@ -156,41 +177,73 @@ export const validateEquipmentFileData = (jsonData, templatesList) => {
 }
 
 export const displayToastMessagesOnFileUpload = (
+    linesProcessed,
     uniqueEquipmentCount,
     successCount,
     failureCount,
-    errorMessages,
-    equipmentAlreadyExisting,
-    nonExistentTemplates
+    isUpdateOperation,
+    errorMessages = [],
+    equipmentAlreadyExisting = [],
+    nonExistentTemplates = []
 ) => {
-    toast.info(`Processed ${uniqueEquipmentCount} lines.`)
-    if (successCount > 0) toast.success(`Created ${successCount} Equipment.`)
-    if (successCount === 0 && failureCount === 0 && errorMessages.length === 0)
-        toast.warning(`No new Equipment to create.`)
-    if (failureCount > 0) {
-        toast.error(
-            `${failureCount} lines failed, please check your Excel file.`
-        )
-    }
-    if (errorMessages.length > 0) {
-        toast.error(
-            `Some items have not been created because of the following errors: ${errorMessages.join(
-                '; '
-            )}.`
-        )
-    }
-    if (nonExistentTemplates > 0) {
-        toast.error(`${nonExistentTemplates} non-existent Templates found.`)
-    }
-    if (
-        (equipmentAlreadyExisting.length > 0 && successCount > 0) ||
-        failureCount > 0 ||
-        errorMessages.length > 0
-    ) {
-        toast.warning(
-            `The following Refs already exist: ${equipmentAlreadyExisting.join(
-                ', '
-            )}.`
-        )
+    toast.info(`Processed ${linesProcessed} lines from the Excel file.`)
+
+    if (isUpdateOperation) {
+        if (successCount > 0)
+            toast.success(`${successCount} Equipment successfully updated.`)
+
+        if (successCount === 0 && errorMessages.length === 0)
+            toast.info('No Equipment updated.')
+
+        if (failureCount > 0 && errorMessages.length > 0) {
+            toast.error(
+                `${failureCount} lines failed, please check your Excel file.`
+            )
+        }
+
+        if (errorMessages.length > 0) {
+            toast.error(
+                `The following errors occurred: ${errorMessages.join('; ')}`
+            )
+        }
+    } else {
+        if (uniqueEquipmentCount > 0) {
+            toast.success(
+                `${uniqueEquipmentCount} Equipment successfully created (${successCount} database lines).`
+            )
+        }
+
+        if (
+            failureCount > 0 &&
+            failureCount !== equipmentAlreadyExisting.length
+        ) {
+            toast.error(
+                `${failureCount} lines failed, please check your Excel file.`
+            )
+        }
+        if (errorMessages.length > 0) {
+            toast.error(
+                `The following errors occurred: ${errorMessages.join('; ')}`
+            )
+        }
+
+        if (equipmentAlreadyExisting.length > 0 && errorMessages.length === 0) {
+            if (equipmentAlreadyExisting.length === linesProcessed)
+                toast.info('No new Equipment to create.')
+            else
+                toast.warning(
+                    `The following Refs already exist: ${equipmentAlreadyExisting.join(
+                        ', '
+                    )}.`
+                )
+        }
+
+        if (nonExistentTemplates.length > 0) {
+            toast.error(
+                `The following Templates do not exist: ${nonExistentTemplates.join(
+                    ', '
+                )}`
+            )
+        }
     }
 }

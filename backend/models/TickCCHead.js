@@ -20,7 +20,7 @@ module.exports = (sequelize) => {
                 primaryKey: true,
                 allowNull: false,
             },
-            Descrip: {
+            Description: {
                 type: DataTypes.TEXT,
                 allowNull: false,
             },

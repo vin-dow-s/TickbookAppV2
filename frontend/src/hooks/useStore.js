@@ -20,6 +20,7 @@ import {
     updateTemplateURL,
     bulkUpdateComponentsURL,
     bulkUpdateEquipmentURL,
+    generateProjectCCsURL,
 } from '../utils/apiConfig'
 import { readExcelFile } from '../utils/readExcelFile'
 import {
@@ -42,6 +43,8 @@ const useStore = create((set) => ({
     templatesList: [],
     equipmentList: [],
     cabschedsList: [],
+    ccsList: [],
+    localMainTableRefs: [],
     isLoading: false,
     viewType: 'Section',
     dataHasChanged: false,
@@ -55,6 +58,8 @@ const useStore = create((set) => ({
     setTemplatesList: (templates) => set({ templatesList: templates }),
     setEquipmentList: (equipment) => set({ equipmentList: equipment }),
     setCabschedsList: (cabscheds) => set({ cabschedsList: cabscheds }),
+    setCCsList: (ccs) => set({ ccsList: ccs }),
+    setLocalMainTableRefs: (refs) => set({ localMainTableRefs: refs }),
     setViewType: (type) => set({ viewType: type }),
     setDataHasChanged: (hasChanged) => set({ dataHasChanged: hasChanged }),
     resetDataHasChanged: () => set({ dataHasChanged: false }),
@@ -146,6 +151,33 @@ const useStore = create((set) => ({
             const response = await fetch(generateProjectCabschedsURL(jobNo))
             const data = await response.json()
             set({ cabschedsList: data })
+        } catch (error) {
+            console.error(error)
+        } finally {
+            set({ isLoading: false })
+        }
+    },
+
+    fetchCCsList: async (jobNo) => {
+        set({ isLoading: true })
+        try {
+            const response = await fetch(generateProjectCCsURL(jobNo))
+            const data = await response.json()
+            set({ ccsList: data })
+        } catch (error) {
+            console.error(error)
+        } finally {
+            set({ isLoading: false })
+        }
+    },
+
+    fetchLocalMainTableRefs: async (jobNo) => {
+        set({ isLoading: true })
+        try {
+            const response = await fetch(generateProjectEquipmentURL(jobNo))
+            const data = await response.json()
+            const refs = data.map((item) => ({ Ref: item.Ref }))
+            set({ localMainTableRefs: refs })
         } catch (error) {
             console.error(error)
         } finally {

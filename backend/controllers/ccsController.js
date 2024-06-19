@@ -11,18 +11,18 @@ const getAllCCs = async (req, res, next) => {
                     model: TickCCHead,
                     as: 'TickCCHead',
                     where: { JobNo: jobNo },
-                    attributes: ['Descrip'],
+                    attributes: ['Description'],
                 },
             ],
         })
 
         const ccsWithDescription = CCs.map((cc) => {
-            const { Descrip } = cc.TickCCHead
+            const { Description } = cc.TickCCHead
             cc.dataValues.DateImp = formatDateString(cc.dataValues.DateImp)
             cc.dataValues.DateLift = formatDateString(cc.dataValues.DateLift)
 
             delete cc.dataValues.TickCCHead
-            return { ...cc.dataValues, Descrip }
+            return { ...cc.dataValues, Description }
         })
 
         res.json(ccsWithDescription)
@@ -75,7 +75,7 @@ const createCCs = async (req, res, next) => {
         await TickCCHead.create({
             JobNo: jobNo,
             CcNr: CCRef,
-            Descrip: Description,
+            Description: Description,
         })
 
         if (newCCs.length > 0) {

@@ -94,10 +94,10 @@ export const columnsCCsHistory = [
     },
     {
         headerName: 'Description',
-        field: 'Descrip',
+        field: 'Description',
         filter: true,
         sortable: true,
-        flex: 0.3,
+        flex: 0.35,
     },
     {
         headerName: 'Date Imp',
@@ -132,11 +132,11 @@ export const columnsCCsHistory = [
         },
     },
     {
-        headerName: 'Current',
-        field: 'Current',
+        headerName: 'Status',
+        field: 'Status',
         filter: true,
         sortable: true,
-        flex: 0.15,
+        flex: 0.1,
     },
 ]
 

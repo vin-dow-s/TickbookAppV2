@@ -9,14 +9,6 @@ import useStore from '../../hooks/useStore'
 
 //Utils
 import {
-    equipmentDescriptionPattern,
-    equipmentSectionPattern,
-    equipmentRefPattern,
-    equipmentAreaPattern,
-    equipmentTendSectionPattern,
-} from '../../utils/regexPatterns'
-import {
-    getClassForField,
     validateField,
     validateFormFields,
 } from '../../utils/validationFormFields'
@@ -40,6 +32,10 @@ import {
     LabelInputContainer,
 } from '../Common/FormBase'
 import FormButton from '../Common/FormButton'
+import {
+    equipmentValidators,
+    fieldClasses,
+} from '../../helpers/equipmentHelpers'
 
 //Styled components declarations
 const EditEquipmentDialogBoxContainer = styled(DialogBoxContainer)`
@@ -133,13 +129,19 @@ const EditEquipmentDialogBox = ({
     updateDashboardTablesAndSummary,
 }) => {
     // 1. State declarations
-    const { templatesList, fetchTemplatesList, onEquipmentUpdate } = useStore(
-        (state) => ({
-            templatesList: state.templatesList,
-            fetchTemplatesList: state.fetchTemplatesList,
-            onEquipmentUpdate: state.onEquipmentUpdate,
-        })
-    )
+    const {
+        templatesList,
+        fetchTemplatesList,
+        equipmentList,
+        fetchEquipmentList,
+        onEquipmentUpdate,
+    } = useStore((state) => ({
+        templatesList: state.templatesList,
+        fetchTemplatesList: state.fetchTemplatesList,
+        equipmentList: state.equipmentList,
+        fetchEquipmentList: state.fetchEquipmentList,
+        onEquipmentUpdate: state.onEquipmentUpdate,
+    }))
 
     const DEFAULT_VALUES = {
         Ref: equipmentData.Ref,
@@ -148,7 +150,7 @@ const EditEquipmentDialogBox = ({
         Section: equipmentData.Section,
         Area: equipmentData.Area,
         TendSection: equipmentData.TendSection || 't.b.a',
-        CurrentRevision: 't.b.a',
+        CurrentRevision: equipmentData.Revision || 't.b.a',
     }
     const [, setIsValid] = useState({
         Ref: false,
@@ -179,52 +181,17 @@ const EditEquipmentDialogBox = ({
         'CurrentRevision',
     ]
 
+    const fieldClassesComputed = fieldClasses(fieldErrors, fieldValues)
+
     const dialogRef = useRef(null)
     const headerRef = useRef(null)
 
-    // 2. Helper Functions
-    const validators = {
-        Ref: (value) =>
-            equipmentRefPattern.test(value)
-                ? ''
-                : 'Ref should be at least 3 characters long.',
-        Description: (value) =>
-            equipmentDescriptionPattern.test(value)
-                ? ''
-                : 'Description should be at least 3 characters long.',
-        Section: (value) =>
-            equipmentSectionPattern.test(value)
-                ? ''
-                : 'Section should be 3-20 characters long.',
-        Area: (value) =>
-            equipmentAreaPattern.test(value)
-                ? ''
-                : 'Area should be 3-25 characters long.',
-        TendSection: (value) =>
-            equipmentTendSectionPattern.test(value)
-                ? ''
-                : 'Tender Section should be a number.',
-    }
-
-    const fieldClasses = {
-        Ref: getClassForField('Ref', fieldErrors, fieldValues),
-        Description: getClassForField('Description', fieldErrors, fieldValues),
-        Section: getClassForField('Section', fieldErrors, fieldValues),
-        Area: getClassForField('Area', fieldErrors, fieldValues),
-        TendSection: getClassForField('TendSection', fieldErrors, fieldValues),
-        CurrentRevision: getClassForField(
-            'TendSection',
-            fieldErrors,
-            fieldValues
-        ),
-    }
-
-    // 3. Event handlers
+    //2. Event handlers
     const handleInputChange = (e) => {
         const { id, value } = e.target
         setFieldValues((prevValues) => ({ ...prevValues, [id]: value }))
 
-        const errorMessage = validateField(validators, id, value)
+        const errorMessage = validateField(equipmentValidators, id, value)
         setFieldErrors((prevErrors) => ({ ...prevErrors, [id]: errorMessage }))
     }
 
@@ -243,21 +210,51 @@ const EditEquipmentDialogBox = ({
             validateFormFields(
                 e,
                 fieldNames,
-                validators,
+                equipmentValidators,
                 setIsValid,
                 setFieldErrors
             )
 
         if (!isValid) return
 
-        await onEquipmentUpdate(jobNo, Ref, validatedFieldValues)
-        updateDashboardTablesAndSummary(validatedFieldValues, 'full-refresh')
+        const result = await onEquipmentUpdate(jobNo, Ref, validatedFieldValues)
+
+        if (result.success) {
+            toast.success('Equipment successfully updated.')
+            updateDashboardTablesAndSummary(
+                validatedFieldValues,
+                'full-refresh'
+            )
+        } else {
+            toast.error(
+                result.error ||
+                    'An error occurred while updating the Equipment.'
+            )
+        }
 
         onClose()
     }
 
     //Click on button Cancel
     const handleCancelClick = () => {
+        const currentEquipment = equipmentList.find(
+            (equip) => equip.Ref === equipmentData.Ref
+        )
+
+        if (currentEquipment) {
+            setFieldValues({
+                Ref: currentEquipment.Ref,
+                Description: currentEquipment.Description,
+                Template: currentEquipment.Template,
+                Section: currentEquipment.Section,
+                Area: currentEquipment.Area,
+                TendSection: currentEquipment.TendSection || 't.b.a',
+                CurrentRevision: currentEquipment.Revision || 't.b.a',
+            })
+        } else {
+            setFieldValues(DEFAULT_VALUES)
+        }
+
         setIsValid({
             Ref: null,
             Description: null,
@@ -267,7 +264,6 @@ const EditEquipmentDialogBox = ({
             TendSection: null,
             CurrentRevision: null,
         })
-        setFieldValues(DEFAULT_VALUES)
         setFieldErrors({})
     }
 
@@ -310,19 +306,26 @@ const EditEquipmentDialogBox = ({
 
     useEffect(() => {
         fetchTemplatesList(jobNo)
-    }, [jobNo, fetchTemplatesList])
+        fetchEquipmentList(jobNo)
+    }, [jobNo, fetchTemplatesList, fetchEquipmentList])
 
     useEffect(() => {
-        setFieldValues({
-            Ref: equipmentData.Ref,
-            Description: equipmentData.Description,
-            Template: equipmentData.Template,
-            Section: equipmentData.Section,
-            Area: equipmentData.Area,
-            TendSection: equipmentData.TendSection || 't.b.a',
-            CurrentRevision: 't.b.a',
-        })
-    }, [equipmentData])
+        const currentEquipment = equipmentList.find(
+            (equip) => equip.Ref === equipmentData.Ref
+        )
+
+        if (currentEquipment) {
+            setFieldValues({
+                Ref: currentEquipment.Ref,
+                Description: currentEquipment.Description,
+                Template: currentEquipment.Template,
+                Section: currentEquipment.Section,
+                Area: currentEquipment.Area,
+                TendSection: currentEquipment.TendSection || 't.b.a',
+                CurrentRevision: currentEquipment.Revision || 't.b.a',
+            })
+        }
+    }, [equipmentData, equipmentList])
 
     return (
         <EditEquipmentDialogBoxContainer ref={dialogRef}>
@@ -342,7 +345,7 @@ const EditEquipmentDialogBox = ({
                                             id="Ref"
                                             value={fieldValues.Ref}
                                             onChange={handleInputChange}
-                                            className={fieldClasses.Ref}
+                                            className={fieldClassesComputed.Ref}
                                             type="text"
                                             placeholder="Max. 80 characters"
                                             maxLength={80}
@@ -363,7 +366,9 @@ const EditEquipmentDialogBox = ({
                                             id="Description"
                                             value={fieldValues.Description}
                                             onChange={handleInputChange}
-                                            className={fieldClasses.Description}
+                                            className={
+                                                fieldClassesComputed.Description
+                                            }
                                             type="text"
                                             placeholder="Max. 80 characters"
                                             maxLength={80}
@@ -384,7 +389,9 @@ const EditEquipmentDialogBox = ({
                                             id="Section"
                                             value={fieldValues.Section}
                                             onChange={handleInputChange}
-                                            className={fieldClasses.Section}
+                                            className={
+                                                fieldClassesComputed.Section
+                                            }
                                             type="text"
                                             placeholder="Max. 20 characters"
                                             maxLength={20}
@@ -403,7 +410,9 @@ const EditEquipmentDialogBox = ({
                                             id="Area"
                                             value={fieldValues.Area}
                                             onChange={handleInputChange}
-                                            className={fieldClasses.Area}
+                                            className={
+                                                fieldClassesComputed.Area
+                                            }
                                             type="text"
                                             placeholder="Max. 25 characters"
                                             maxLength={25}
@@ -424,7 +433,9 @@ const EditEquipmentDialogBox = ({
                                             id="TendSection"
                                             value={fieldValues.TendSection}
                                             onChange={handleInputChange}
-                                            className={fieldClasses.TendSection}
+                                            className={
+                                                fieldClassesComputed.TendSection
+                                            }
                                             type="text"
                                             placeholder="Ex: 1.01"
                                             maxLength={25}
@@ -447,7 +458,9 @@ const EditEquipmentDialogBox = ({
                                             id="Template"
                                             value={fieldValues.Template}
                                             onChange={handleInputChange}
-                                            className={fieldClasses.Template}
+                                            className={
+                                                fieldClassesComputed.Template
+                                            }
                                         >
                                             {templatesList.map(
                                                 (templateItem) => (
@@ -479,7 +492,7 @@ const EditEquipmentDialogBox = ({
                                             value={fieldValues.CurrentRevision}
                                             onChange={handleInputChange}
                                             className={
-                                                fieldClasses.CurrentRevision
+                                                fieldClassesComputed.CurrentRevision
                                             }
                                             type="text"
                                             placeholder="Ex: A1"

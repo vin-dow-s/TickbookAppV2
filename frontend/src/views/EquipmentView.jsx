@@ -20,7 +20,7 @@ import { fetchComponentsInProject } from '../helpers/templateHelpers'
 import { columnsComponentsInSelectedTemplate } from '../constants/dialog-box-tables-columns'
 import { Overlay } from '../styles/dialog-boxes'
 import { colors } from '../styles/global-styles'
-import { StyledAGGrid } from '../styles/tables'
+import { StyledAGGrid } from '../styles/ag-grid'
 
 //Components
 import FileUploadButton from '../components/Common/FileUploadButton'
@@ -118,18 +118,6 @@ const CreateEquipmentContainer = styled.div`
     @media screen and (max-width: 800px) {
         flex: 1;
         width: 100%;
-    }
-`
-
-const CreateEquipmentForm = styled(FormBase)`
-    position: relative;
-    height: 100%;
-    flex-direction: column;
-    justify-content: space-between;
-    padding: 20px;
-
-    @media screen and (max-width: 1500px), screen and (max-height: 700px) {
-        font-size: smaller;
     }
 `
 
@@ -327,6 +315,8 @@ const EquipmentView = () => {
     const [isCreatingItems, setIsCreatingItems] = useState(false)
     const [creationStepMessage, setCreationStepMessage] = useState('')
 
+    const fieldClassesComputed = fieldClasses(fieldErrors, fieldValues)
+
     //Returns Components present in the selected Template (ordered by templates.inOrder column)
     const filteredComponents = useMemo(() => {
         return componentsInTemplate.map((templateComponent) => {
@@ -376,8 +366,10 @@ const EquipmentView = () => {
     //2. Event handlers
     const handleInputChange = (e) => {
         const { id, value } = e.target
+        // Update field values
         setFieldValues((prevValues) => ({ ...prevValues, [id]: value }))
 
+        // Dynamically check the input against the regex pattern and set error message
         const errorMessage = validateField(equipmentValidators, id, value)
         setFieldErrors((prevErrors) => ({ ...prevErrors, [id]: errorMessage }))
     }
@@ -464,7 +456,7 @@ const EquipmentView = () => {
 
         const result = await onEquipmentCreate(jobNo, newEquipmentData)
         if (result.success) {
-            toast.success('Equipment successfully created!')
+            toast.success('Equipment successfully created.')
         } else if (result.type === 'exists') {
             toast.warning(result.error || 'This Equipment already exists.')
         } else {
@@ -583,7 +575,7 @@ const EquipmentView = () => {
                         <div className="purple-label">
                             Create a new Equipment
                         </div>
-                        <CreateEquipmentForm onSubmit={handleFormSubmit}>
+                        <FormBase onSubmit={handleFormSubmit}>
                             <FieldsWrapper>
                                 <EquipmentFieldsContainer>
                                     <FirstRowContainer>
@@ -596,7 +588,9 @@ const EquipmentView = () => {
                                                     id="Ref"
                                                     value={fieldValues.Ref}
                                                     onChange={handleInputChange}
-                                                    className={fieldClasses.Ref}
+                                                    className={
+                                                        fieldClassesComputed.Ref
+                                                    }
                                                     type="text"
                                                     placeholder="Ex: C01"
                                                     maxLength={80}
@@ -620,7 +614,7 @@ const EquipmentView = () => {
                                                     }
                                                     onChange={handleInputChange}
                                                     className={
-                                                        fieldClasses.Description
+                                                        fieldClassesComputed.Description
                                                     }
                                                     type="text"
                                                     placeholder="Max. 80 characters"
@@ -645,7 +639,7 @@ const EquipmentView = () => {
                                                     value={fieldValues.Section}
                                                     onChange={handleInputChange}
                                                     className={
-                                                        fieldClasses.Section
+                                                        fieldClassesComputed.Section
                                                     }
                                                     type="text"
                                                     placeholder="Max. 20 characters"
@@ -668,7 +662,7 @@ const EquipmentView = () => {
                                                     value={fieldValues.Area}
                                                     onChange={handleInputChange}
                                                     className={
-                                                        fieldClasses.Area
+                                                        fieldClassesComputed.Area
                                                     }
                                                     type="text"
                                                     placeholder="Max. 40 characters"
@@ -735,7 +729,7 @@ const EquipmentView = () => {
                                                     }
                                                     onChange={handleInputChange}
                                                     className={
-                                                        fieldClasses.CurrentRevision
+                                                        fieldClassesComputed.CurrentRevision
                                                     }
                                                     type="text"
                                                     placeholder="Ex: A1"
@@ -768,7 +762,7 @@ const EquipmentView = () => {
                                     Cancel
                                 </FormButton>
                             </ButtonsContainer>
-                        </CreateEquipmentForm>
+                        </FormBase>
                     </CreateEquipmentContainer>
                     <FileUploadContainer>
                         <div className="purple-label">

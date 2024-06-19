@@ -78,6 +78,12 @@ models.Equiplist.hasMany(models.TickEquipList, {
     sourceKey: 'Ref',
 })
 
+//Relationship Equiplist <-> Revision : One-To-Many
+models.Equiplist.hasMany(models.Revision, {
+    foreignKey: 'Item_Ref',
+    sourceKey: 'Ref',
+})
+
 //Relationship Project <-> Cabsched : One-To-Many
 models.Project.hasMany(models.Cabsched, {
     foreignKey: 'JobNo',
@@ -136,6 +142,12 @@ models.Project.hasMany(models.TickEquipList, {
 models.Revision.belongsTo(models.Project, {
     foreignKey: 'JobNo',
     targetKey: 'JobNo',
+})
+
+//Relationship Revision <-> Equiplist : Many-To-One
+models.Revision.belongsTo(models.Equiplist, {
+    foreignKey: 'Item_Ref',
+    targetKey: 'Ref',
 })
 
 //Relationship Template <-> Project : Many-To-One

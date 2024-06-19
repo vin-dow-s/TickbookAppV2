@@ -96,7 +96,7 @@ const createTemplate = async (req, res, next) => {
             JobNo: jobNo,
             Name,
             Hours: Number(totalHours.toFixed(3)),
-            message: 'Template lines successfully created!',
+            message: 'Template lines successfully created.',
         })
     } catch (error) {
         if (error.name === 'SequelizeUniqueConstraintError') {
@@ -284,7 +284,7 @@ const updateTemplate = async (req, res, next) => {
             JobNo: jobNo,
             Name: template,
             Hours: Number(totalHours.toFixed(3)),
-            message: 'Template lines successfully created!',
+            message: 'Template lines successfully created.',
         })
     } catch (error) {
         if (error.name === 'SequelizeUniqueConstraintError') {

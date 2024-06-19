@@ -11,7 +11,7 @@ import {
     DialogHeader,
 } from '../../styles/dialog-boxes'
 import { colors } from '../../styles/global-styles'
-import { StyledAGGrid } from '../../styles/tables'
+import { StyledAGGrid } from '../../styles/ag-grid'
 import { columnsComponentsInProject } from '../../constants/dialog-box-tables-columns'
 
 //Assets
@@ -359,7 +359,7 @@ const EditTemplateDialogBox = ({
         )
 
         if (result.success) {
-            toast.success('Template successfully updated!')
+            toast.success('Template successfully updated.')
             updateTemplatesTable(result.template)
             onClose()
         } else {

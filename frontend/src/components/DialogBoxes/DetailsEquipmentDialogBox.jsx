@@ -16,7 +16,7 @@ import {
 } from '../../styles/dialog-boxes'
 import { colors } from '../../styles/global-styles'
 import { columnsEquipRef } from '../../constants/dialog-box-tables-columns'
-import { StyledAGGrid } from '../../styles/tables'
+import { StyledAGGrid } from '../../styles/ag-grid'
 
 //Utils
 import { generateEquipmentURL } from '../../utils/apiConfig'

@@ -72,7 +72,7 @@ const DeleteEquipmentDialogBox = ({
             deleteAssociatedCables
         )
         if (result.success) {
-            toast.success('Equipment successfully deleted!')
+            toast.success('Equipment successfully deleted.')
             if (result.deletedCabschedsCount > 0) {
                 toast.success(
                     `${result.deletedCabschedsCount} associated Cables successfully deleted.`

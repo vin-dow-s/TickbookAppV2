@@ -11,7 +11,7 @@ import useStore from '../hooks/useStore'
 import { generateProjectsURL } from '../utils/apiConfig'
 
 //Styles and constants
-import { StyledAGGrid } from '../styles/tables'
+import { StyledAGGrid } from '../styles/ag-grid'
 import { columnsSelectProject } from '../constants/dialog-box-tables-columns'
 
 //Components
@@ -35,13 +35,17 @@ const ProjectViewContainer = styled.div`
 `
 
 const SelectProjectContainer = styled.div`
+    display: flex;
+    flex-direction: column;
     flex: 1.5;
+    padding: 10px;
     background-color: white;
     color: black;
     border-radius: 10px;
-    padding: 10px;
 `
 const CreateProjectContainer = styled.div`
+    display: flex;
+    flex-direction: column;
     flex: 0.6;
     background-color: white;
     color: black;
@@ -49,20 +53,19 @@ const CreateProjectContainer = styled.div`
     padding: 10px;
 `
 
-const CreateProjectForm = styled(FormBase)`
-    input {
-        margin-left: 10px;
-    }
-`
-
 const CreateProjectFormFieldsContainer = styled.div`
     display: flex;
+    flex: 1;
+    flex-wrap: wrap;
     flex-direction: row;
     justify-content: space-around;
     margin-bottom: 10px;
 `
 
 const CreateProjectFormField = styled(FormField)`
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
     justify-content: center;
     text-align: end;
 
@@ -185,7 +188,7 @@ const ProjectView = () => {
                 toast.error('An error occurred while creating a new Project.')
             } else if (response.ok) {
                 const newProject = await response.json()
-                toast.success(`Project ${number} successfully created!`)
+                toast.success(`Project ${number} successfully created.`)
                 onProjectCreate(newProject)
 
                 setRestoreTableFocus({
@@ -253,7 +256,7 @@ const ProjectView = () => {
             <CreateProjectContainer>
                 {' '}
                 <div className="purple-label">Create a new Project</div>
-                <CreateProjectForm onSubmit={handleFormSubmit}>
+                <FormBase onSubmit={handleFormSubmit}>
                     <CreateProjectFormFieldsContainer>
                         <CreateProjectFormField>
                             <LabelInputContainer>
@@ -332,7 +335,7 @@ const ProjectView = () => {
                             Cancel
                         </FormButton>
                     </ButtonsContainer>
-                </CreateProjectForm>
+                </FormBase>
             </CreateProjectContainer>
         </ProjectViewContainer>
     )

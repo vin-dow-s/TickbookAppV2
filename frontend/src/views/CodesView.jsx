@@ -15,12 +15,11 @@ import {
 import { generateCodesURL } from '../utils/apiConfig'
 
 //Styles and constants
-import { StyledAGGrid } from '../styles/tables'
+import { StyledAGGrid } from '../styles/ag-grid'
 import { columnsCodes } from '../constants/dialog-box-tables-columns'
 
 //Components
 import { overlayLoadingTemplatePurple } from '../components/Common/Loader'
-import { colors } from '../styles/global-styles'
 import {
     ButtonsContainer,
     ErrorMessage,
@@ -40,11 +39,13 @@ const CodesViewContainer = styled.div`
 `
 
 const CodesListContainer = styled.div`
+    display: flex;
+    flex-direction: column;
     flex: 1.5;
+    padding: 10px;
     background-color: white;
     color: black;
     border-radius: 10px;
-    padding: 10px;
 
     .grey-label {
         color: #5e6066;
@@ -53,21 +54,19 @@ const CodesListContainer = styled.div`
     }
 `
 const CreateCodeContainer = styled.div`
+    display: flex;
+    flex-direction: column;
     flex: 0.6;
+    padding: 10px;
     background-color: white;
     color: black;
     border-radius: 10px;
-    padding: 10px;
-`
-
-const CreateCodeForm = styled(FormBase)`
-    input {
-        margin-left: 10px;
-    }
 `
 
 const CreateCodeFormFieldsContainer = styled.div`
     display: flex;
+    flex: 1;
+    flex-wrap: wrap;
     flex-direction: row;
     justify-content: center;
     margin-bottom: 10px;
@@ -75,6 +74,9 @@ const CreateCodeFormFieldsContainer = styled.div`
 `
 
 const CreateCodeFormField = styled(FormField)`
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
     justify-content: center;
     text-align: end;
 
@@ -169,7 +171,7 @@ const CodesView = () => {
                 toast.error('An error occurred while creating a new Code.')
             } else if (response.ok) {
                 const newCode = await response.json()
-                toast.success(`Code ${code} successfully created!`)
+                toast.success(`Code ${code} successfully created.`)
                 onCodeCreate(newCode)
                 setIsCodeValid(null)
                 setIsNameValid(null)
@@ -218,7 +220,7 @@ const CodesView = () => {
             <CreateCodeContainer>
                 {' '}
                 <div className="purple-label">Create a new Code</div>
-                <CreateCodeForm onSubmit={handleFormSubmit}>
+                <FormBase onSubmit={handleFormSubmit}>
                     <CreateCodeFormFieldsContainer>
                         <CreateCodeFormField>
                             <LabelInputContainer>
@@ -273,7 +275,7 @@ const CodesView = () => {
                             Cancel
                         </FormButton>
                     </ButtonsContainer>
-                </CreateCodeForm>
+                </FormBase>
             </CreateCodeContainer>
         </CodesViewContainer>
     )

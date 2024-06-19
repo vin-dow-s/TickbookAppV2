@@ -886,16 +886,16 @@ const useStore = create((set) => ({
                         dataHasChanged: true,
                     }
                 })
+
+                return { success: true }
             } else {
-                console.error(
-                    'Failed to update equipment:',
-                    await response.text()
-                )
-                throw new Error('Failed to update equipment.')
+                const errorText = await response.text()
+                console.error('Failed to update equipment:', errorText)
+                return { success: false, error: errorText }
             }
         } catch (error) {
             console.error('Error while updating the equipment:', error)
-            throw error
+            return { success: false, error: error.message }
         }
     },
 

@@ -9,6 +9,7 @@ import useStore from '../hooks/useStore'
 //Utils
 import { isComponentUsedInTemplateURL } from '../utils/apiConfig'
 import { onCellContextMenu } from '../utils/gridUtils'
+import { validateField } from '../utils/validationFormFields'
 
 //Helpers
 import {
@@ -23,7 +24,7 @@ import {
 //Styles and constants
 import { Overlay } from '../styles/dialog-boxes'
 import { colors } from '../styles/global-styles'
-import { StyledAGGrid } from '../styles/tables'
+import { StyledAGGrid } from '../styles/ag-grid'
 import { columnsComponents } from '../constants/dialog-box-tables-columns'
 import { contextMenuOptions } from '../constants/context-menu'
 
@@ -131,18 +132,6 @@ const CreateComponentContainer = styled.div`
     }
 `
 
-const CreateComponentForm = styled(FormBase)`
-    position: relative;
-    height: 100%;
-    flex-direction: column;
-    justify-content: space-between;
-    padding: 20px;
-
-    @media screen and (max-width: 1500px), screen and (max-height: 700px) {
-        font-size: smaller;
-    }
-`
-
 const FieldsWrapper = styled.div`
     display: flex;
     flex-direction: row;
@@ -203,6 +192,10 @@ const CreateComponentFormField = styled(FormField)`
         input {
             width: 15px;
         }
+    }
+
+    @media screen and (max-width: 1500px), screen and (max-height: 700px) {
+        font-size: smaller;
     }
 `
 
@@ -437,16 +430,12 @@ const ComponentsView = () => {
     //3. Event handlers
     const handleInputChange = (e) => {
         const { id, value } = e.target
-        const trimmedValue = value.trim()
-
-        // Dynamically check the input against the regex pattern and set error message
-        const errorMessage = componentValidators[id]
-            ? componentValidators[id](trimmedValue)
-            : ''
-        setFieldErrors((prevErrors) => ({ ...prevErrors, [id]: errorMessage }))
-
         // Update field values
         setFieldValues((prevValues) => ({ ...prevValues, [id]: value }))
+
+        // Dynamically check the input against the regex pattern and set error message
+        const errorMessage = validateField(componentValidators, id, value)
+        setFieldErrors((prevErrors) => ({ ...prevErrors, [id]: errorMessage }))
     }
 
     const handleComponentFileUploadWrapper = async (event) => {
@@ -848,7 +837,7 @@ const ComponentsView = () => {
                                 ? 'Update Multiple Components Codes'
                                 : 'Edit Component'}
                         </div>
-                        <CreateComponentForm onSubmit={handleFormSubmit}>
+                        <FormBase onSubmit={handleFormSubmit}>
                             <FieldsWrapper>
                                 <CreateComponentFormFieldsContainer>
                                     <FirstRowContainer>
@@ -1256,7 +1245,7 @@ const ComponentsView = () => {
                                     Cancel
                                 </FormButton>
                             </ButtonsContainer>
-                        </CreateComponentForm>
+                        </FormBase>
                     </CreateComponentContainer>
                     <FileUploadContainer>
                         <div className="purple-label">

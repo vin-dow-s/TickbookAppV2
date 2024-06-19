@@ -2,10 +2,21 @@ import styled from 'styled-components'
 import { colors } from '../../styles/global-styles'
 
 export const FormBase = styled.form`
+    position: relative;
+    height: 100%;
     display: flex;
     flex-direction: column;
+    justify-content: space-between;
     padding: 25px;
     gap: 15px;
+
+    input {
+        margin-left: 10px;
+    }
+
+    @media screen and (max-width: 1500px), screen and (max-height: 700px) {
+        font-size: smaller;
+    }
 `
 
 export const FieldsContainer = styled.div`
@@ -23,6 +34,10 @@ export const ButtonsContainer = styled.div`
 
     @media screen and (max-width: 800px) {
         margin-top: 10px;
+    }
+
+    @media screen and (max-width: 1017px), screen and (max-height: 700px) {
+        font-size: smaller;
     }
 `
 
@@ -51,6 +66,7 @@ export const FormField = styled.div`
 
         &:focus {
             border-color: ${colors.purpleBgen};
+            box-shadow: 0 0 0 2px rgba(120, 111, 255, 0.1);
             outline: none;
         }
 
@@ -61,10 +77,12 @@ export const FormField = styled.div`
 
         &.valid {
             border-color: #10d317;
+            box-shadow: 0 0 0 2px rgba(16, 211, 23, 0.1);
         }
 
         &.invalid {
             border-color: #e74c3c;
+            box-shadow: 0 0 0 2px rgba(231, 76, 60, 0.1);
         }
 
         &.equipRef {
@@ -98,7 +116,7 @@ export const ErrorMessage = styled.span`
     position: absolute;
     width: 100%;
     left: 0;
-    bottom: -15px;
+    top: 42px;
     color: #e74c3c;
     font-size: 0.65rem;
     overflow: visible;

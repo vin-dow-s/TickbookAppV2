@@ -41,6 +41,13 @@ const getProjectEquipment = async (req, res, next) => {
             order: ['Ref'],
         })
 
+        const associatedRevisions = await Revision.findAll({
+            where: {
+                JobNo: jobNo,
+            },
+            attributes: ['Item_Ref', 'Revision', 'Number'],
+        })
+
         const result = equipmentAndTendSection.map((equip) => {
             const { TickEquipLists, ...restOfEquipData } = equip.dataValues
 
@@ -49,9 +56,18 @@ const getProjectEquipment = async (req, res, next) => {
                     ? TickEquipLists[0].dataValues.TendSection
                     : null
 
+            const lastestRevisions = associatedRevisions
+                .filter((revision) => revision.Item_Ref === equip.Ref)
+                .reduce(
+                    (max, current) =>
+                        current.Number > max.Number ? current : max,
+                    { Number: 0 }
+                )
+
             return {
                 ...restOfEquipData,
                 TendSection: tendSection,
+                Revision: lastestRevisions.Revision,
             }
         })
 
@@ -941,11 +957,11 @@ const updateEquipment = async (req, res, next) => {
                     req.body.CurrentRevision !== 't.b.a'
                         ? req.body.CurrentRevision
                         : 'N/A',
-                Item_Ref:
+                Item_Ref: dataToUpdate.Ref,
+                Item_Desc:
                     decodedRef !== dataToUpdate.Ref
-                        ? `${decodedRef} -> ${dataToUpdate.Ref}`
-                        : dataToUpdate.Ref,
-                Item_Desc: dataToUpdate.Description,
+                        ? `Ref: ${decodedRef} -> ${dataToUpdate.Ref}`
+                        : dataToUpdate.Description,
                 Notes: 'Equipment updated',
                 Dated: gmtPlusOneDate(),
             })
@@ -1653,7 +1669,7 @@ const deleteEquipment = async (req, res, next) => {
         }
 
         res.status(200).json({
-            message: 'Equipment successfully deleted!',
+            message: 'Equipment successfully deleted.',
             deletedCabscheds: deletedCabscheds,
         })
     } catch (error) {

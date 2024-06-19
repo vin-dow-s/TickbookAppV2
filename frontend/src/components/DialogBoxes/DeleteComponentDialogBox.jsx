@@ -111,7 +111,7 @@ const DeleteComponentDialogBox = ({
         // Delete the main component
         const result = await onComponentDelete(jobNo, componentData.ID)
         if (result.success) {
-            toast.success('Component successfully deleted!')
+            toast.success('Component successfully deleted.')
             onClose()
 
             const previousRowIndex = Math.max(0, rowIndex - 1)

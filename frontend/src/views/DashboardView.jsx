@@ -19,7 +19,7 @@ import {
 import { onCellContextMenu } from '../utils/gridUtils'
 
 //Styles and constants
-import { StyledAGGrid } from '../styles/tables'
+import { StyledAGGrid } from '../styles/ag-grid'
 import { colors, fonts } from '../styles/global-styles'
 import {
     columnsMainTable,

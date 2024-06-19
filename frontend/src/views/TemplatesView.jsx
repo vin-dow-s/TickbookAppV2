@@ -24,7 +24,7 @@ import {
 //Styles and constants
 import { Overlay } from '../styles/dialog-boxes'
 import { colors } from '../styles/global-styles'
-import { StyledAGGrid } from '../styles/tables'
+import { StyledAGGrid } from '../styles/ag-grid'
 import {
     columnsComponentsInProject,
     columnsComponentsInSelectedTemplate,
@@ -122,10 +122,6 @@ const CreateTemplateForm = styled(FormBase)`
     color: black;
     border-radius: 10px;
     padding: 10px;
-
-    @media screen and (max-width: 1500px), screen and (max-height: 700px) {
-        font-size: smaller;
-    }
 `
 
 const TemplatesAndComponentsContainer = styled.div`
@@ -257,6 +253,10 @@ const TemplatesFieldsContainer = styled(FieldsContainer)`
     flex-direction: row;
     gap: 10px;
     align-items: center;
+
+    @media screen and (max-width: 1017px), screen and (max-height: 700px) {
+        font-size: smaller;
+    }
 `
 
 const TemplatesFormField = styled(FormField)`
@@ -369,6 +369,8 @@ const TemplatesView = () => {
     const [isCreatingItems, setIsCreatingItems] = useState(false)
     const [creationStepMessage, setCreationStepMessage] = useState('')
 
+    const fieldClassesComputed = fieldClasses(fieldErrors, fieldValues)
+
     //Updates selectedComponents on click in "Components in Project"
     const handleComponentSelect = (event) => {
         const clickedComponent = event.data
@@ -480,8 +482,10 @@ const TemplatesView = () => {
     //3. Event handlers
     const handleInputChange = (e) => {
         const { id, value } = e.target
+        // Update field values
         setFieldValues((prevValues) => ({ ...prevValues, [id]: value }))
 
+        // Dynamically check the input against the regex pattern and set error message
         const errorMessage = validateField(templateValidators, id, value)
         setFieldErrors((prevErrors) => ({ ...prevErrors, [id]: errorMessage }))
     }
@@ -538,7 +542,7 @@ const TemplatesView = () => {
 
         const result = await onTemplateCreate(jobNo, newTemplateData)
         if (result.success) {
-            toast.success('Template successfully created!')
+            toast.success('Template successfully created.')
         } else if (result.statusCode === 409) {
             toast.warning('This Template already exists.')
         } else {
@@ -993,7 +997,7 @@ const TemplatesView = () => {
                                         id="Name"
                                         value={fieldValues.Name}
                                         onChange={handleInputChange}
-                                        className={fieldClasses.Name}
+                                        className={fieldClassesComputed.Name}
                                         type="text"
                                         placeholder="Min. 3 characters"
                                         maxLength={80}

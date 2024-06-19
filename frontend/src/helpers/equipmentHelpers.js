@@ -27,6 +27,10 @@ export const equipmentValidators = {
         equipmentAreaPattern.test(value)
             ? ''
             : 'Area should be 3-25 characters long.',
+    TendSection: (value) =>
+        equipmentTendSectionPattern.test(value)
+            ? ''
+            : 'Tender Section should be a number.',
     Revision: (value) =>
         equipmentCurrentRevisionPattern.test(value)
             ? ''
@@ -39,6 +43,7 @@ export const fieldClasses = (fieldErrors, fieldValues) => ({
     Section: getClassForField('Section', fieldErrors, fieldValues),
     Area: getClassForField('Area', fieldErrors, fieldValues),
     Template: getClassForField('Template', fieldErrors, fieldValues),
+    TendSection: getClassForField('TendSection', fieldErrors, fieldValues),
     CurrentRevision: getClassForField(
         'CurrentRevision',
         fieldErrors,

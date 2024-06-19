@@ -17,9 +17,10 @@ import DashboardView from './views/DashboardView'
 import ProjectView from './views/ProjectView'
 import CodesView from './views/CodesView'
 import ComponentsView from './views/ComponentsView'
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import TemplatesView from './views/TemplatesView'
 import EquipmentView from './views/EquipmentView'
+import ExportDialog from './components/DialogBoxes/ExportDialogBox'
 
 const AppContainer = styled.div`
     width: 100svw;
@@ -89,11 +90,21 @@ const ViewContainer = styled.div`
  * Integrates the main routing logic.
  */
 const App = () => {
-    const { jobNo, jobTitle, jobAddress } = useStore((state) => ({
+    const { jobNo, jobTitle, jobAddress, viewType } = useStore((state) => ({
         jobNo: state.jobNo,
         jobTitle: state.jobTitle,
         jobAddress: state.jobAddress,
+        viewType: state.viewType,
     }))
+    const [showExportDialog, setShowExportDialog] = useState(false)
+
+    const handleOpenExportDialog = () => {
+        setShowExportDialog(true)
+    }
+
+    const handleCloseExportDialog = () => {
+        setShowExportDialog(false)
+    }
 
     //Prevents the default browser right click menu to appear in tables
     useEffect(() => {
@@ -125,7 +136,7 @@ const App = () => {
                             jobTitle={jobTitle}
                             jobAddress={jobAddress}
                         />
-                        <ExportContainer>
+                        <ExportContainer onClick={handleOpenExportDialog}>
                             <RiShare2Line />
                             EXPORT
                         </ExportContainer>
@@ -160,6 +171,13 @@ const App = () => {
                     </ViewContainer>
                 </MainContainer>
             </AppContainer>
+            {showExportDialog && (
+                <ExportDialog
+                    jobNo={jobNo}
+                    viewType={viewType}
+                    onClose={handleCloseExportDialog}
+                />
+            )}
         </Router>
     )
 }

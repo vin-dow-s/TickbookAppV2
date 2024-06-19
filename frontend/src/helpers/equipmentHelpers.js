@@ -46,7 +46,7 @@ export const fieldClasses = (fieldErrors, fieldValues) => ({
     ),
 })
 
-export const validateEquipmentFileData = (jsonData, templatesList) => {
+export const validateEquipmentCreationFileData = (jsonData, templatesList) => {
     let missingValues = []
     let invalidRefFormat = []
     let invalidDescriptionFormat = []
@@ -174,6 +174,50 @@ export const validateEquipmentFileData = (jsonData, templatesList) => {
         errorMessages,
         nonExistentTemplates: Array.from(nonExistentTemplates),
     }
+}
+
+export const validateEquipmentUpdateFileData = (jsonData) => {
+    let errorMessages = []
+    let validData = []
+
+    jsonData.forEach((row, index) => {
+        let hasError = false
+
+        // Trim all string fields
+        Object.keys(row).forEach((key) => {
+            if (typeof row[key] === 'string') {
+                row[key] = row[key].trim()
+            }
+        })
+
+        // Check for missing values and test regex patterns
+        if (!row.Ref || !row.Description || !row.Section || !row.Area) {
+            errorMessages.push(`Missing values on line ${index + 2}`)
+            hasError = true
+        }
+        if (!equipmentRefPattern.test(row.Ref)) {
+            errorMessages.push(`Invalid Ref on line ${index + 2}`)
+            hasError = true
+        }
+        if (!equipmentDescriptionPattern.test(row.Description)) {
+            errorMessages.push(`Invalid Description on line ${index + 2}`)
+            hasError = true
+        }
+        if (!equipmentSectionPattern.test(row.Section)) {
+            errorMessages.push(`Invalid Section on line ${index + 2}`)
+            hasError = true
+        }
+        if (!equipmentAreaPattern.test(row.Area)) {
+            errorMessages.push(`Invalid Area on line ${index + 2}`)
+            hasError = true
+        }
+
+        if (!hasError) {
+            validData.push(row)
+        }
+    })
+
+    return { validData, errorMessages }
 }
 
 export const displayToastMessagesOnFileUpload = (

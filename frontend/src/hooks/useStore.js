@@ -27,7 +27,10 @@ import {
     groupComponentsByTemplateAndReturnsComponentsToCreate,
     validateTemplatesFileData,
 } from '../helpers/templateHelpers'
-import { validateEquipmentFileData } from '../helpers/equipmentHelpers'
+import {
+    validateEquipmentCreationFileData,
+    validateEquipmentUpdateFileData,
+} from '../helpers/equipmentHelpers'
 
 const useStore = create((set) => ({
     jobNo: '',
@@ -961,7 +964,7 @@ const useStore = create((set) => ({
             let result
 
             if (!isUpdateOperation) {
-                const validatedData = validateEquipmentFileData(
+                const validatedData = validateEquipmentCreationFileData(
                     jsonData,
                     useStore.getState().templatesList
                 )
@@ -1102,9 +1105,20 @@ const useStore = create((set) => ({
             const headers = Object.keys(dataToUpdate[0])
             const fieldToUpdate = headers[1]
 
+            const { validData, errorMessages: validationErrors } =
+                validateEquipmentUpdateFileData(dataToUpdate)
+
+            if (validationErrors.length > 0) {
+                return {
+                    success: false,
+                    error: 'Invalid data.',
+                    errorMessages: validationErrors,
+                }
+            }
+
             const errorMessages = []
 
-            const bulkUpdateData = dataToUpdate
+            const bulkUpdateData = validData
                 .map((row) => {
                     const equipRef = row['Ref']
                     const newValue = row[fieldToUpdate]

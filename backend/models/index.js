@@ -193,8 +193,8 @@ models.TickCCHist.belongsTo(models.TickCCHead, {
     targetKey: 'JobNo',
 })
 models.TickCCHist.belongsTo(models.TickCCHead, {
-    foreignKey: 'CcNr',
-    targetKey: 'CcNr',
+    foreignKey: 'CcRef',
+    targetKey: 'CcRef',
 })
 
 //Relationship TickCCHist <-> Project : Many-To-One

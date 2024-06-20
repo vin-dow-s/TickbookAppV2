@@ -60,6 +60,10 @@ const CreateProjectFormFieldsContainer = styled.div`
     flex-direction: row;
     justify-content: space-around;
     margin-bottom: 10px;
+
+    @media screen and (max-width: 1500px), screen and (max-height: 700px) {
+        font-size: smaller;
+    }
 `
 
 const CreateProjectFormField = styled(FormField)`

@@ -19,7 +19,7 @@ module.exports = (sequelize) => {
                 type: DataTypes.STRING(80),
                 allowNull: false,
             },
-            CcNr: {
+            CcRef: {
                 type: DataTypes.STRING(25),
                 allowNull: false,
             },

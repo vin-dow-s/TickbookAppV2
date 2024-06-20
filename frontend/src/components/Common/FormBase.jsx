@@ -13,10 +13,6 @@ export const FormBase = styled.form`
     input {
         margin-left: 10px;
     }
-
-    @media screen and (max-width: 1500px), screen and (max-height: 700px) {
-        font-size: smaller;
-    }
 `
 
 export const FieldsContainer = styled.div`
@@ -44,7 +40,7 @@ export const ButtonsContainer = styled.div`
 export const FormField = styled.div`
     position: relative;
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     margin: 10px 15px;
 
     label {

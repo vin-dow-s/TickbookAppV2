@@ -71,6 +71,10 @@ const CreateCodeFormFieldsContainer = styled.div`
     justify-content: center;
     margin-bottom: 10px;
     gap: 100px;
+
+    @media screen and (max-width: 1017px), screen and (max-height: 700px) {
+        font-size: smaller;
+    }
 `
 
 const CreateCodeFormField = styled(FormField)`

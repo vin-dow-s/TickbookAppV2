@@ -87,7 +87,7 @@ export const columnsCCsHistory = [
     },
     {
         headerName: 'CC Ref',
-        field: 'CcNr',
+        field: 'CcRef',
         filter: true,
         sortable: true,
         flex: 0.15,

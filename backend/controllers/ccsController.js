@@ -34,27 +34,21 @@ const getAllCCs = async (req, res, next) => {
 
 const createCCs = async (req, res, next) => {
     const { jobNo } = req.params
-    const { SelectedRefs, CCRef, Description, Date } = req.body
+    const { CcRef, DateImp, Description, SelectedRefs } = req.body
 
-    if (
-        !SelectedRefs ||
-        !SelectedRefs.length ||
-        !CCRef ||
-        !Description ||
-        !Date
-    ) {
+    if (!SelectedRefs?.length || !CcRef || !Description || !DateImp) {
         return res.status(400).json({ message: 'All fields are required.' })
     }
 
     try {
         const existingCC = await TickCCHist.findOne({
-            where: { JobNo: jobNo, CcNr: CCRef },
+            where: { JobNo: jobNo, CcRef: CcRef },
         })
 
         if (existingCC) {
             return res
                 .status(409)
-                .json({ message: `CCRef ${CCRef} already exists.` })
+                .json({ message: `CcRef ${CcRef} already exists.` })
         }
 
         const newCCs = []
@@ -63,10 +57,10 @@ const createCCs = async (req, res, next) => {
             const newCC = await TickCCHist.create({
                 JobNo: jobNo,
                 EquipRef,
-                CcNr: CCRef,
-                DateImp: Date,
+                CcRef: CcRef,
+                DateImp: DateImp,
                 DateLift: null,
-                Current: 'current',
+                Status: 'current',
             })
 
             newCCs.push(newCC)
@@ -74,12 +68,16 @@ const createCCs = async (req, res, next) => {
 
         await TickCCHead.create({
             JobNo: jobNo,
-            CcNr: CCRef,
+            CcRef: CcRef,
             Description: Description,
         })
 
         if (newCCs.length > 0) {
-            res.status(201).json(newCCs)
+            const ccsWithDescription = newCCs.map((cc) => ({
+                ...cc.dataValues,
+                Description: Description,
+            }))
+            res.status(201).json(ccsWithDescription)
         } else {
             res.status(409).json({ message: 'No new CCs created.' })
         }
@@ -97,7 +95,7 @@ const updateCCs = async (req, res, next) => {
 
     try {
         const cc = await TickCCHist.findOne({
-            where: { JobNo: jobNo, EquipRef: equipRef, CcNr: ccRef },
+            where: { JobNo: jobNo, EquipRef: equipRef, CcRef: ccRef },
         })
 
         if (!cc) {
@@ -112,7 +110,7 @@ const updateCCs = async (req, res, next) => {
 
         await cc.update({
             DateLift,
-            Current: DateLift ? 'lifted' : 'current',
+            Status: DateLift ? 'lifted' : 'current',
         })
 
         res.json(cc)

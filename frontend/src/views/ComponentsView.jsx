@@ -142,6 +142,10 @@ const FieldsWrapper = styled.div`
     @media screen and (max-width: 800px) {
         flex-direction: column;
     }
+
+    @media screen and (max-width: 1500px), screen and (max-height: 700px) {
+        font-size: smaller;
+    }
 `
 
 const CreateComponentFormFieldsContainer = styled(FieldsContainer)`
@@ -561,7 +565,7 @@ const ComponentsView = () => {
         }
     }
 
-    const handleComponentsCodesBulkUpdate = () => {
+    const handleComponentsCodesBulkUpdate = async () => {
         const selectedNodes = componentsTableGridApi.getSelectedNodes()
         const componentIds = selectedNodes.map((node) => node.data.ID)
 
@@ -572,26 +576,29 @@ const ComponentsView = () => {
             return
         }
 
-        onComponentsCodesBulkUpdate(jobNo, componentIds, newCode)
-            .then(() => {
-                toast.success(
-                    `${componentIds.length} Components successfully updated.`
-                )
-                componentsTableGridApi.deselectAll()
-                setFieldValues(DEFAULT_VALUES)
-                setUpdateMultiple(false)
+        const result = await onComponentsCodesBulkUpdate(
+            jobNo,
+            componentIds,
+            newCode
+        )
 
-                setRestoreTableFocus({
-                    rowIndex: componentsList.findIndex(
-                        (c) => c.ID === componentIds[0]
-                    ),
-                    column: 'Name',
-                })
+        if (result) {
+            toast.success(
+                `${componentIds.length} Components successfully updated.`
+            )
+            componentsTableGridApi.deselectAll()
+            setFieldValues(DEFAULT_VALUES)
+            setUpdateMultiple(false)
+
+            setRestoreTableFocus({
+                rowIndex: componentsList.findIndex(
+                    (c) => c.ID === componentIds[selectedNodes.length - 1]
+                ),
+                column: 'Name',
             })
-            .catch((error) => {
-                toast.error('Error updating components.')
-                console.error('Error updating components:', error)
-            })
+        } else {
+            toast.error('Error updating components.')
+        }
     }
 
     const handleComponentCreate = async (componentData) => {

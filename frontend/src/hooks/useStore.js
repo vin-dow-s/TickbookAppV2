@@ -21,6 +21,7 @@ import {
     bulkUpdateComponentsURL,
     bulkUpdateEquipmentURL,
     generateProjectCCsURL,
+    updateCCsURL,
 } from '../utils/apiConfig'
 import { readExcelFile } from '../utils/readExcelFile'
 import {
@@ -374,11 +375,14 @@ const useStore = create((set) => ({
                             : component
                     ),
                 }))
+
+                return { success: true }
             } else {
                 throw new Error('Failed to update components')
             }
         } catch (error) {
             console.error('Error updating components:', error)
+            return { success: false, error: error.message }
         }
     },
 
@@ -1445,6 +1449,64 @@ const useStore = create((set) => ({
         } catch (error) {
             console.error('Error while updating the completion:', error)
             throw error
+        }
+    },
+
+    onCcCreate: async (jobNo, ccData) => {
+        try {
+            const response = await fetch(generateProjectCCsURL(jobNo), {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(ccData),
+            })
+
+            if (!response.ok) {
+                const responseBody = await response.json()
+                throw new Error(responseBody.message)
+            }
+
+            const newCcs = await response.json()
+
+            set((state) => ({
+                ccsList: [...state.ccsList, ...newCcs],
+            }))
+
+            return { success: true, ccs: newCcs }
+        } catch (error) {
+            console.error('Error:', error)
+            return { success: false, error: error.message }
+        }
+    },
+
+    onCcUpdate: async (jobNo, equipRef, ccRef, dateLift) => {
+        try {
+            const response = await fetch(updateCCsURL(jobNo, equipRef, ccRef), {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ DateLift: dateLift }),
+            })
+
+            if (!response.ok) {
+                const responseBody = await response.json()
+                throw new Error(responseBody.message)
+            }
+
+            set((state) => ({
+                ccsList: state.ccsList.map((cc) =>
+                    cc.EquipRef === equipRef && cc.CcRef === ccRef
+                        ? {
+                              ...cc,
+                              DateLift: dateLift,
+                              Status: dateLift ? 'lifted' : 'current',
+                          }
+                        : cc
+                ),
+            }))
+
+            return { success: true }
+        } catch (error) {
+            console.error('Error:', error)
+            return { success: false, error: error.message }
         }
     },
 }))

@@ -1,6 +1,7 @@
 //Modules
 import { Route, BrowserRouter as Router, Routes } from 'react-router-dom'
 import styled from 'styled-components'
+import { useEffect, useState } from 'react'
 
 //Hooks
 import useStore from './hooks/useStore'
@@ -10,6 +11,7 @@ import { RiShare2Line } from 'react-icons/ri'
 
 //Components
 import MainInfoSection from './components/MainInfoSection'
+import ExportDialog from './components/DialogBoxes/ExportDialogBox'
 import Sidebar from './components/Sidebar'
 
 //Views
@@ -17,12 +19,11 @@ import DashboardView from './views/DashboardView'
 import ProjectView from './views/ProjectView'
 import CodesView from './views/CodesView'
 import ComponentsView from './views/ComponentsView'
-import { useEffect, useState } from 'react'
 import TemplatesView from './views/TemplatesView'
 import EquipmentView from './views/EquipmentView'
-import ExportDialog from './components/DialogBoxes/ExportDialogBox'
 import CCsView from './views/CCsView'
 import RevisionsView from './views/RevisionsView'
+import TenderSectionsView from './views/TenderSectionsView'
 
 const AppContainer = styled.div`
     width: 100svw;
@@ -168,7 +169,10 @@ const App = () => {
                                 element={<RevisionsView />}
                             />
                             <Route path="/ccs" element={<CCsView />} />
-                            <Route path="/tender-sections" />
+                            <Route
+                                path="/tender-sections"
+                                element={<TenderSectionsView />}
+                            />
                             <Route path="/" element={<ProjectView />} />
                             <Route path="/codes" element={<CodesView />} />
                         </Routes>

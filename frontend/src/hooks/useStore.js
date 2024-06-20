@@ -23,6 +23,7 @@ import {
     generateProjectCCsURL,
     updateCCsURL,
     generateProjectRevisionsURL,
+    generateProjectTenderHoursURL,
 } from '../utils/apiConfig'
 import { readExcelFile } from '../utils/readExcelFile'
 import {
@@ -47,6 +48,7 @@ const useStore = create((set) => ({
     cabschedsList: [],
     revisionsList: [],
     ccsList: [],
+    tenderSectionsList: [],
     localMainTableRefs: [],
     isLoading: false,
     viewType: 'Section',
@@ -63,6 +65,8 @@ const useStore = create((set) => ({
     setCabschedsList: (cabscheds) => set({ cabschedsList: cabscheds }),
     setRevisionsList: (revisions) => set({ revisionsList: revisions }),
     setCCsList: (ccs) => set({ ccsList: ccs }),
+    setTenderSectionsList: (tenderSections) =>
+        set({ tenderSectionsList: tenderSections }),
     setLocalMainTableRefs: (refs) => set({ localMainTableRefs: refs }),
     setViewType: (type) => set({ viewType: type }),
     setDataHasChanged: (hasChanged) => set({ dataHasChanged: hasChanged }),
@@ -181,6 +185,19 @@ const useStore = create((set) => ({
             const response = await fetch(generateProjectCCsURL(jobNo))
             const data = await response.json()
             set({ ccsList: data })
+        } catch (error) {
+            console.error(error)
+        } finally {
+            set({ isLoading: false })
+        }
+    },
+
+    fetchTenderSectionsList: async (jobNo) => {
+        set({ isLoading: true })
+        try {
+            const response = await fetch(generateProjectTenderHoursURL(jobNo))
+            const data = await response.json()
+            set({ tenderSectionsList: data })
         } catch (error) {
             console.error(error)
         } finally {

@@ -22,6 +22,7 @@ import TemplatesView from './views/TemplatesView'
 import EquipmentView from './views/EquipmentView'
 import ExportDialog from './components/DialogBoxes/ExportDialogBox'
 import CCsView from './views/CCsView'
+import RevisionsView from './views/RevisionsView'
 
 const AppContainer = styled.div`
     width: 100svw;
@@ -148,7 +149,6 @@ const App = () => {
                                 path="/dashboard"
                                 element={<DashboardView />}
                             />
-                            <Route path="/revisions" />
                             <Route
                                 path="/components"
                                 element={<ComponentsView />}
@@ -163,7 +163,10 @@ const App = () => {
                             />
                             <Route path="/cable-schedules" />
                             <Route path="/multi-prog" />
-                            <Route path="/revisions" />
+                            <Route
+                                path="/revisions"
+                                element={<RevisionsView />}
+                            />
                             <Route path="/ccs" element={<CCsView />} />
                             <Route path="/tender-sections" />
                             <Route path="/" element={<ProjectView />} />

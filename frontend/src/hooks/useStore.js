@@ -22,6 +22,7 @@ import {
     bulkUpdateEquipmentURL,
     generateProjectCCsURL,
     updateCCsURL,
+    generateProjectRevisionsURL,
 } from '../utils/apiConfig'
 import { readExcelFile } from '../utils/readExcelFile'
 import {
@@ -44,6 +45,7 @@ const useStore = create((set) => ({
     templatesList: [],
     equipmentList: [],
     cabschedsList: [],
+    revisionsList: [],
     ccsList: [],
     localMainTableRefs: [],
     isLoading: false,
@@ -59,6 +61,7 @@ const useStore = create((set) => ({
     setTemplatesList: (templates) => set({ templatesList: templates }),
     setEquipmentList: (equipment) => set({ equipmentList: equipment }),
     setCabschedsList: (cabscheds) => set({ cabschedsList: cabscheds }),
+    setRevisionsList: (revisions) => set({ revisionsList: revisions }),
     setCCsList: (ccs) => set({ ccsList: ccs }),
     setLocalMainTableRefs: (refs) => set({ localMainTableRefs: refs }),
     setViewType: (type) => set({ viewType: type }),
@@ -152,6 +155,19 @@ const useStore = create((set) => ({
             const response = await fetch(generateProjectCabschedsURL(jobNo))
             const data = await response.json()
             set({ cabschedsList: data })
+        } catch (error) {
+            console.error(error)
+        } finally {
+            set({ isLoading: false })
+        }
+    },
+
+    fetchRevisionsList: async (jobNo) => {
+        set({ isLoading: true })
+        try {
+            const response = await fetch(generateProjectRevisionsURL(jobNo))
+            const data = await response.json()
+            set({ revisionsList: data })
         } catch (error) {
             console.error(error)
         } finally {

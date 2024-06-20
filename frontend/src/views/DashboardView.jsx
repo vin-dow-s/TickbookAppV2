@@ -173,7 +173,7 @@ const RefreshButton = styled.button`
  * @param {boolean} autoRefreshEnabled - Flag to enable/disable auto-update feature for the view table.
  */
 const DashboardView = () => {
-    // 1. State declarations
+    //1. State declarations
     const { jobNo, viewType, setViewType, dataHasChanged, setDataHasChanged } =
         useStore((state) => ({
             jobNo: state.jobNo,
@@ -214,7 +214,7 @@ const DashboardView = () => {
     const [restoreMainTableFocus, setRestoreMainTableFocus] = useState(null)
     const [autoRefreshEnabled, setAutoRefreshEnabled] = useState(true)
 
-    // 2. Data fetching with Hooks
+    //2. Data fetching with Hooks
     //Fetches project data based on the user-selected job number
     const {
         data: mainTableData = [],
@@ -233,7 +233,7 @@ const DashboardView = () => {
         autoRefreshEnabled ? localMainTableData : null
     )
 
-    // 3. Helper Functions
+    //3. Helper Functions
     const mainTableGridOptions = {
         defaultColDef: {
             resizable: true,
@@ -406,9 +406,6 @@ const DashboardView = () => {
                 setEquipRef(null)
                 setViewTableDetails(null)
                 break
-            case 'addCC':
-                openAddCCDialogBox(rowData)
-                break
             case 'deleteEquipment':
                 setCurrentEquipmentData(rowData)
                 setIsDeleteEquipmentDialogBoxOpen(true)
@@ -505,7 +502,7 @@ const DashboardView = () => {
         setDataHasChanged(false)
     }
 
-    // 5. useEffects (synchronise and update data dynamically)
+    //4. useEffects (synchronise and update data dynamically)
     useEffect(() => {
         if (mainTableData) {
             setLocalMainTableData(mainTableData)
@@ -625,8 +622,6 @@ const DashboardView = () => {
 
     return (
         <DashboardViewContainer>
-            {/* Main information about the project */}
-
             {/* Main table with project data */}
             <MainTableContainer>
                 {/* Search field for main table */}

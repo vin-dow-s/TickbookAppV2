@@ -8,16 +8,10 @@ export const contextMenuOptions = {
             icon: '/edit-line.svg',
             action: 'editEquipment',
         },
-
         {
             label: 'Delete Equipment',
             icon: '/delete-bin-line.svg',
             action: 'deleteEquipment',
-        },
-        {
-            label: 'Add CC',
-            icon: '/add-line.svg',
-            action: 'addCC',
         },
     ],
     componentsTable: [

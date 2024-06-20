@@ -20,7 +20,6 @@ import {
 import { ccsValidators } from '../helpers/ccsHelpers'
 
 //Styles and constants
-import { Overlay } from '../styles/dialog-boxes'
 import { colors } from '../styles/global-styles'
 import { StyledAGGrid } from '../styles/ag-grid'
 import { columnsCCsHistory } from '../constants/dialog-box-tables-columns'
@@ -34,33 +33,9 @@ import {
     LabelInputContainer,
 } from '../components/Common/FormBase'
 import FormButton from '../components/Common/FormButton'
-import MainLoader from '../components/Common/MainLoader'
 import { overlayLoadingTemplatePurple } from '../components/Common/Loader'
 
 //Styled components declarations
-const MainLoaderOverlayContainer = styled.div`
-    position: fixed;
-    top: 0;
-    left: 0;
-    height: 100%;
-    width: 100%;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    z-index: 50000;
-    background: rgba(0, 0, 0, 0.5);
-`
-
-const CreationStepMessageContainer = styled.div`
-    position: absolute;
-    top: 58%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    color: white;
-    font-size: 1.2em;
-    z-index: 50001;
-    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
-`
 
 const CCsViewContainer = styled.div`
     display: flex;
@@ -264,6 +239,7 @@ const CCsView = () => {
         fetchLocalMainTableRefs,
         onCcCreate,
         onCcUpdate,
+        isLoading,
     } = useStore((state) => ({
         jobNo: state.jobNo,
         ccsList: state.ccsList,
@@ -272,13 +248,12 @@ const CCsView = () => {
         fetchLocalMainTableRefs: state.fetchLocalMainTableRefs,
         onCcCreate: state.onCcCreate,
         onCcUpdate: state.onCcUpdate,
+        isLoading: state.isLoading,
     }))
 
     const [selectedRefs, setSelectedRefs] = useState([])
-    const [ccsHistoryTableGridApi, setCCsHistoryTableGridApi] = useState(null)
+    const [ccsHistoryTableGridApi, setCcsHistoryTableGridApi] = useState(null)
     const [quickFilterText, setQuickFilterText] = useState('')
-    const [isCreatingItems, setIsCreatingItems] = useState(false)
-    const [creationStepMessage, setCreationStepMessage] = useState('')
     const [selectedStatus, setSelectedStatus] = useState('all')
     const [fieldValues, setFieldValues] = useState({
         CcRef: '',
@@ -307,7 +282,7 @@ const CCsView = () => {
         rowSelection: 'single',
         overlayLoadingTemplate: overlayLoadingTemplatePurple,
         onGridReady: (params) => {
-            setCCsHistoryTableGridApi(params.api)
+            setCcsHistoryTableGridApi(params.api)
             params.api.updateGridOptions({ rowData: ccsList })
         },
         singleClickEdit: true,
@@ -350,10 +325,10 @@ const CCsView = () => {
     }, [ccsHistoryTableGridApi, selectedStatus])
 
     useEffect(() => {
-        if (isCreatingItems) {
+        if (isLoading) {
             ccsHistoryTableGridApi?.showLoadingOverlay()
         } else ccsHistoryTableGridApi?.hideOverlay()
-    }, [ccsList, ccsHistoryTableGridApi, isCreatingItems])
+    }, [ccsList, ccsHistoryTableGridApi, isLoading])
 
     const handleInputChange = (e) => {
         const { id, value } = e.target
@@ -466,167 +441,150 @@ const CCsView = () => {
     }))
 
     return (
-        <>
-            {isCreatingItems && (
-                <MainLoaderOverlayContainer>
-                    <Overlay />
-                    <CreationStepMessageContainer>
-                        {creationStepMessage}
-                    </CreationStepMessageContainer>
-                    <MainLoader />
-                </MainLoaderOverlayContainer>
-            )}
-            <CCsViewContainer>
-                <CCsDataContainer>
-                    <LabelSelectInputContainer>
-                        <span className="grey-label">CCs List</span>
-                        <StateSelectContainer>
-                            Status:
-                            <select
-                                onChange={(e) =>
-                                    setSelectedStatus(e.target.value)
-                                }
-                            >
-                                <option value="all">All</option>
-                                <option value="current">Current</option>
-                                <option value="lifted">Lifted</option>
-                            </select>
-                        </StateSelectContainer>
-                        <div
-                            style={{
-                                position: 'relative',
-                                top: '0',
-                                right: '0',
-                            }}
+        <CCsViewContainer>
+            <CCsDataContainer>
+                <LabelSelectInputContainer>
+                    <span className="grey-label">CCs List</span>
+                    <StateSelectContainer>
+                        Status:
+                        <select
+                            onChange={(e) => setSelectedStatus(e.target.value)}
                         >
-                            <input
-                                className="quick-filter-input purple"
-                                type="text"
-                                placeholder="Search in all columns..."
-                                value={quickFilterText}
-                                onChange={(e) =>
-                                    setQuickFilterText(e.target.value)
-                                }
-                            />
-                        </div>
-                    </LabelSelectInputContainer>
-                    <div style={{ height: 'calc(100% - 32px)' }}>
-                        <StyledAGGrid
-                            className="ag-theme-quartz purple-table"
-                            gridOptions={CCsHistoryTableGridOptions}
-                            rowData={ccsList}
+                            <option value="all">All</option>
+                            <option value="current">Current</option>
+                            <option value="lifted">Lifted</option>
+                        </select>
+                    </StateSelectContainer>
+                    <div
+                        style={{
+                            position: 'relative',
+                            top: '0',
+                            right: '0',
+                        }}
+                    >
+                        <input
+                            className="quick-filter-input purple"
+                            type="text"
+                            placeholder="Search in all columns..."
+                            value={quickFilterText}
+                            onChange={(e) => setQuickFilterText(e.target.value)}
                         />
                     </div>
-                </CCsDataContainer>
-                <AddCCFormContainer>
-                    <div className="purple-label">Create a New CC</div>
-                    <FormBase onSubmit={handleFormSubmit}>
-                        <FieldsWrapper>
-                            <AddCCFormField>
-                                <LabelInputContainer>
-                                    <label htmlFor="CcRef">CC Ref</label>
-                                    <input
-                                        id="CcRef"
-                                        value={fieldValues.CcRef}
-                                        onChange={handleInputChange}
-                                        className={getClassForField(
-                                            'CcRef',
-                                            fieldErrors,
-                                            fieldValues
-                                        )}
-                                        type="text"
-                                        placeholder="Max. 25 characters"
-                                        maxLength={25}
-                                    />
-                                </LabelInputContainer>
-                                {fieldErrors['CcRef'] && (
-                                    <ErrorMessage>
-                                        {fieldErrors['CcRef']}
-                                    </ErrorMessage>
-                                )}
-                            </AddCCFormField>
-                            <AddCCFormField>
-                                <LabelInputContainer>
-                                    <label htmlFor="DateImp">Date</label>
-                                    <input
-                                        id="DateImp"
-                                        value={fieldValues.DateImp}
-                                        onChange={handleInputChange}
-                                        className={getClassForField(
-                                            'DateImp',
-                                            fieldErrors,
-                                            fieldValues
-                                        )}
-                                        type="date"
-                                    />
-                                </LabelInputContainer>
-                                {fieldErrors['DateImp'] && (
-                                    <ErrorMessage>
-                                        {fieldErrors['DateImp']}
-                                    </ErrorMessage>
-                                )}
-                            </AddCCFormField>
-                            <AddCCFormField>
-                                <DescriptionLabelInputContainer>
-                                    <label htmlFor="Description">
-                                        Description
-                                    </label>
-                                    <textarea
-                                        id="Description"
-                                        value={fieldValues.Description}
-                                        onChange={handleInputChange}
-                                        className={getClassForField(
-                                            'Description',
-                                            fieldErrors,
-                                            fieldValues
-                                        )}
-                                        style={{ resize: 'none' }}
-                                    />
-                                    {fieldErrors['Description'] && (
-                                        <DescriptionErrorMessage>
-                                            {fieldErrors['Description']}
-                                        </DescriptionErrorMessage>
-                                    )}
-                                </DescriptionLabelInputContainer>
-                            </AddCCFormField>
-                        </FieldsWrapper>
+                </LabelSelectInputContainer>
+                <div style={{ height: 'calc(100% - 32px)' }}>
+                    <StyledAGGrid
+                        className="ag-theme-quartz purple-table"
+                        gridOptions={CCsHistoryTableGridOptions}
+                        rowData={ccsList}
+                    />
+                </div>
+            </CCsDataContainer>
+            <AddCCFormContainer>
+                <div className="purple-label">Create a New CC</div>
+                <FormBase onSubmit={handleFormSubmit}>
+                    <FieldsWrapper>
                         <AddCCFormField>
-                            <label
-                                style={{
-                                    marginBottom: '3px',
-                                }}
-                            >
-                                Selected Equipment Refs
-                            </label>
-                            <SelectedEquipmentContainer>
-                                <Select
-                                    components={{ MenuList }}
-                                    options={equipmentOptions}
-                                    isMulti
-                                    onChange={handleEquipmentChange}
-                                    className="basic-multi-select"
-                                    classNamePrefix="select"
-                                    menuPlacement="top"
-                                    styles={customStyles}
+                            <LabelInputContainer>
+                                <label htmlFor="CcRef">CC Ref</label>
+                                <input
+                                    id="CcRef"
+                                    value={fieldValues.CcRef}
+                                    onChange={handleInputChange}
+                                    className={getClassForField(
+                                        'CcRef',
+                                        fieldErrors,
+                                        fieldValues
+                                    )}
+                                    type="text"
+                                    placeholder="Max. 25 characters"
+                                    maxLength={25}
                                 />
-                            </SelectedEquipmentContainer>
+                            </LabelInputContainer>
+                            {fieldErrors['CcRef'] && (
+                                <ErrorMessage>
+                                    {fieldErrors['CcRef']}
+                                </ErrorMessage>
+                            )}
                         </AddCCFormField>
-                        <ButtonsContainer>
-                            <FormButton type="submit" variant="submit">
-                                Create
-                            </FormButton>
-                            <FormButton
-                                type="reset"
-                                variant="cancel"
-                                onClick={handleCancelClick}
-                            >
-                                Cancel
-                            </FormButton>
-                        </ButtonsContainer>
-                    </FormBase>
-                </AddCCFormContainer>
-            </CCsViewContainer>
-        </>
+                        <AddCCFormField>
+                            <LabelInputContainer>
+                                <label htmlFor="DateImp">Date</label>
+                                <input
+                                    id="DateImp"
+                                    value={fieldValues.DateImp}
+                                    onChange={handleInputChange}
+                                    className={getClassForField(
+                                        'DateImp',
+                                        fieldErrors,
+                                        fieldValues
+                                    )}
+                                    type="date"
+                                />
+                            </LabelInputContainer>
+                            {fieldErrors['DateImp'] && (
+                                <ErrorMessage>
+                                    {fieldErrors['DateImp']}
+                                </ErrorMessage>
+                            )}
+                        </AddCCFormField>
+                        <AddCCFormField>
+                            <DescriptionLabelInputContainer>
+                                <label htmlFor="Description">Description</label>
+                                <textarea
+                                    id="Description"
+                                    value={fieldValues.Description}
+                                    onChange={handleInputChange}
+                                    className={getClassForField(
+                                        'Description',
+                                        fieldErrors,
+                                        fieldValues
+                                    )}
+                                    style={{ resize: 'none' }}
+                                />
+                                {fieldErrors['Description'] && (
+                                    <DescriptionErrorMessage>
+                                        {fieldErrors['Description']}
+                                    </DescriptionErrorMessage>
+                                )}
+                            </DescriptionLabelInputContainer>
+                        </AddCCFormField>
+                    </FieldsWrapper>
+                    <AddCCFormField>
+                        <label
+                            style={{
+                                marginBottom: '3px',
+                            }}
+                        >
+                            Selected Equipment Refs
+                        </label>
+                        <SelectedEquipmentContainer>
+                            <Select
+                                components={{ MenuList }}
+                                options={equipmentOptions}
+                                isMulti
+                                onChange={handleEquipmentChange}
+                                className="basic-multi-select"
+                                classNamePrefix="select"
+                                menuPlacement="top"
+                                styles={customStyles}
+                            />
+                        </SelectedEquipmentContainer>
+                    </AddCCFormField>
+                    <ButtonsContainer>
+                        <FormButton type="submit" variant="submit">
+                            Create
+                        </FormButton>
+                        <FormButton
+                            type="reset"
+                            variant="cancel"
+                            onClick={handleCancelClick}
+                        >
+                            Cancel
+                        </FormButton>
+                    </ButtonsContainer>
+                </FormBase>
+            </AddCCFormContainer>
+        </CCsViewContainer>
     )
 }
 

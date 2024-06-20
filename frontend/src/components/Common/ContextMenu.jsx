@@ -54,7 +54,7 @@ const ContextMenuItem = styled.li`
 
     ${(props) =>
         props.$islast &&
-        !props.$isduplicate &&
+        !props.$isseparatingline &&
         css`
             &::before {
                 content: '';
@@ -113,9 +113,10 @@ const ContextMenu = ({ position, data, options, onClose, onOptionClick }) => {
                     }}
                     $isdelete={option?.action?.includes('delete')}
                     $islast={index === options.length - 1}
-                    $isduplicate={option?.label
-                        ?.toLowerCase()
-                        .includes('duplicate')}
+                    $isseparatingline={
+                        option?.label?.toLowerCase().includes('duplicate') ||
+                        option?.label?.toLowerCase().includes('equipment')
+                    }
                 >
                     {option.icon && (
                         <img src={option.icon} alt={option.label} />

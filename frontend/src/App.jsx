@@ -24,6 +24,7 @@ import EquipmentView from './views/EquipmentView'
 import CCsView from './views/CCsView'
 import RevisionsView from './views/RevisionsView'
 import TenderSectionsView from './views/TenderSectionsView'
+import CabschedsView from './views/CabschedsView'
 
 const AppContainer = styled.div`
     width: 100svw;
@@ -162,7 +163,10 @@ const App = () => {
                                 path="/equipment"
                                 element={<EquipmentView />}
                             />
-                            <Route path="/cable-schedules" />
+                            <Route
+                                path="/cable-schedules"
+                                element={<CabschedsView />}
+                            />
                             <Route path="/multi-prog" />
                             <Route
                                 path="/revisions"

@@ -24,6 +24,11 @@ import {
     updateCCsURL,
     generateProjectRevisionsURL,
     generateProjectTenderHoursURL,
+    updateCabschedURL,
+    deleteCabschedURL,
+    generateProjectCabschedsBulkURL,
+    updateCabschedCompletionURL,
+    markCableAsInstalledURL,
 } from '../utils/apiConfig'
 import { readExcelFile } from '../utils/readExcelFile'
 import {
@@ -35,6 +40,7 @@ import {
     validateEquipmentCreationFileData,
     validateEquipmentUpdateFileData,
 } from '../helpers/equipmentHelpers'
+import { validateCabschedCreationFileData } from '../helpers/cabschedHelpers'
 
 const useStore = create((set) => ({
     jobNo: '',
@@ -848,240 +854,6 @@ const useStore = create((set) => ({
         jsonData,
         equipmentList
     ) => {
-        let successCount = 0
-        let equipmentAlreadyExisting = []
-        let failureCount = 0
-        let equipmentData = []
-
-        const existingEquipmentRefs = new Set(equipmentList.map((e) => e.Ref))
-
-        jsonData.forEach((row) => {
-            const equipRefBase = row.Ref
-            const equipQty = isNaN(parseInt(row.EquipQty))
-                ? 1
-                : parseInt(row.EquipQty)
-
-            for (let i = 0; i < equipQty; i++) {
-                let equipRef = equipRefBase
-                if (equipQty !== 1) {
-                    const refSuffix = String(i + 1).padStart(2, '0')
-                    equipRef = `${equipRefBase}-${refSuffix}`
-                }
-
-                if (!existingEquipmentRefs.has(equipRef)) {
-                    equipmentData.push({
-                        JobNo: jobNo,
-                        Ref: equipRef,
-                        Description: row.Description,
-                        TempName: row.Template,
-                        ProgID: row.ProgID,
-                        TendID: row.TendID,
-                    })
-                } else {
-                    equipmentAlreadyExisting.push(equipRef)
-                }
-            }
-        })
-
-        // Sending bulk request
-        try {
-            const response = await fetch(
-                generateProjectEquipmentBulkURL(jobNo),
-                {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(equipmentData),
-                }
-            )
-
-            const responseBody = await response.json()
-
-            if (!response.ok) {
-                throw new Error(responseBody.message)
-            }
-
-            set((state) => ({
-                equipmentList: [
-                    ...state.equipmentList,
-                    ...responseBody.success,
-                ],
-            }))
-
-            const { success, failures, uniqueEquipmentCount } = responseBody
-
-            return {
-                successCount: success.length,
-                failureCount: failures.length,
-                uniqueEquipmentCount,
-                equipmentAlreadyExisting,
-            }
-        } catch (error) {
-            console.error('Error creating Equipment in bulk:', error)
-            failureCount = equipmentData.length
-        }
-
-        return { successCount, equipmentAlreadyExisting, failureCount }
-    },
-
-    onEquipmentUpdate: async (jobNo, oldRef, fieldValuesToUpdate) => {
-        try {
-            const url = updateEquipmentURL(jobNo, oldRef)
-
-            const response = await fetch(url, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(fieldValuesToUpdate),
-            })
-
-            if (response.ok) {
-                const updatedEquipmentFromServer = await response.json()
-
-                set((state) => {
-                    const updatedEquipmentList = state.equipmentList.map(
-                        (equip) =>
-                            equip.Ref === oldRef
-                                ? updatedEquipmentFromServer.updatedEquipment
-                                : equip
-                    )
-                    const updatedCabschedsList = state.cabschedsList.map(
-                        (cabsched) =>
-                            updatedEquipmentFromServer.updatedCabscheds.find(
-                                (updated) => updated.CabNum === cabsched.CabNum
-                            ) || cabsched
-                    )
-                    return {
-                        equipmentList: updatedEquipmentList,
-                        cabschedsList: updatedCabschedsList,
-                        dataHasChanged: true,
-                    }
-                })
-
-                return { success: true }
-            } else {
-                const errorText = await response.text()
-                console.error('Failed to update equipment:', errorText)
-                return { success: false, error: errorText }
-            }
-        } catch (error) {
-            console.error('Error while updating the equipment:', error)
-            return { success: false, error: error.message }
-        }
-    },
-
-    onEquipmentDelete: async (
-        jobNo,
-        deletedEquipment,
-        deleteAssociatedCables
-    ) => {
-        try {
-            const requestOptions = {
-                method: 'DELETE',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    deleteAssociatedCables: deleteAssociatedCables,
-                }),
-            }
-
-            const response = await fetch(
-                deleteEquipmentURL(jobNo, deletedEquipment.Ref),
-                requestOptions
-            )
-
-            const result = await response.json()
-            if (response.ok) {
-                set((state) => ({
-                    equipmentList: state.equipmentList.filter(
-                        (equip) => equip.Ref !== deletedEquipment.Ref
-                    ),
-                    cabschedsList: deleteAssociatedCables
-                        ? state.cabschedsList.filter(
-                              (cable) =>
-                                  !result.deletedCabscheds.some(
-                                      (deletedCable) =>
-                                          deletedCable.CabNum === cable.CabNum
-                                  )
-                          )
-                        : state.cabschedsList,
-                    dataHasChanged: true,
-                }))
-
-                return {
-                    success: true,
-                    deletedCabschedsCount: result.deletedCabscheds.length,
-                }
-            } else {
-                return { success: false, message: result.message }
-            }
-        } catch (error) {
-            console.error('Error:', error)
-            return { success: false, message: error.message }
-        }
-    },
-
-    handleEquipmentFileUpload: async (jobNo, file) => {
-        set({ isLoading: true })
-        try {
-            const jsonData = await readExcelFile(file)
-            if (!jsonData || jsonData.length === 0)
-                throw new Error('The file is empty.')
-
-            const isUpdateOperation = Object.keys(jsonData[0]).includes(
-                'TotalHours'
-            )
-
-            const equipmentList = useStore.getState().equipmentList
-            let result
-
-            if (!isUpdateOperation) {
-                const validatedData = validateEquipmentCreationFileData(
-                    jsonData,
-                    useStore.getState().templatesList
-                )
-
-                if (validatedData.nonExistentTemplates.length > 0) {
-                    return {
-                        success: false,
-                        errorMessages: [
-                            `The following Templates do not exist: ${validatedData.nonExistentTemplates.join(
-                                ', '
-                            )}.`,
-                        ],
-                    }
-                }
-
-                result = await useStore
-                    .getState()
-                    .createEquipmentOnFileUpload(
-                        jobNo,
-                        validatedData.equipList,
-                        equipmentList
-                    )
-
-                result.errorMessages = validatedData.errorMessages
-                result.nonExistentTemplates = validatedData.nonExistentTemplates
-            } else {
-                result = await useStore
-                    .getState()
-                    .updateEquipmentOnFileUpload(jobNo, jsonData, equipmentList)
-
-                result.errorMessages = result.errorMessages || []
-                result.nonExistentTemplates = []
-            }
-
-            return {
-                ...result,
-                linesProcessed: jsonData.length,
-                isUpdateOperation,
-            }
-        } catch (error) {
-            console.error('Error during file processing:', error)
-            return { success: false, error: error.message }
-        } finally {
-            set({ isLoading: false })
-        }
-    },
-
-    createEquipmentOnFileUpload: async (jobNo, jsonData, equipmentList) => {
         let equipmentAlreadyExisting = []
         let equipmentData = []
 
@@ -1169,7 +941,56 @@ const useStore = create((set) => ({
         }
     },
 
-    updateEquipmentOnFileUpload: async (jobNo, dataToUpdate, equipmentList) => {
+    onEquipmentUpdate: async (jobNo, oldRef, fieldValuesToUpdate) => {
+        try {
+            const url = updateEquipmentURL(jobNo, oldRef)
+
+            const response = await fetch(url, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(fieldValuesToUpdate),
+            })
+
+            if (response.ok) {
+                const updatedEquipmentFromServer = await response.json()
+
+                set((state) => {
+                    const updatedEquipmentList = state.equipmentList.map(
+                        (equip) =>
+                            equip.Ref === oldRef
+                                ? updatedEquipmentFromServer.updatedEquipment
+                                : equip
+                    )
+                    const updatedCabschedsList = state.cabschedsList.map(
+                        (cabsched) =>
+                            updatedEquipmentFromServer.updatedCabscheds.find(
+                                (updated) => updated.CabNum === cabsched.CabNum
+                            ) || cabsched
+                    )
+                    return {
+                        equipmentList: updatedEquipmentList,
+                        cabschedsList: updatedCabschedsList,
+                        dataHasChanged: true,
+                    }
+                })
+
+                return { success: true }
+            } else {
+                const errorText = await response.text()
+                console.error('Failed to update equipment:', errorText)
+                return { success: false, error: errorText }
+            }
+        } catch (error) {
+            console.error('Error while updating the equipment:', error)
+            return { success: false, error: error.message }
+        }
+    },
+
+    onEquipmentBulkUpdateOnEquipmentUpload: async (
+        jobNo,
+        dataToUpdate,
+        equipmentList
+    ) => {
         try {
             const headers = Object.keys(dataToUpdate[0])
             const fieldToUpdate = headers[1]
@@ -1482,6 +1303,459 @@ const useStore = create((set) => ({
         } catch (error) {
             console.error('Error while updating the completion:', error)
             throw error
+        }
+    },
+
+    onEquipmentDelete: async (
+        jobNo,
+        deletedEquipment,
+        deleteAssociatedCables
+    ) => {
+        try {
+            const requestOptions = {
+                method: 'DELETE',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    deleteAssociatedCables: deleteAssociatedCables,
+                }),
+            }
+
+            const response = await fetch(
+                deleteEquipmentURL(jobNo, deletedEquipment.Ref),
+                requestOptions
+            )
+
+            const result = await response.json()
+            if (response.ok) {
+                set((state) => ({
+                    equipmentList: state.equipmentList.filter(
+                        (equip) => equip.Ref !== deletedEquipment.Ref
+                    ),
+                    cabschedsList: deleteAssociatedCables
+                        ? state.cabschedsList.filter(
+                              (cable) =>
+                                  !result.deletedCabscheds.some(
+                                      (deletedCable) =>
+                                          deletedCable.CabNum === cable.CabNum
+                                  )
+                          )
+                        : state.cabschedsList,
+                    dataHasChanged: true,
+                }))
+
+                return {
+                    success: true,
+                    deletedCabschedsCount: result.deletedCabscheds.length,
+                }
+            } else {
+                return { success: false, message: result.message }
+            }
+        } catch (error) {
+            console.error('Error:', error)
+            return { success: false, message: error.message }
+        }
+    },
+
+    handleEquipmentFileUpload: async (jobNo, file) => {
+        set({ isLoading: true })
+        try {
+            const jsonData = await readExcelFile(file)
+            if (!jsonData || jsonData.length === 0)
+                throw new Error('The file is empty.')
+
+            const isUpdateOperation = Object.keys(jsonData[0]).includes(
+                'TotalHours'
+            )
+
+            const equipmentList = useStore.getState().equipmentList
+            let result
+
+            if (!isUpdateOperation) {
+                const validatedData = validateEquipmentCreationFileData(
+                    jsonData,
+                    useStore.getState().templatesList
+                )
+
+                if (validatedData.nonExistentTemplates.length > 0) {
+                    return {
+                        success: false,
+                        errorMessages: [
+                            `The following Templates do not exist: ${validatedData.nonExistentTemplates.join(
+                                ', '
+                            )}.`,
+                        ],
+                    }
+                }
+
+                result = await useStore
+                    .getState()
+                    .onEquipmentBulkCreateOnEquipmentUpload(
+                        jobNo,
+                        validatedData.equipList,
+                        equipmentList
+                    )
+
+                result.errorMessages = validatedData.errorMessages
+                result.nonExistentTemplates = validatedData.nonExistentTemplates
+            } else {
+                result = await useStore
+                    .getState()
+                    .onEquipmentBulkUpdateOnEquipmentUpload(
+                        jobNo,
+                        jsonData,
+                        equipmentList
+                    )
+
+                result.errorMessages = result.errorMessages || []
+                result.nonExistentTemplates = []
+            }
+
+            return {
+                ...result,
+                linesProcessed: jsonData.length,
+                isUpdateOperation,
+            }
+        } catch (error) {
+            console.error('Error during file processing:', error)
+            return { success: false, error: error.message }
+        } finally {
+            set({ isLoading: false })
+        }
+    },
+
+    onCabschedCreate: async (jobNo, cabschedData) => {
+        try {
+            const response = await fetch(generateProjectCabschedsURL(jobNo), {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(cabschedData),
+            })
+
+            const responseBody = await response.json()
+
+            if (!response.ok) {
+                const error = new Error(responseBody.message)
+                error.statusCode = response.status
+                throw error
+            }
+
+            set((state) => ({
+                cabschedsList: [...state.cabschedsList, responseBody],
+            }))
+            return { success: true, cabsched: responseBody }
+        } catch (error) {
+            if (error.statusCode === 409) {
+                return { success: false, error: error.message, type: 'exists' }
+            }
+            return { success: false, error: error.message, type: 'general' }
+        }
+    },
+
+    onCabschedUpdate: async (
+        jobNo,
+        cabschedToUpdate,
+        fieldValuesToUpdate,
+        equipmentRefs,
+        cabSizesData
+    ) => {
+        const matchingComponent = cabSizesData.find(
+            (component) => component.Name === fieldValuesToUpdate.CabSize
+        )
+
+        // Find the matching EquipRef in mainTableData
+        const matchingEquipRef = equipmentRefs.find(
+            (item) => item.Ref === fieldValuesToUpdate.EquipRef
+        )
+
+        // If a matching EquipRef is found, update the ZGlandArea
+        if (matchingEquipRef) {
+            fieldValuesToUpdate.ZGlandArea =
+                matchingEquipRef.Area || matchingEquipRef.Area
+        }
+
+        const finalCabschedData = {
+            ...cabschedToUpdate,
+            ...fieldValuesToUpdate,
+            Length: parseFloat(fieldValuesToUpdate.Length),
+            Component_ID: matchingComponent.id,
+        }
+
+        try {
+            const response = await fetch(
+                updateCabschedURL(jobNo, cabschedToUpdate.CabNum),
+                {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(finalCabschedData),
+                }
+            )
+
+            if (response.ok) {
+                const updatedCabsched = await response.json()
+
+                set((state) => ({
+                    cabschedsList: state.cabschedsList.map((cabsched) =>
+                        cabsched.CabNum === cabschedToUpdate.CabNum
+                            ? updatedCabsched
+                            : cabsched
+                    ),
+                }))
+
+                return { success: true, cabsched: updatedCabsched }
+            }
+
+            const responseBody = await response.json()
+            throw new Error(responseBody.message)
+        } catch (error) {
+            console.error('Error:', error)
+            return { success: false, error: error.message }
+        }
+    },
+
+    onCabschedCompletionUpdate: async (
+        jobNo,
+        cabNum,
+        fieldToUpdate,
+        percentComplete
+    ) => {
+        try {
+            const bodyData = {
+                JobNo: jobNo,
+                CabNum: cabNum,
+            }
+
+            bodyData[fieldToUpdate] = percentComplete
+
+            const response = await fetch(
+                updateCabschedCompletionURL(jobNo, cabNum),
+                {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(bodyData),
+                }
+            )
+
+            if (response.ok) {
+                const updatedCabsched = await response.json()
+
+                set((state) => ({
+                    cabschedsList: state.cabschedsList.map((cabsched) =>
+                        cabsched.CabNum === cabNum ? updatedCabsched : cabsched
+                    ),
+                }))
+
+                return { success: true, cabsched: updatedCabsched }
+            } else {
+                const responseBody = await response.json()
+                return { success: false, error: responseBody.message }
+            }
+        } catch (error) {
+            console.error('Error:', error)
+            return { success: false, error: error.message }
+        }
+    },
+
+    onCabschedDelete: async (jobNo, cabNum) => {
+        try {
+            const response = await fetch(deleteCabschedURL(jobNo, cabNum), {
+                method: 'DELETE',
+            })
+
+            if (response.ok) {
+                set((state) => ({
+                    cabschedsList: state.cabschedsList.filter(
+                        (cabsched) => cabsched.CabNum !== cabNum
+                    ),
+                }))
+                return { success: true }
+            }
+
+            const responseBody = await response.json()
+            throw new Error(responseBody.message)
+        } catch (error) {
+            console.error('Error:', error)
+            return { success: false, error: error.message }
+        }
+    },
+
+    onCabschedMarkedInstalled: async (jobNo, rowData) => {
+        try {
+            const response = await fetch(
+                markCableAsInstalledURL(jobNo, rowData.CabNum),
+                {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(),
+                }
+            )
+
+            if (response.ok) {
+                const markedCable = {
+                    ...rowData,
+                    tickCabBySC: !rowData.tickCabBySC,
+                }
+
+                set((state) => ({
+                    cabschedsList: state.cabschedsList.map((cabsched) =>
+                        cabsched.CabNum === rowData.CabNum
+                            ? markedCable
+                            : cabsched
+                    ),
+                }))
+
+                return { success: true, markedCable }
+            } else {
+                throw new Error(
+                    'Failed to mark cable as installed/uninstalled.'
+                )
+            }
+        } catch (error) {
+            console.error(
+                'Error marking cable as installed/uninstalled:',
+                error
+            )
+        }
+    },
+
+    handleCabschedFileUpload: async (
+        jobNo,
+        file,
+        cabschedsList,
+        cabSizesData,
+        equipmentRefs
+    ) => {
+        set({ isLoading: true })
+        try {
+            const jsonData = await readExcelFile(file)
+            if (!jsonData || jsonData.length === 0)
+                throw new Error('The file is empty.')
+
+            const {
+                cabscheds,
+                nonExistentCabSize,
+                nonExistentEquipRef,
+                errorMessages,
+            } = validateCabschedCreationFileData(
+                jsonData,
+                cabSizesData,
+                equipmentRefs
+            )
+
+            if (
+                nonExistentCabSize.length > 0 ||
+                nonExistentEquipRef.length > 0 ||
+                errorMessages.length > 0
+            ) {
+                return {
+                    success: false,
+                    errorMessages: [
+                        ...errorMessages,
+                        ...nonExistentCabSize.map(
+                            (size) => `CabSize ${size} does not exist.`
+                        ),
+                        ...nonExistentEquipRef.map(
+                            (ref) => `EquipRef ${ref} does not exist.`
+                        ),
+                    ],
+                }
+            }
+
+            const result = await useStore
+                .getState()
+                .onCabschedsBulkCreate(
+                    jobNo,
+                    cabscheds,
+                    cabschedsList,
+                    cabSizesData
+                )
+
+            return {
+                ...result,
+                linesProcessed: jsonData.length,
+                nonExistentCabSize,
+                nonExistentEquipRef,
+            }
+        } catch (error) {
+            console.error('Error during file processing:', error)
+            return { success: false, error: error.message }
+        } finally {
+            set({ isLoading: false })
+        }
+    },
+
+    onCabschedsBulkCreate: async (
+        jobNo,
+        cabschedsToCreate,
+        cabschedsList,
+        cabSizesData
+    ) => {
+        const newCabscheds = cabschedsToCreate.filter(
+            (cabsched) =>
+                !cabschedsList.some(
+                    (existing) => existing.CabNum === cabsched.CabNum
+                )
+        )
+
+        const bulkCreateData = newCabscheds.map((cabsched) => {
+            const component = cabSizesData.find(
+                (cabSize) => cabSize.Name === cabsched.CabSize
+            )
+
+            return {
+                JobNo: jobNo,
+                CabNum: cabsched.CabNum,
+                CabSize: cabsched.CabSize,
+                Length: cabsched.Length,
+                EquipRef: cabsched.EquipRef,
+                AGlandArea: cabsched.AGlandArea,
+                ZGlandArea: cabsched.ZGlandArea,
+                AGlandComp: cabsched.AGlandComp || '0',
+                ZGlandComp: cabsched.ZGlandComp || '0',
+                CabComp: cabsched.CabComp || '0',
+                CabTest: cabsched.CabTest || '0',
+                Component_ID: component ? component.id : null,
+            }
+        })
+
+        try {
+            const response = await fetch(
+                generateProjectCabschedsBulkURL(jobNo),
+                {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(bulkCreateData),
+                }
+            )
+
+            const responseBody = await response.json()
+
+            if (!response.ok) {
+                throw new Error(responseBody.message)
+            }
+
+            if (responseBody.success.length > 0)
+                set((state) => ({
+                    cabschedsList: [
+                        ...state.cabschedsList,
+                        ...responseBody.success,
+                    ],
+                }))
+
+            const { success, failures, alreadyExists } = responseBody
+            return {
+                success: true,
+                successCount: success.length,
+                failureCount: failures.length,
+                alreadyExists,
+            }
+        } catch (error) {
+            console.error('Error creating Cabscheds in bulk:', error)
+            return {
+                successCount: 0,
+                failureCount: 0,
+            }
         }
     },
 

@@ -94,7 +94,10 @@ const createCabsched = async (req, res, next) => {
 
         res.status(201).json(newCable)
     } catch (error) {
-        if (error.name === 'SequelizeUniqueConstraintError') {
+        if (
+            error.name === 'SequelizeUniqueConstraintError' ||
+            error.message === 'This Equipment already exists.'
+        ) {
             return res
                 .status(409)
                 .json({ message: 'This Cable already exists.' })
@@ -253,18 +256,30 @@ const updateCabschedCompletion = async (req, res, next) => {
                 },
             ],
         })
+        console.log(
+            '🚀 ~ updateCabschedCompletion ~ existingCabsched:',
+            existingCabsched
+        )
 
         if (!existingCabsched) {
             return res.status(400).json({ message: 'Cable not found.' })
         }
 
         const dataToUpdate = req.body
+        console.log(
+            '🚀 ~ updateCabschedCompletion ~ dataToUpdate:',
+            dataToUpdate
+        )
 
         if (!existingCabsched) {
             return res.status(400).json({ message: 'Cable not found.' })
         }
 
         const updatedCabsched = await existingCabsched.update(dataToUpdate)
+        console.log(
+            '🚀 ~ updateCabschedCompletion ~ updatedCabsched:',
+            updatedCabsched
+        )
 
         if (existingCabsched.tickCabBySC) {
             updatedCabsched.tickCabBySC = existingCabsched.tickCabBySC

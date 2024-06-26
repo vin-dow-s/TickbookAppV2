@@ -12,7 +12,7 @@ import { generateProjectsURL } from '../utils/apiConfig'
 
 //Styles and constants
 import { StyledAGGrid } from '../styles/ag-grid'
-import { columnsSelectProject } from '../constants/dialog-box-tables-columns'
+import { columnsSelectProject } from '../constants/ag-grid-columns'
 
 //Components
 import { overlayLoadingTemplatePurple } from '../components/Common/Loader'
@@ -242,10 +242,10 @@ const ProjectView = () => {
     return (
         <ProjectViewContainer>
             <SelectProjectContainer>
-                <span className="grey-label">Projects List</span>
+                <span className="grey-label left">Projects List</span>
                 <div
                     style={{
-                        height: 'calc(100% - 18px)',
+                        height: '100%',
                         width: '100%',
                         marginTop: '2px',
                     }}

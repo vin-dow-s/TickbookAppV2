@@ -108,8 +108,8 @@ const Sidebar = () => {
                     <RiGitBranchLine />
                     CABLE SCHEDULE
                 </SidebarLink>
-                <SidebarLink to="/multi-prog">
-                    <RiCheckboxMultipleLine /> MULTI PROG ID
+                <SidebarLink to="/multi-update">
+                    <RiCheckboxMultipleLine /> MULTI UPDATE
                 </SidebarLink>
                 <SidebarLink to="/revisions">
                     <RiListCheck />

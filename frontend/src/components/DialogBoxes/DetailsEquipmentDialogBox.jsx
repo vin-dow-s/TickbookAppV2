@@ -15,7 +15,7 @@ import {
     DialogHeader,
 } from '../../styles/dialog-boxes'
 import { colors } from '../../styles/global-styles'
-import { columnsEquipRef } from '../../constants/dialog-box-tables-columns'
+import { columnsEquipRef } from '../../constants/ag-grid-columns'
 import { StyledAGGrid } from '../../styles/ag-grid'
 
 //Utils

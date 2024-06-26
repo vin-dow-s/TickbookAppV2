@@ -8,7 +8,7 @@ import useStore from '../hooks/useStore'
 //Styles and constants
 import { colors } from '../styles/global-styles'
 import { StyledAGGrid } from '../styles/ag-grid'
-import { columnsRevisions } from '../constants/dialog-box-tables-columns'
+import { columnsRevisions } from '../constants/ag-grid-columns'
 
 //Components
 import { overlayLoadingTemplatePurple } from '../components/Common/Loader'

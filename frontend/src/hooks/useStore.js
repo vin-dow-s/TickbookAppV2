@@ -29,6 +29,8 @@ import {
     generateProjectCabschedsBulkURL,
     updateCabschedCompletionURL,
     markCableAsInstalledURL,
+    generateEquipmentComponentsCodesURL,
+    bulkUpdateEquipmentCompletionByCodesURL,
 } from '../utils/apiConfig'
 import { readExcelFile } from '../utils/readExcelFile'
 import {
@@ -156,6 +158,27 @@ const useStore = create((set) => ({
             console.error(error)
         } finally {
             set({ isLoading: false })
+        }
+    },
+
+    fetchEquipmentCodes: async (jobNo, area, section) => {
+        try {
+            const url = generateEquipmentComponentsCodesURL(
+                jobNo,
+                area,
+                section
+            )
+            const response = await fetch(url)
+            const data = await response.json()
+
+            const formattedData = data.map((code) => ({
+                ...code,
+                PercentComplete: 'N/A',
+            }))
+            return { success: true, data: formattedData }
+        } catch (error) {
+            console.error('Error fetching components codes:', error)
+            return { success: false, error }
         }
     },
 
@@ -1195,16 +1218,13 @@ const useStore = create((set) => ({
                 set((state) => {
                     const updatedEquipmentList = state.equipmentList.map(
                         (equip) => {
-                            const updatedEquip = result.updatedEquipments.find(
-                                (updated) => updated.ID === equip.ID
-                            )
-                            if (updatedEquip) {
+                            if (result?.updatedItem?.ID === equip.ID) {
                                 return {
                                     ...equip,
-                                    Complete: updatedEquip.Complete,
-                                    Description: updatedEquip.Description,
-                                    Template: updatedEquip.Template,
-                                    Area: updatedEquip.Area,
+                                    Complete: result.updatedItem.Complete,
+                                    Description: result.updatedItem.Description,
+                                    Template: result.updatedItem.Template,
+                                    Area: result.updatedItem.Area,
                                 }
                             }
                             return equip
@@ -1213,12 +1233,16 @@ const useStore = create((set) => ({
 
                     const updatedCabschedsList = state.cabschedsList.map(
                         (existingCable) => {
-                            const cableToUpdate = result.updatedCabscheds.find(
-                                (updatedCableFromServer) =>
-                                    updatedCableFromServer.CabNum ===
-                                    existingCable.CabNum
-                            )
-                            return cableToUpdate || existingCable
+                            if (
+                                result?.updatedItem?.CabNum ===
+                                existingCable.CabNum
+                            ) {
+                                return {
+                                    ...existingCable,
+                                    ...result.updatedItem,
+                                }
+                            }
+                            return existingCable
                         }
                     )
 
@@ -1303,6 +1327,52 @@ const useStore = create((set) => ({
         } catch (error) {
             console.error('Error while updating the completion:', error)
             throw error
+        }
+    },
+
+    onEquipmentCompletionByCodesBulkUpdate: async (jobNo, updates) => {
+        try {
+            const response = await fetch(
+                bulkUpdateEquipmentCompletionByCodesURL(jobNo),
+                {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(updates),
+                }
+            )
+
+            if (response.ok) {
+                const updatedEquipmentFromServer = await response.json()
+
+                set((state) => ({
+                    equipmentList: state.equipmentList.map((equip) =>
+                        updatedEquipmentFromServer.updatedItems.includes(
+                            equip.Ref
+                        )
+                            ? {
+                                  ...equip,
+                                  ...updatedEquipmentFromServer.updatedEquipmentLists.find(
+                                      (e) => e.Ref === equip.Ref
+                                  ),
+                              }
+                            : equip
+                    ),
+                }))
+
+                return { success: true, updatedEquipmentFromServer }
+            } else {
+                const errorText = await response.text()
+                console.error(
+                    'Failed to update equipment completion:',
+                    errorText
+                )
+                return { success: false, error: errorText }
+            }
+        } catch (error) {
+            console.error('Error updating equipment completion:', error)
+            return { success: false, error: error.message }
         }
     },
 
@@ -1448,6 +1518,80 @@ const useStore = create((set) => ({
                 return { success: false, error: error.message, type: 'exists' }
             }
             return { success: false, error: error.message, type: 'general' }
+        }
+    },
+
+    onCabschedsBulkCreate: async (
+        jobNo,
+        cabschedsToCreate,
+        cabschedsList,
+        cabSizesData
+    ) => {
+        const newCabscheds = cabschedsToCreate.filter(
+            (cabsched) =>
+                !cabschedsList.some(
+                    (existing) => existing.CabNum === cabsched.CabNum
+                )
+        )
+
+        const bulkCreateData = newCabscheds.map((cabsched) => {
+            const component = cabSizesData.find(
+                (cabSize) => cabSize.Name === cabsched.CabSize
+            )
+
+            return {
+                JobNo: jobNo,
+                CabNum: cabsched.CabNum,
+                CabSize: cabsched.CabSize,
+                Length: cabsched.Length,
+                EquipRef: cabsched.EquipRef,
+                AGlandArea: cabsched.AGlandArea,
+                ZGlandArea: cabsched.ZGlandArea,
+                AGlandComp: cabsched.AGlandComp || '0',
+                ZGlandComp: cabsched.ZGlandComp || '0',
+                CabComp: cabsched.CabComp || '0',
+                CabTest: cabsched.CabTest || '0',
+                Component_ID: component ? component.id : null,
+            }
+        })
+
+        try {
+            const response = await fetch(
+                generateProjectCabschedsBulkURL(jobNo),
+                {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(bulkCreateData),
+                }
+            )
+
+            const responseBody = await response.json()
+
+            if (!response.ok) {
+                throw new Error(responseBody.message)
+            }
+
+            if (responseBody.success.length > 0)
+                set((state) => ({
+                    cabschedsList: [
+                        ...state.cabschedsList,
+                        ...responseBody.success,
+                    ],
+                }))
+
+            const { success, failures, alreadyExists } = responseBody
+            return {
+                success: true,
+                successCount: success.length,
+                failureCount: failures.length,
+                alreadyExists,
+            }
+        } catch (error) {
+            console.error('Error creating Cabscheds in bulk:', error)
+            return {
+                successCount: 0,
+                failureCount: 0,
+            }
         }
     },
 
@@ -1682,80 +1826,6 @@ const useStore = create((set) => ({
             return { success: false, error: error.message }
         } finally {
             set({ isLoading: false })
-        }
-    },
-
-    onCabschedsBulkCreate: async (
-        jobNo,
-        cabschedsToCreate,
-        cabschedsList,
-        cabSizesData
-    ) => {
-        const newCabscheds = cabschedsToCreate.filter(
-            (cabsched) =>
-                !cabschedsList.some(
-                    (existing) => existing.CabNum === cabsched.CabNum
-                )
-        )
-
-        const bulkCreateData = newCabscheds.map((cabsched) => {
-            const component = cabSizesData.find(
-                (cabSize) => cabSize.Name === cabsched.CabSize
-            )
-
-            return {
-                JobNo: jobNo,
-                CabNum: cabsched.CabNum,
-                CabSize: cabsched.CabSize,
-                Length: cabsched.Length,
-                EquipRef: cabsched.EquipRef,
-                AGlandArea: cabsched.AGlandArea,
-                ZGlandArea: cabsched.ZGlandArea,
-                AGlandComp: cabsched.AGlandComp || '0',
-                ZGlandComp: cabsched.ZGlandComp || '0',
-                CabComp: cabsched.CabComp || '0',
-                CabTest: cabsched.CabTest || '0',
-                Component_ID: component ? component.id : null,
-            }
-        })
-
-        try {
-            const response = await fetch(
-                generateProjectCabschedsBulkURL(jobNo),
-                {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(bulkCreateData),
-                }
-            )
-
-            const responseBody = await response.json()
-
-            if (!response.ok) {
-                throw new Error(responseBody.message)
-            }
-
-            if (responseBody.success.length > 0)
-                set((state) => ({
-                    cabschedsList: [
-                        ...state.cabschedsList,
-                        ...responseBody.success,
-                    ],
-                }))
-
-            const { success, failures, alreadyExists } = responseBody
-            return {
-                success: true,
-                successCount: success.length,
-                failureCount: failures.length,
-                alreadyExists,
-            }
-        } catch (error) {
-            console.error('Error creating Cabscheds in bulk:', error)
-            return {
-                successCount: 0,
-                failureCount: 0,
-            }
         }
     },
 

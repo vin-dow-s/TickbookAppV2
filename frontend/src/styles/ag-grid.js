@@ -126,16 +126,8 @@ export const StyledAGGrid = styled(AgGridReact)`
             border-color: #786fff !important;
         }
 
-        input[class^='ag-'][type='text']:focus {
-            border-color: #786fff;
-            box-shadow: 0 0 0 2px rgba(120, 111, 255, 0.1);
-        }
-
-        input[class^='ag-'][type='number']:focus {
-            border-color: #786fff;
-            box-shadow: 0 0 0 2px rgba(120, 111, 255, 0.1);
-        }
-
+        input[class^='ag-'][type='text']:focus,
+        input[class^='ag-'][type='number']:focus,
         input[class^='ag-'][type='date']:focus {
             border-color: #786fff;
             box-shadow: 0 0 0 2px rgba(120, 111, 255, 0.1);
@@ -145,13 +137,19 @@ export const StyledAGGrid = styled(AgGridReact)`
             color: #786fff;
         }
 
-        .ag-row-selected::before {
-            background-color: rgba(120, 111, 255, 0.3);
-        }
-
         .ag-header-cell-filtered {
             background-color: rgba(120, 111, 255, 0.3) !important;
             color: black !important;
+        }
+
+        .ag-wrapper.ag-input-wrapper input {
+            padding: 5px;
+            box-sizing: border-box;
+            width: 100%;
+        }
+
+        .ag-input-field-input {
+            border-radius: 4px;
         }
     }
 
@@ -182,5 +180,14 @@ export const StyledAGGrid = styled(AgGridReact)`
         .ag-header-cell-label {
             justify-content: center;
         }
+    }
+
+    .ag-cell-edit-input {
+        width: 100%;
+        height: 100%;
+        padding: 0;
+        border: none;
+        box-shadow: none;
+        font-size: 1rem;
     }
 `

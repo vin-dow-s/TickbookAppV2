@@ -25,7 +25,7 @@ import {
 import { Overlay } from '../styles/dialog-boxes'
 import { colors } from '../styles/global-styles'
 import { StyledAGGrid } from '../styles/ag-grid'
-import { columnsComponents } from '../constants/dialog-box-tables-columns'
+import { columnsComponents } from '../constants/ag-grid-columns'
 import { contextMenuOptions } from '../constants/context-menu'
 
 //Components

@@ -5,7 +5,7 @@ import { useEffect, useState } from 'react'
 //Styles and constants
 import { colors, fonts } from '../styles/global-styles'
 import { StyledAGGrid } from '../styles/ag-grid'
-import { columnsTenderSections } from '../constants/dialog-box-tables-columns'
+import { columnsTenderSections } from '../constants/ag-grid-columns'
 
 //Components
 import { FormField } from '../components/Common/FormBase'

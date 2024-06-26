@@ -12,7 +12,7 @@ import {
 } from '../../styles/dialog-boxes'
 import { colors } from '../../styles/global-styles'
 import { StyledAGGrid } from '../../styles/ag-grid'
-import { columnsComponentsInProject } from '../../constants/dialog-box-tables-columns'
+import { columnsComponentsInProject } from '../../constants/ag-grid-columns'
 
 //Assets
 import ArrowDown from '../../assets/arrow-down-line.svg'

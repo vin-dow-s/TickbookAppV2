@@ -29,7 +29,7 @@ import {
     columnsComponentsInProject,
     columnsComponentsInSelectedTemplate,
     columnsTemplates,
-} from '../constants/dialog-box-tables-columns'
+} from '../constants/ag-grid-columns'
 import { contextMenuOptions } from '../constants/context-menu'
 
 //Assets
@@ -776,7 +776,6 @@ const TemplatesView = () => {
                             <div
                                 style={{
                                     height: '100%',
-                                    width: '100%',
                                 }}
                             >
                                 <StyledAGGrid

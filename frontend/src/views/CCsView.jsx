@@ -22,7 +22,7 @@ import { ccsValidators } from '../helpers/ccsHelpers'
 //Styles and constants
 import { colors } from '../styles/global-styles'
 import { StyledAGGrid } from '../styles/ag-grid'
-import { columnsCCsHistory } from '../constants/dialog-box-tables-columns'
+import { columnsCCsHistory } from '../constants/ag-grid-columns'
 
 //Components
 import {
@@ -75,7 +75,7 @@ const StateSelectContainer = styled.div`
     align-items: center;
     padding-bottom: 8px;
     gap: 10px;
-    margin-left: 93px;
+    margin: 10px 0 10px 93px;
 
     select {
         padding: 10px;

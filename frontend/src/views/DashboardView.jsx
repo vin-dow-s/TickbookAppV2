@@ -28,14 +28,14 @@ import {
     columnsViewByAreaSectionComp,
     columnsViewByLabourAndMaterial,
     columnsViewBySection,
-} from '../constants/main-tables-columns'
+} from '../constants/ag-grid-columns'
 import {
     columnsEquipInAreaComp,
     columnsEquipInAreaCompCables,
     columnsEquipInAreaSectionComp,
     columnsEquipInAreaSectionCompCables,
     columnsEquipInSection,
-} from '../constants/dialog-box-tables-columns'
+} from '../constants/ag-grid-columns'
 import { contextMenuOptions } from '../constants/context-menu'
 
 //Assets

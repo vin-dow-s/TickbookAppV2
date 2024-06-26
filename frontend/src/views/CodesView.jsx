@@ -16,7 +16,7 @@ import { generateCodesURL } from '../utils/apiConfig'
 
 //Styles and constants
 import { StyledAGGrid } from '../styles/ag-grid'
-import { columnsCodes } from '../constants/dialog-box-tables-columns'
+import { columnsCodes } from '../constants/ag-grid-columns'
 
 //Components
 import { overlayLoadingTemplatePurple } from '../components/Common/Loader'
@@ -206,10 +206,10 @@ const CodesView = () => {
     return (
         <CodesViewContainer>
             <CodesListContainer>
-                <span className="grey-label">Codes List</span>
+                <span className="grey-label left">Codes List</span>
                 <div
                     style={{
-                        height: 'calc(100% - 18px)',
+                        height: '100%',
                         width: '100%',
                         marginTop: '2px',
                     }}

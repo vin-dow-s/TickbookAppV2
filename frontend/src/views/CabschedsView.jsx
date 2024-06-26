@@ -33,7 +33,7 @@ import { contextMenuOptions } from '../constants/context-menu'
 import { Overlay } from '../styles/dialog-boxes'
 import { colors } from '../styles/global-styles'
 import { StyledAGGrid } from '../styles/ag-grid'
-import { columnsCabscheds } from '../constants/dialog-box-tables-columns'
+import { columnsCabscheds } from '../constants/ag-grid-columns'
 
 //Components
 import FileUploadButton from '../components/Common/FileUploadButton'

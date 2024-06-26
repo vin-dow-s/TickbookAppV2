@@ -25,6 +25,7 @@ import CCsView from './views/CCsView'
 import RevisionsView from './views/RevisionsView'
 import TenderSectionsView from './views/TenderSectionsView'
 import CabschedsView from './views/CabschedsView'
+import MultiUpdateView from './views/MultiUpdateView'
 
 const AppContainer = styled.div`
     width: 100svw;
@@ -167,7 +168,10 @@ const App = () => {
                                 path="/cable-schedules"
                                 element={<CabschedsView />}
                             />
-                            <Route path="/multi-prog" />
+                            <Route
+                                path="/multi-update"
+                                element={<MultiUpdateView />}
+                            />
                             <Route
                                 path="/revisions"
                                 element={<RevisionsView />}

@@ -130,6 +130,8 @@ const CodesView = () => {
             setCodesTableGridApi(params.api)
             params.api.updateGridOptions({ rowData: null })
         },
+        suppressScrollOnNewData: true,
+
     }
 
     const handleFormSubmit = async (e) => {

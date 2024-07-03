@@ -155,6 +155,8 @@ const MultiUpdateView = () => {
 
             params.api.updateGridOptions({ rowData: initialFiltered })
         },
+        suppressScrollOnNewData: true,
+
     }
 
     const multiUpdateCodesTableGridOptions = {
@@ -175,6 +177,8 @@ const MultiUpdateView = () => {
             }
         },
         stopEditingWhenCellsLoseFocus: true,
+        suppressScrollOnNewData: true,
+
     }
 
     useEffect(() => {

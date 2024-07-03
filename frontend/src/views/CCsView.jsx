@@ -293,6 +293,8 @@ const CCsView = () => {
             }
         },
         stopEditingWhenCellsLoseFocus: true,
+        suppressScrollOnNewData: true,
+
     }
 
     useEffect(() => {

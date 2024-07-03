@@ -315,7 +315,6 @@ const TemplatesView = () => {
         jobNo,
         templatesList,
         isLoading,
-        fetchTemplatesList,
         fetchTemplateComponents,
         onTemplateCreate,
         onTemplateDuplicate,
@@ -324,7 +323,6 @@ const TemplatesView = () => {
         jobNo: state.jobNo,
         templatesList: state.templatesList,
         isLoading: state.isLoading,
-        fetchTemplatesList: state.fetchTemplatesList,
         fetchTemplateComponents: state.fetchTemplateComponents,
         onTemplateCreate: state.onTemplateCreate,
         onTemplateDuplicate: state.onTemplateDuplicate,
@@ -419,6 +417,7 @@ const TemplatesView = () => {
         onCellContextMenu: (params) => {
             onCellContextMenu(params, setContextMenuState)
         },
+        suppressScrollOnNewData: true,
     }
 
     const componentsInProjectTableGridOptions = {
@@ -435,6 +434,7 @@ const TemplatesView = () => {
             params.api.updateGridOptions({ rowData: nonCbsComponentsInProject })
         },
         onRowClicked: handleComponentSelect,
+        suppressScrollOnNewData: true,
     }
 
     const componentsInSelectedTemplateTableGridOptions = {
@@ -692,9 +692,8 @@ const TemplatesView = () => {
                 setNonCbsComponentsInProject,
                 setIsLoadingComponents
             )
-            fetchTemplatesList(jobNo)
         }
-    }, [jobNo, fetchTemplatesList])
+    }, [jobNo])
 
     useEffect(() => {
         if (

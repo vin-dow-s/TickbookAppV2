@@ -44,7 +44,7 @@ import {
 } from '../helpers/equipmentHelpers'
 import { validateCabschedCreationFileData } from '../helpers/cabschedHelpers'
 
-const useStore = create((set) => ({
+const useStore = create((set, get) => ({
     jobNo: '',
     jobTitle: '',
     jobAddress: '',
@@ -81,6 +81,7 @@ const useStore = create((set) => ({
     resetDataHasChanged: () => set({ dataHasChanged: false }),
 
     fetchProjectsList: async () => {
+        if (get().projectsList.length > 0) return
         set({ isLoading: true })
         try {
             const response = await fetch(generateProjectsURL())
@@ -94,6 +95,7 @@ const useStore = create((set) => ({
     },
 
     fetchCodesList: async (jobNo) => {
+        if (get().codesList.length > 0) return
         set({ isLoading: true })
         try {
             const response = await fetch(generateCodesURL(jobNo))
@@ -107,6 +109,7 @@ const useStore = create((set) => ({
     },
 
     fetchComponentsList: async (jobNo) => {
+        if (get().componentsList.length > 0) return
         set({ isLoading: true })
         try {
             const response = await fetch(generateProjectComponentsURL(jobNo))
@@ -120,6 +123,7 @@ const useStore = create((set) => ({
     },
 
     fetchTemplatesList: async (jobNo) => {
+        if (get().templatesList.length > 0) return
         set({ isLoading: true })
         try {
             const response = await fetch(generateProjectTemplatesURL(jobNo))
@@ -149,6 +153,7 @@ const useStore = create((set) => ({
     },
 
     fetchEquipmentList: async (jobNo) => {
+        if (get().equipmentList.length > 0) return
         set({ isLoading: true })
         try {
             const response = await fetch(generateProjectEquipmentURL(jobNo))
@@ -183,6 +188,7 @@ const useStore = create((set) => ({
     },
 
     fetchCabschedsList: async (jobNo) => {
+        if (get().cabschedsList.length > 0) return
         set({ isLoading: true })
         try {
             const response = await fetch(generateProjectCabschedsURL(jobNo))
@@ -196,6 +202,7 @@ const useStore = create((set) => ({
     },
 
     fetchRevisionsList: async (jobNo) => {
+        if (get().revisionsList.length > 0) return
         set({ isLoading: true })
         try {
             const response = await fetch(generateProjectRevisionsURL(jobNo))
@@ -209,6 +216,7 @@ const useStore = create((set) => ({
     },
 
     fetchCCsList: async (jobNo) => {
+        if (get().ccsList.length > 0) return
         set({ isLoading: true })
         try {
             const response = await fetch(generateProjectCCsURL(jobNo))
@@ -222,6 +230,7 @@ const useStore = create((set) => ({
     },
 
     fetchTenderSectionsList: async (jobNo) => {
+        if (get().tenderSectionsList.length > 0) return
         set({ isLoading: true })
         try {
             const response = await fetch(generateProjectTenderHoursURL(jobNo))
@@ -248,11 +257,28 @@ const useStore = create((set) => ({
         }
     },
 
+    //Load directly all project data to make views faster and avoid unnecessary requests
+    fetchAllProjectData: async (jobNo) => {
+        set({ isLoading: true })
+        await Promise.all([
+            get().fetchCodesList(jobNo),
+            get().fetchComponentsList(jobNo),
+            get().fetchTemplatesList(jobNo),
+            get().fetchEquipmentList(jobNo),
+            get().fetchCabschedsList(jobNo),
+            get().fetchRevisionsList(jobNo),
+            get().fetchCCsList(jobNo),
+            get().fetchTenderSectionsList(jobNo),
+        ])
+        set({ isLoading: false })
+    },
+
     onProjectSelect: (project) => {
         const jobNo = project?.JobNo
         const jobTitle = project?.Title
         const jobAddress = project?.Address
         set({ jobNo, jobTitle, jobAddress })
+        get().fetchAllProjectData(jobNo) // Fetch all project data when a project is selected
     },
 
     onProjectCreate: (project) => {

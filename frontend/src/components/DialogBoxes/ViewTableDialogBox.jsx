@@ -70,6 +70,7 @@ const ViewTableDialogBox = ({
             setViewTableGridApi(params.api)
             params.api.updateGridOptions({ rowData: equipmentList })
         },
+        
     }
 
     //Local state to handle equipment reference and list (not dependent of MainFrameView)

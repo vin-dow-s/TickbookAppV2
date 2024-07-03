@@ -92,7 +92,6 @@ const DetailsEquipmentDialogBox = ({
     const [equipmentList, setEquipmentList] = useState([])
     const encodedEquipRef = encodeURIComponent(equipRef)
     const [completionInput, setCompletionInput] = useState('')
-    const [restoreTableFocus, setRestoreTableFocus] = useState(null)
 
     const dialogRef = useRef(null)
     const headerRef = useRef(null)
@@ -234,6 +233,8 @@ const DetailsEquipmentDialogBox = ({
             onInputBlur(params)
         },
         stopEditingWhenCellsLoseFocus: true,
+        suppressScrollOnNewData: true,
+
     }
 
     const handleCompletionInputChange = (e) => {
@@ -312,16 +313,6 @@ const DetailsEquipmentDialogBox = ({
             equipRefTableGridApi?.hideOverlay()
         }
     }, [equipmentList, equipRefTableGridApi, isLoadingEquipment])
-
-    useEffect(() => {
-        if (restoreTableFocus && equipRefTableGridApi) {
-            const { rowIndex, column } = restoreTableFocus
-            equipRefTableGridApi.ensureIndexVisible(rowIndex, 'middle')
-            equipRefTableGridApi.setFocusedCell(rowIndex, column)
-
-            setRestoreTableFocus(null)
-        }
-    }, [restoreTableFocus, equipRefTableGridApi])
 
     if (!isOpen) return null
 

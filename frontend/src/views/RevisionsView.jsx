@@ -63,6 +63,7 @@ const RevisionsView = () => {
             setRevisionsTableGridApi(params.api)
             params.api.updateGridOptions({ rowData: revisionsList })
         },
+
     }
 
     useEffect(() => {

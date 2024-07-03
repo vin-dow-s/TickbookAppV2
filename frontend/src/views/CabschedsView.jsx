@@ -332,7 +332,6 @@ const CabschedsView = () => {
     const [isCreatingItems, setIsCreatingItems] = useState(false)
     const [isDeleteCabschedDialogBoxOpen, setIsDeleteCabschedDialogBoxOpen] =
         useState(false)
-    const [restoreTableFocus, setRestoreTableFocus] = useState(null)
     const [creationStepMessage, setCreationStepMessage] = useState('')
 
     const {
@@ -436,6 +435,7 @@ const CabschedsView = () => {
         },
         stopEditingWhenCellsLoseFocus: true,
         getRowStyle: getRowStyle,
+        suppressScrollOnNewData: true,
     }
 
     //3. Event handlers
@@ -494,11 +494,6 @@ const CabschedsView = () => {
                 failureCount,
                 alreadyExists
             )
-
-            setRestoreTableFocus({
-                rowIndex: cabschedsList.length - 1,
-                column: 'CabNum',
-            })
         } catch (error) {
             console.error('Error during file processing:', error)
             toast.error(`Error processing file: ${error.message}`)
@@ -525,11 +520,6 @@ const CabschedsView = () => {
 
         // Create or update Cabsched logic
         if (selectedCabsched) {
-            const rowIndex = cabschedsList.findIndex(
-                (c) => c.CabNum === selectedCabsched.CabNum
-            )
-            if (rowIndex === -1) return
-
             const response = await onCabschedUpdate(
                 jobNo,
                 selectedCabsched,
@@ -537,15 +527,9 @@ const CabschedsView = () => {
                 equipmentRefs,
                 cabSizesData
             )
-            if (response.success) {
+            if (response.success)
                 toast.success('Cable schedule successfully updated!')
-                setRestoreTableFocus({
-                    rowIndex: response.rowIndex,
-                    column: 'Name',
-                })
-            } else {
-                toast.error('Error updating the Cable.')
-            }
+            else toast.error('Error updating the Cable.')
 
             setSelectedCabsched(null)
         } else {
@@ -719,20 +703,6 @@ const CabschedsView = () => {
     useEffect(() => {
         if (jobNo) fetchCabschedsList(jobNo)
     }, [jobNo, fetchCabschedsList])
-
-    useEffect(() => {
-        if (
-            restoreTableFocus &&
-            cabschedsTableGridApi &&
-            restoreTableFocus.rowIndex > 0
-        ) {
-            const { rowIndex, column } = restoreTableFocus
-            cabschedsTableGridApi.ensureIndexVisible(rowIndex, 'middle')
-            cabschedsTableGridApi.setFocusedCell(rowIndex, column)
-
-            setRestoreTableFocus(null)
-        }
-    }, [restoreTableFocus, cabschedsTableGridApi])
 
     if (!isLoadingCabSizes && cabSizesError && jobNo) {
         console.error('Cable Sizes Data missing:', cabSizesError)

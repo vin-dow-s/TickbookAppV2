@@ -50,12 +50,7 @@ const DeleteMessage = styled.h4`
 `
 
 //Main component of the file
-const DeleteComponentDialogBox = ({
-    jobNo,
-    componentData,
-    onClose,
-    setRestoreTableFocus,
-}) => {
+const DeleteComponentDialogBox = ({ jobNo, componentData, onClose }) => {
     const { componentsList, onComponentDelete } = useStore((state) => ({
         componentsList: state.componentsList,
         onComponentDelete: state.onComponentDelete,
@@ -81,11 +76,6 @@ const DeleteComponentDialogBox = ({
             toast.error('No component data available.')
             return
         }
-
-        const rowIndex = componentsList.findIndex(
-            (c) => c.ID === componentData.ID
-        )
-        if (rowIndex === -1) return
 
         // Handle deletion of associated components if it's a CBS component
         if (componentData.Code === 'cbs') {
@@ -113,12 +103,6 @@ const DeleteComponentDialogBox = ({
         if (result.success) {
             toast.success('Component successfully deleted.')
             onClose()
-
-            const previousRowIndex = Math.max(0, rowIndex - 1)
-            setRestoreTableFocus({
-                rowIndex: previousRowIndex,
-                column: 'Name',
-            })
         } else {
             toast.error(result.error)
         }
@@ -207,7 +191,6 @@ DeleteComponentDialogBox.propTypes = {
     jobNo: PropTypes.string.isRequired,
     componentData: PropTypes.object.isRequired,
     onClose: PropTypes.func.isRequired,
-    setRestoreTableFocus: PropTypes.func.isRequired,
 }
 
 export default DeleteComponentDialogBox

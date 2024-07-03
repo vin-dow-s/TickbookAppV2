@@ -114,7 +114,6 @@ const ProjectView = () => {
     const [titleErrorMessage, setTitleErrorMessage] = useState('')
     const [addressErrorMessage, setAddressErrorMessage] = useState('')
     const [numberErrorMessage, setNumberErrorMessage] = useState('')
-    const [restoreTableFocus, setRestoreTableFocus] = useState(null)
 
     const selectProjectTableGridOptions = {
         defaultColDef: {
@@ -133,6 +132,7 @@ const ProjectView = () => {
             onProjectSelect(params.data)
             navigate('/dashboard')
         },
+        suppressScrollOnNewData: true,
     }
 
     const handleFormSubmit = async (e) => {
@@ -194,11 +194,6 @@ const ProjectView = () => {
                 const newProject = await response.json()
                 toast.success(`Project ${number} successfully created.`)
                 onProjectCreate(newProject)
-
-                setRestoreTableFocus({
-                    rowIndex: projectsList.length - 1,
-                    column: 'Name',
-                })
             }
         } catch (error) {
             console.error('Error:', error)
@@ -224,20 +219,6 @@ const ProjectView = () => {
             selectProjectTableGridApi?.showLoadingOverlay()
         } else selectProjectTableGridApi?.hideOverlay()
     }, [projectsList, selectProjectTableGridApi, isLoading])
-
-    useEffect(() => {
-        if (
-            restoreTableFocus &&
-            selectProjectTableGridApi &&
-            restoreTableFocus.rowIndex > 0
-        ) {
-            const { rowIndex, column } = restoreTableFocus
-            selectProjectTableGridApi.ensureIndexVisible(rowIndex, 'middle')
-            selectProjectTableGridApi.setFocusedCell(rowIndex, column)
-
-            setRestoreTableFocus(null)
-        }
-    }, [restoreTableFocus, selectProjectTableGridApi])
 
     return (
         <ProjectViewContainer>

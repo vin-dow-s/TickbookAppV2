@@ -91,6 +91,7 @@ const TenderSectionsView = () => {
             setTenderSectionsTableGridApi(params.api)
             params.api.updateGridOptions({ rowData: tenderSectionsList })
         },
+        suppressScrollOnNewData: true,
     }
 
     useEffect(() => {

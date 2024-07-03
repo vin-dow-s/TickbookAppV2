@@ -323,8 +323,6 @@ const ComponentsView = () => {
         componentsList,
         codesList,
         isLoading,
-        fetchComponentsList,
-        fetchCodesList,
         onComponentCreate,
         onComponentUpdate,
         onComponentsCodesBulkUpdate,
@@ -334,8 +332,6 @@ const ComponentsView = () => {
         componentsList: state.componentsList,
         codesList: state.codesList,
         isLoading: state.isLoading,
-        fetchComponentsList: state.fetchComponentsList,
-        fetchCodesList: state.fetchCodesList,
         onComponentCreate: state.onComponentCreate,
         onComponentsBulkCreate: state.onComponentsBulkCreate,
         onComponentUpdate: state.onComponentUpdate,
@@ -358,7 +354,6 @@ const ComponentsView = () => {
     const [updateMultiple, setUpdateMultiple] = useState(false)
     const [isDeleteComponentDialogBoxOpen, setIsDeleteComponentDialogBoxOpen] =
         useState(false)
-    const [restoreTableFocus, setRestoreTableFocus] = useState(null)
 
     const fieldNames = [
         'Code',
@@ -427,6 +422,7 @@ const ComponentsView = () => {
             setComponentsTableGridApi(params.api)
             params.api.updateGridOptions({ rowData: componentsList })
         },
+        suppressScrollOnNewData: true,
     }
 
     //3. Event handlers
@@ -477,16 +473,10 @@ const ComponentsView = () => {
                     )
                 }
 
-                if (success.length > 0) {
+                if (success.length > 0)
                     toast.success(
                         `${success.length} Component(s) successfully created.`
                     )
-
-                    setRestoreTableFocus({
-                        rowIndex: componentsList.length - 1,
-                        column: 'Name',
-                    })
-                }
 
                 if (failures.length > 0) {
                     const failureLineNumbers = failures
@@ -552,10 +542,6 @@ const ComponentsView = () => {
         if (result) {
             toast.success('Component successfully updated.')
             handleCancelClick()
-            setRestoreTableFocus({
-                rowIndex: componentsList.findIndex((c) => c.ID === ID),
-                column: 'Name',
-            })
             return true
         } else {
             toast.error('Error updating the Component.')
@@ -587,13 +573,6 @@ const ComponentsView = () => {
             componentsTableGridApi.deselectAll()
             setFieldValues(DEFAULT_VALUES)
             setUpdateMultiple(false)
-
-            setRestoreTableFocus({
-                rowIndex: componentsList.findIndex(
-                    (c) => c.ID === componentIds[selectedNodes.length - 1]
-                ),
-                column: 'Name',
-            })
         } else {
             toast.error('Error updating components.')
         }
@@ -624,10 +603,6 @@ const ComponentsView = () => {
             const result = await onComponentCreate(jobNo, componentData)
             if (result.success) {
                 toast.success('Component successfully created.')
-                setRestoreTableFocus({
-                    rowIndex: componentsList.length - 1,
-                    column: 'Name',
-                })
             } else if (result.statusCode === 409) {
                 toast.warning('This Component already exists.')
             } else {
@@ -745,29 +720,10 @@ const ComponentsView = () => {
     }, [componentsTableGridApi, quickFilterText])
 
     useEffect(() => {
-        if (jobNo) fetchComponentsList(jobNo)
-        fetchCodesList()
-    }, [jobNo, fetchComponentsList, fetchCodesList])
-
-    useEffect(() => {
         if (isLoading) {
             componentsTableGridApi?.showLoadingOverlay()
         } else componentsTableGridApi?.hideOverlay()
     }, [componentsList, componentsTableGridApi, isLoading])
-
-    useEffect(() => {
-        if (
-            restoreTableFocus &&
-            componentsTableGridApi &&
-            restoreTableFocus.rowIndex > 0
-        ) {
-            const { rowIndex, column } = restoreTableFocus
-            componentsTableGridApi.ensureIndexVisible(rowIndex, 'middle')
-            componentsTableGridApi.setFocusedCell(rowIndex, column)
-
-            setRestoreTableFocus(null)
-        }
-    }, [restoreTableFocus, componentsTableGridApi])
 
     useEffect(() => {
         if (componentsTableGridApi) {
@@ -1272,7 +1228,6 @@ const ComponentsView = () => {
                         jobNo={jobNo}
                         componentData={currentComponentData}
                         onClose={() => setIsDeleteComponentDialogBoxOpen(false)}
-                        setRestoreTableFocus={setRestoreTableFocus}
                     />
                 )}
             </ComponentsViewContainer>

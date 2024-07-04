@@ -24,27 +24,6 @@ const getProjectComponents = async (req, res, next) => {
     }
 }
 
-const getProjectNonCBSComponentsWithLabnorm = async (req, res, next) => {
-    const jobNo = req.params.jobNo
-
-    try {
-        const components = await Component.findAll({
-            attributes: ['ID', 'Name', 'LabNorm'],
-            where: {
-                jobNo: jobNo,
-                Code: {
-                    [Op.ne]: 'cbs',
-                },
-            },
-            order: ['Name', 'LabNorm'],
-        })
-
-        res.json(components)
-    } catch (error) {
-        next(error)
-    }
-}
-
 const createComponent = async (req, res, next) => {
     const jobNo = req.params.jobNo
 
@@ -349,7 +328,6 @@ const validateComponentData = (data) => {
 
 module.exports = {
     getProjectComponents,
-    getProjectNonCBSComponentsWithLabnorm,
     createComponent,
     bulkCreateComponents,
     updateComponent,

@@ -1,5 +1,5 @@
 //Modules
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { toast } from 'react-toastify'
 import styled from 'styled-components'
 
@@ -12,9 +12,6 @@ import {
     validateField,
     validateFormFields,
 } from '../utils/validationFormFields'
-
-//Helpers
-import { fetchComponentsInProject } from '../helpers/templateHelpers'
 
 //Styles and constants
 import { columnsComponentsInSelectedTemplate } from '../constants/ag-grid-columns'
@@ -253,16 +250,13 @@ const EquipmentView = () => {
     const {
         jobNo,
         templatesList,
-        fetchTemplatesList,
-        fetchEquipmentList,
+        isLoading,
         onEquipmentCreate,
         handleEquipmentFileUpload,
     } = useStore((state) => ({
         jobNo: state.jobNo,
         templatesList: state.templatesList,
         isLoading: state.isLoading,
-        fetchTemplatesList: state.fetchTemplatesList,
-        fetchEquipmentList: state.fetchEquipmentList,
         onEquipmentCreate: state.onEquipmentCreate,
         handleEquipmentFileUpload: state.handleEquipmentFileUpload,
     }))
@@ -307,28 +301,11 @@ const EquipmentView = () => {
     const [selectedTemplate, setSelectedTemplate] = useState(() =>
         templatesList.length > 0 ? templatesList[0] : null
     )
-    const [isLoadingComponents, setIsLoadingComponents] = useState(true)
-    const [nonCbsComponentsInProject, setNonCbsComponentsInProject] = useState(
-        []
-    )
     const [componentsInTemplate, setComponentsInTemplate] = useState([])
     const [isCreatingItems, setIsCreatingItems] = useState(false)
     const [creationStepMessage, setCreationStepMessage] = useState('')
 
     const fieldClassesComputed = fieldClasses(fieldErrors, fieldValues)
-
-    //Returns Components present in the selected Template (ordered by templates.inOrder column)
-    const filteredComponents = useMemo(() => {
-        return componentsInTemplate.map((templateComponent) => {
-            const component = nonCbsComponentsInProject.find(
-                (c) => c.ID === templateComponent.Component_ID
-            )
-            return {
-                ...templateComponent,
-                ...component,
-            }
-        })
-    }, [componentsInTemplate, nonCbsComponentsInProject])
 
     const componentsInSelectedTemplateTableGridOptions = {
         defaultColDef: {
@@ -338,7 +315,7 @@ const EquipmentView = () => {
         overlayLoadingTemplate: overlayLoadingTemplatePurple,
         onGridReady: (params) => {
             setComponentsInSelectedTemplateTableGridApi(params.api)
-            params.api.updateGridOptions({ rowData: filteredComponents })
+            params.api.updateGridOptions({ rowData: componentsInTemplate })
         },
     }
 
@@ -351,17 +328,6 @@ const EquipmentView = () => {
             )
         }
     }, [jobNo, selectedTemplate])
-
-    useEffect(() => {
-        if (jobNo) {
-            fetchComponentsInProject(
-                jobNo,
-                setNonCbsComponentsInProject,
-                setIsLoadingComponents
-            )
-            fetchTemplatesList(jobNo)
-        }
-    }, [jobNo, fetchTemplatesList])
 
     //2. Event handlers
     const handleInputChange = (e) => {
@@ -516,19 +482,12 @@ const EquipmentView = () => {
     }
 
     useEffect(() => {
-        if (jobNo && isLoadingComponents) {
+        if (jobNo && isLoading) {
             componentsInSelectedTemplateTableGridApi?.showLoadingOverlay()
         } else if (componentsInSelectedTemplateTableGridApi) {
             componentsInSelectedTemplateTableGridApi?.hideOverlay()
         }
-    }, [jobNo, isLoadingComponents, componentsInSelectedTemplateTableGridApi])
-
-    useEffect(() => {
-        if (jobNo) {
-            fetchTemplatesList(jobNo)
-            fetchEquipmentList(jobNo)
-        }
-    }, [jobNo, fetchTemplatesList, fetchEquipmentList])
+    }, [jobNo, isLoading, componentsInSelectedTemplateTableGridApi])
 
     useEffect(() => {
         if (templatesList.length > 0 && !selectedTemplate) {
@@ -565,7 +524,7 @@ const EquipmentView = () => {
                             gridOptions={
                                 componentsInSelectedTemplateTableGridOptions
                             }
-                            rowData={filteredComponents}
+                            rowData={componentsInTemplate}
                             overlayNoRowsTemplate="Select a Template."
                         />
                     </div>

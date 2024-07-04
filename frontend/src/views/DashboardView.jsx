@@ -452,6 +452,7 @@ const DashboardView = () => {
         }
 
         fetchSummaryValues()
+        setRefreshViewTableTrigger((prevFlag) => !prevFlag)
     }
 
     //4. useEffects (synchronise and update data dynamically)

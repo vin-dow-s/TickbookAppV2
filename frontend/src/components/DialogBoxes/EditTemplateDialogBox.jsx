@@ -227,7 +227,7 @@ const ClearAllButton = styled.button`
 const EditTemplateDialogBox = ({
     jobNo,
     componentsInTemplate,
-    nonCbsComponentsInProject,
+    nonCbsComponentsList,
     onClose,
     updateTemplatesTable,
 }) => {
@@ -239,7 +239,7 @@ const EditTemplateDialogBox = ({
     const normalizedTemplateData = useMemo(
         () =>
             componentsInTemplate.map((templateComponent, index) => {
-                const fullComponentData = nonCbsComponentsInProject.find(
+                const fullComponentData = nonCbsComponentsList.find(
                     (comp) => comp.ID === templateComponent.Component_ID
                 )
 
@@ -249,15 +249,15 @@ const EditTemplateDialogBox = ({
                     uid: `initial-${index}`,
                 }
             }),
-        [componentsInTemplate, nonCbsComponentsInProject]
+        [componentsInTemplate, nonCbsComponentsList]
     )
 
     const template = componentsInTemplate[0]?.Name
 
     //1. State declarations
     const [
-        nonCbsComponentsInProjectTableGridApi,
-        setNonCbsComponentsInProjectTableGridApi,
+        nonCbsComponentsListTableGridApi,
+        setNonCbsComponentsListTableGridApi,
     ] = useState(null)
     const [selectedComponents, setSelectedComponents] = useState(
         normalizedTemplateData
@@ -299,7 +299,7 @@ const EditTemplateDialogBox = ({
         }
     }
 
-    const nonCbsComponentsInProjectTableGridOptions = {
+    const nonCbsComponentsListTableGridOptions = {
         defaultColDef: {
             resizable: true,
             sortable: true,
@@ -309,8 +309,8 @@ const EditTemplateDialogBox = ({
         rowSelection: 'single',
         overlayLoadingTemplate: overlayLoadingTemplatePurple,
         onGridReady: (params) => {
-            setNonCbsComponentsInProjectTableGridApi(params.api)
-            params.api.updateGridOptions({ rowData: nonCbsComponentsInProject })
+            setNonCbsComponentsListTableGridApi(params.api)
+            params.api.updateGridOptions({ rowData: nonCbsComponentsList })
         },
         onRowClicked: handleComponentSelect,
     }
@@ -400,12 +400,12 @@ const EditTemplateDialogBox = ({
 
     //3. useEffects
     useEffect(() => {
-        if (nonCbsComponentsInProjectTableGridApi) {
-            nonCbsComponentsInProjectTableGridApi.updateGridOptions({
-                rowData: nonCbsComponentsInProject,
+        if (nonCbsComponentsListTableGridApi) {
+            nonCbsComponentsListTableGridApi.updateGridOptions({
+                rowData: nonCbsComponentsList,
             })
         }
-    }, [nonCbsComponentsInProject, nonCbsComponentsInProjectTableGridApi])
+    }, [nonCbsComponentsList, nonCbsComponentsListTableGridApi])
 
     useEffect(() => {
         if (selectedComponentsWrapperRef.current && componentAdded) {
@@ -507,9 +507,9 @@ const EditTemplateDialogBox = ({
                                     <StyledAGGrid
                                         className="ag-theme-quartz purple-table"
                                         gridOptions={
-                                            nonCbsComponentsInProjectTableGridOptions
+                                            nonCbsComponentsListTableGridOptions
                                         }
-                                        rowData={nonCbsComponentsInProject}
+                                        rowData={nonCbsComponentsList}
                                     />
                                 </div>
                             </ComponentsWrapper>
@@ -660,7 +660,7 @@ const EditTemplateDialogBox = ({
 EditTemplateDialogBox.propTypes = {
     jobNo: PropTypes.string,
     componentsInTemplate: PropTypes.arrayOf(PropTypes.object).isRequired,
-    nonCbsComponentsInProject: PropTypes.arrayOf(PropTypes.object),
+    nonCbsComponentsList: PropTypes.arrayOf(PropTypes.object),
     onClose: PropTypes.func.isRequired,
     updateTemplatesTable: PropTypes.func.isRequired,
 }

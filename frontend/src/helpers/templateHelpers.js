@@ -5,7 +5,6 @@ import {
     onlyFloatsPattern,
     templatesNamePattern,
 } from '../utils/regexPatterns'
-import { generateProjectNonCBSComponentsWithLabnormsURL } from '../utils/apiConfig'
 
 export const fieldClasses = (fieldErrors, fieldValues) => ({
     Name: getClassForField('Name', fieldErrors, fieldValues),
@@ -16,29 +15,6 @@ export const templateValidators = {
         templatesNamePattern.test(value)
             ? ''
             : 'should be between 3 and 80 characters long.',
-}
-
-export const fetchComponentsInProject = async (
-    jobNo,
-    setNonCbsComponentsInProject,
-    setIsLoadingComponents
-) => {
-    try {
-        setIsLoadingComponents(true)
-        const response = await fetch(
-            generateProjectNonCBSComponentsWithLabnormsURL(jobNo)
-        )
-        if (!response.ok) {
-            throw new Error('Failed to fetch components')
-        }
-        const data = await response.json()
-        setNonCbsComponentsInProject(data)
-    } catch (error) {
-        console.error('Failed to fetch components:', error)
-        toast.error('Failed to load components.')
-    } finally {
-        setIsLoadingComponents(false)
-    }
 }
 
 export const validateTemplatesFileData = (jsonData) => {

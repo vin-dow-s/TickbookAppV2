@@ -40,14 +40,10 @@ const RevisionsDataContainer = styled.div`
 `
 
 const RevisionsView = () => {
-    const { jobNo, revisionsList, fetchRevisionsList, isLoading } = useStore(
-        (state) => ({
-            jobNo: state.jobNo,
-            revisionsList: state.revisionsList,
-            fetchRevisionsList: state.fetchRevisionsList,
-            isLoading: state.isLoading,
-        })
-    )
+    const { revisionsList, isLoading } = useStore((state) => ({
+        revisionsList: state.revisionsList,
+        isLoading: state.isLoading,
+    }))
     const [revisionsTableGridApi, setRevisionsTableGridApi] = useState(null)
 
     const revisionsTableGridOptions = {
@@ -63,12 +59,7 @@ const RevisionsView = () => {
             setRevisionsTableGridApi(params.api)
             params.api.updateGridOptions({ rowData: revisionsList })
         },
-
     }
-
-    useEffect(() => {
-        if (jobNo) fetchRevisionsList(jobNo)
-    }, [jobNo, fetchRevisionsList])
 
     useEffect(() => {
         if (isLoading) {

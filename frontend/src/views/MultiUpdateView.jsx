@@ -103,13 +103,11 @@ const MultiUpdateView = () => {
     const {
         jobNo,
         equipmentList,
-        fetchEquipmentList,
         fetchEquipmentCodes,
         onEquipmentCompletionByCodesBulkUpdate,
     } = useStore((state) => ({
         jobNo: state.jobNo,
         equipmentList: state.equipmentList,
-        fetchEquipmentList: state.fetchEquipmentList,
         fetchEquipmentCodes: state.fetchEquipmentCodes,
         onEquipmentCompletionByCodesBulkUpdate:
             state.onEquipmentCompletionByCodesBulkUpdate,
@@ -156,7 +154,6 @@ const MultiUpdateView = () => {
             params.api.updateGridOptions({ rowData: initialFiltered })
         },
         suppressScrollOnNewData: true,
-
     }
 
     const multiUpdateCodesTableGridOptions = {
@@ -178,12 +175,7 @@ const MultiUpdateView = () => {
         },
         stopEditingWhenCellsLoseFocus: true,
         suppressScrollOnNewData: true,
-
     }
-
-    useEffect(() => {
-        if (jobNo) fetchEquipmentList(jobNo)
-    }, [jobNo, fetchEquipmentList])
 
     useEffect(() => {
         if (equipmentList.length > 0) {

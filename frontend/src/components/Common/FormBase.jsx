@@ -9,10 +9,6 @@ export const FormBase = styled.form`
     justify-content: space-between;
     padding: 25px;
     gap: 15px;
-
-    input {
-        margin-left: 10px;
-    }
 `
 
 export const FieldsContainer = styled.div`
@@ -99,6 +95,14 @@ export const FormField = styled.div`
 
     select {
         background-color: white;
+    }
+
+    .select__option {
+        cursor: pointer;
+    }
+
+    .select__option--is-focused {
+        background-color: ${colors.purpleBgenTransparent};
     }
 `
 

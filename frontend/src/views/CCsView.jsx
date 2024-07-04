@@ -173,7 +173,6 @@ const DescriptionErrorMessage = styled(ErrorMessage)`
 
 const SelectedEquipmentContainer = styled.div`
     width: 100%;
-    cursor: pointer;
 `
 
 const MenuList = (props) => {
@@ -234,18 +233,14 @@ const CCsView = () => {
     const {
         jobNo,
         ccsList,
-        fetchCCsList,
         localMainTableRefs,
-        fetchLocalMainTableRefs,
         onCcCreate,
         onCcUpdate,
         isLoading,
     } = useStore((state) => ({
         jobNo: state.jobNo,
         ccsList: state.ccsList,
-        fetchCCsList: state.fetchCCsList,
         localMainTableRefs: state.localMainTableRefs,
-        fetchLocalMainTableRefs: state.fetchLocalMainTableRefs,
         onCcCreate: state.onCcCreate,
         onCcUpdate: state.onCcUpdate,
         isLoading: state.isLoading,
@@ -294,15 +289,7 @@ const CCsView = () => {
         },
         stopEditingWhenCellsLoseFocus: true,
         suppressScrollOnNewData: true,
-
     }
-
-    useEffect(() => {
-        if (jobNo) {
-            fetchCCsList(jobNo)
-            fetchLocalMainTableRefs(jobNo)
-        }
-    }, [jobNo, fetchCCsList, fetchLocalMainTableRefs])
 
     useEffect(() => {
         if (ccsHistoryTableGridApi && quickFilterText !== null) {
@@ -565,10 +552,11 @@ const CCsView = () => {
                                 options={equipmentOptions}
                                 isMulti
                                 onChange={handleEquipmentChange}
-                                className="basic-multi-select"
+                                className="basic-multi-select purple-table"
                                 classNamePrefix="select"
                                 menuPlacement="top"
                                 styles={customStyles}
+                                isDisabled={equipmentOptions.length === 0}
                             />
                         </SelectedEquipmentContainer>
                     </AddCCFormField>

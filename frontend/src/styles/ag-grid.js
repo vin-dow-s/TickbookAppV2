@@ -143,7 +143,6 @@ export const StyledAGGrid = styled(AgGridReact)`
         }
 
         .ag-wrapper.ag-input-wrapper input {
-            padding: 5px;
             box-sizing: border-box;
             width: 100%;
         }

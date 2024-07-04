@@ -60,25 +60,14 @@ const useStore = create((set, get) => ({
     localMainTableRefs: [],
     isLoading: false,
     viewType: 'Section',
-    dataHasChanged: false,
-
-    setJobNo: (jobNo) => set({ jobNo }),
-    setJobTitle: (jobTitle) => set({ jobTitle }),
-    setJobAddress: (jobAddress) => set({ jobAddress }),
-    setProjectsList: (projects) => set({ projectsList: projects }),
-    setCodesList: (codes) => set({ codesList: codes }),
-    setComponentsList: (components) => set({ componentsList: components }),
-    setTemplatesList: (templates) => set({ templatesList: templates }),
-    setEquipmentList: (equipment) => set({ equipmentList: equipment }),
-    setCabschedsList: (cabscheds) => set({ cabschedsList: cabscheds }),
-    setRevisionsList: (revisions) => set({ revisionsList: revisions }),
-    setCCsList: (ccs) => set({ ccsList: ccs }),
-    setTenderSectionsList: (tenderSections) =>
-        set({ tenderSectionsList: tenderSections }),
-    setLocalMainTableRefs: (refs) => set({ localMainTableRefs: refs }),
-    setViewType: (type) => set({ viewType: type }),
-    setDataHasChanged: (hasChanged) => set({ dataHasChanged: hasChanged }),
-    resetDataHasChanged: () => set({ dataHasChanged: false }),
+    projectHasChanged: false,
+    componentsDataHasChanged: false,
+    templatesDataHasChanged: false,
+    equipmentDataHasChanged: false,
+    cabschedsDataHasChanged: false,
+    revisionsDataHasChanged: false,
+    ccsDataHasChanged: false,
+    tenderSectionsDataHasChanged: false,
 
     fetchProjectsList: async () => {
         if (get().projectsList.length > 0) return
@@ -96,6 +85,7 @@ const useStore = create((set, get) => ({
 
     fetchCodesList: async (jobNo) => {
         if (get().codesList.length > 0) return
+
         set({ isLoading: true })
         try {
             const response = await fetch(generateCodesURL(jobNo))
@@ -109,7 +99,8 @@ const useStore = create((set, get) => ({
     },
 
     fetchComponentsList: async (jobNo) => {
-        if (get().componentsList.length > 0) return
+        if (!get().projectHasChanged && !get().componentsDataHasChanged) return
+
         set({ isLoading: true })
         try {
             const response = await fetch(generateProjectComponentsURL(jobNo))
@@ -123,7 +114,13 @@ const useStore = create((set, get) => ({
     },
 
     fetchTemplatesList: async (jobNo) => {
-        if (get().templatesList.length > 0) return
+        if (
+            !get().projectHasChanged &&
+            !get().componentsDataHasChanged &&
+            !get().templatesDataHasChanged
+        )
+            return
+
         set({ isLoading: true })
         try {
             const response = await fetch(generateProjectTemplatesURL(jobNo))
@@ -153,7 +150,17 @@ const useStore = create((set, get) => ({
     },
 
     fetchEquipmentList: async (jobNo) => {
-        if (get().equipmentList.length > 0) return
+        if (
+            !get().projectHasChanged &&
+            !get().componentsDataHasChanged &&
+            !get().templatesDataHasChanged &&
+            !get().equipmentDataHasChanged &&
+            !get().cabschedsDataHasChanged &&
+            !get().revisionsDataHasChanged &&
+            !get().tenderSectionsDataHasChanged
+        )
+            return
+
         set({ isLoading: true })
         try {
             const response = await fetch(generateProjectEquipmentURL(jobNo))
@@ -188,7 +195,14 @@ const useStore = create((set, get) => ({
     },
 
     fetchCabschedsList: async (jobNo) => {
-        if (get().cabschedsList.length > 0) return
+        if (
+            !get().projectHasChanged &&
+            !get().componentsDataHasChanged &&
+            !get().templatesDataHasChanged &&
+            !get().equipmentDataHasChanged
+        )
+            return
+
         set({ isLoading: true })
         try {
             const response = await fetch(generateProjectCabschedsURL(jobNo))
@@ -202,7 +216,13 @@ const useStore = create((set, get) => ({
     },
 
     fetchRevisionsList: async (jobNo) => {
-        if (get().revisionsList.length > 0) return
+        if (
+            !get().projectHasChanged &&
+            !get().equipmentDataHasChanged &&
+            !get().revisionsDataHasChanged
+        )
+            return
+
         set({ isLoading: true })
         try {
             const response = await fetch(generateProjectRevisionsURL(jobNo))
@@ -216,7 +236,13 @@ const useStore = create((set, get) => ({
     },
 
     fetchCCsList: async (jobNo) => {
-        if (get().ccsList.length > 0) return
+        if (
+            !get().projectHasChanged &&
+            !get().equipmentDataHasChanged &&
+            !get().ccsDataHasChanged
+        )
+            return
+
         set({ isLoading: true })
         try {
             const response = await fetch(generateProjectCCsURL(jobNo))
@@ -230,7 +256,13 @@ const useStore = create((set, get) => ({
     },
 
     fetchTenderSectionsList: async (jobNo) => {
-        if (get().tenderSectionsList.length > 0) return
+        if (
+            !get().projectHasChanged &&
+            !get().equipmentDataHasChanged &&
+            !get().tenderSectionsDataHasChanged
+        )
+            return
+
         set({ isLoading: true })
         try {
             const response = await fetch(generateProjectTenderHoursURL(jobNo))
@@ -259,7 +291,7 @@ const useStore = create((set, get) => ({
 
     //Load directly all project data to make views faster and avoid unnecessary requests
     fetchAllProjectData: async (jobNo) => {
-        set({ isLoading: true })
+        set({ isLoading: true, projectHasChanged: true, dataHasChanged: true })
         await Promise.all([
             get().fetchCodesList(jobNo),
             get().fetchComponentsList(jobNo),
@@ -269,6 +301,7 @@ const useStore = create((set, get) => ({
             get().fetchRevisionsList(jobNo),
             get().fetchCCsList(jobNo),
             get().fetchTenderSectionsList(jobNo),
+            get().fetchLocalMainTableRefs(jobNo),
         ])
         set({ isLoading: false })
     },
@@ -277,8 +310,10 @@ const useStore = create((set, get) => ({
         const jobNo = project?.JobNo
         const jobTitle = project?.Title
         const jobAddress = project?.Address
-        set({ jobNo, jobTitle, jobAddress })
-        get().fetchAllProjectData(jobNo) // Fetch all project data when a project is selected
+        if (get().jobNo !== jobNo) {
+            set({ jobNo, jobTitle, jobAddress, dataHasChanged: false })
+            get().fetchAllProjectData(jobNo) // Fetch all project data when a project is selected
+        }
     },
 
     onProjectCreate: (project) => {
@@ -346,6 +381,7 @@ const useStore = create((set, get) => ({
                 const newComponent = await response.json()
                 set((state) => ({
                     componentsList: [...state.componentsList, newComponent],
+                    componentsDataHasChanged: true,
                 }))
                 return { success: true, component: newComponent }
             }
@@ -388,6 +424,7 @@ const useStore = create((set, get) => ({
                             ...state.componentsList,
                             ...responseBody.success,
                         ],
+                        componentsDataHasChanged: true,
                     }))
                     return {
                         success: true,
@@ -434,6 +471,7 @@ const useStore = create((set, get) => ({
                             ? updatedComponent
                             : component
                     ),
+                    componentsDataHasChanged: true,
                 }))
                 return updatedComponent
             } else {
@@ -462,6 +500,7 @@ const useStore = create((set, get) => ({
                             ? { ...component, Code: newCode }
                             : component
                     ),
+                    componentsDataHasChanged: true,
                 }))
 
                 return { success: true }
@@ -488,6 +527,7 @@ const useStore = create((set, get) => ({
                     componentsList: state.componentsList.filter(
                         (component) => component.ID !== componentId
                     ),
+                    componentsDataHasChanged: true,
                 }))
                 return { success: true }
             } else {
@@ -567,6 +607,7 @@ const useStore = create((set, get) => ({
 
             set((state) => ({
                 templatesList: [...state.templatesList, newTemplate],
+                templatesDataHasChanged: true,
             }))
 
             return { success: true, template: newTemplate }
@@ -609,6 +650,7 @@ const useStore = create((set, get) => ({
                     ...state.templatesList,
                     ...responseBody.success,
                 ],
+                templatesDataHasChanged: true,
             }))
 
             const { success, alreadyExists, failures } = responseBody
@@ -661,6 +703,7 @@ const useStore = create((set, get) => ({
                             ? updatedTemplate
                             : template
                     ),
+                    templatesDataHasChanged: true,
                 }))
 
                 return { success: true, template: updatedTemplate }
@@ -714,6 +757,7 @@ const useStore = create((set, get) => ({
 
                 set((state) => ({
                     templatesList: [...state.templatesList, newTemplate],
+                    templatesDataHasChanged: true,
                 }))
 
                 return { success: true, template: newTemplate }
@@ -819,6 +863,7 @@ const useStore = create((set, get) => ({
 
             set((state) => ({
                 equipmentList: [...state.equipmentList, responseBody],
+                equipmentDataHasChanged: true,
             }))
 
             return { success: true, equipment: responseBody }
@@ -881,6 +926,7 @@ const useStore = create((set, get) => ({
                     ...state.equipmentList,
                     ...responseBody.success,
                 ],
+                equipmentDataHasChanged: true,
             }))
 
             const { success, failures, uniqueEquipmentCount } = responseBody
@@ -969,6 +1015,7 @@ const useStore = create((set, get) => ({
                         ...state.equipmentList,
                         ...responseBody.success,
                     ],
+                    equipmentDataHasChanged: true,
                 }))
 
             const { success, failures, uniqueEquipmentCount, existingRefs } =
@@ -1016,10 +1063,12 @@ const useStore = create((set, get) => ({
                                 (updated) => updated.CabNum === cabsched.CabNum
                             ) || cabsched
                     )
+
                     return {
                         equipmentList: updatedEquipmentList,
                         cabschedsList: updatedCabschedsList,
-                        dataHasChanged: true,
+                        cabschedsDataHasChanged: true,
+                        equipmentDataHasChanged: true,
                     }
                 })
 
@@ -1131,6 +1180,8 @@ const useStore = create((set, get) => ({
                                 (c) => c.CabNum === cabsched.CabNum
                             ) || cabsched
                     ),
+                    cabschedsDataHasChanged: true,
+                    equipmentDataHasChanged: true,
                 }))
 
                 const successCount =
@@ -1275,7 +1326,8 @@ const useStore = create((set, get) => ({
                     return {
                         equipmentList: updatedEquipmentList,
                         cabschedsList: updatedCabschedsList,
-                        dataHasChanged: true,
+                        cabschedsDataHasChanged: true,
+                        equipmentDataHasChanged: true,
                     }
                 })
 
@@ -1341,7 +1393,8 @@ const useStore = create((set, get) => ({
                     return {
                         equipmentList: updatedEquipmentList,
                         cabschedsList: updatedCabschedsList,
-                        dataHasChanged: true,
+                        cabschedsDataHasChanged: true,
+                        equipmentDataHasChanged: true,
                     }
                 })
 
@@ -1385,6 +1438,7 @@ const useStore = create((set, get) => ({
                               }
                             : equip
                     ),
+                    dataHasChanged: true,
                 }))
 
                 return { success: true, updatedEquipmentFromServer }
@@ -1436,7 +1490,8 @@ const useStore = create((set, get) => ({
                                   )
                           )
                         : state.cabschedsList,
-                    dataHasChanged: true,
+                    cabschedsDataHasChanged: true,
+                    equipmentDataHasChanged: true,
                 }))
 
                 return {
@@ -1537,6 +1592,7 @@ const useStore = create((set, get) => ({
 
             set((state) => ({
                 cabschedsList: [...state.cabschedsList, responseBody],
+                cabschedsDataHasChanged: true,
             }))
             return { success: true, cabsched: responseBody }
         } catch (error) {
@@ -1603,6 +1659,7 @@ const useStore = create((set, get) => ({
                         ...state.cabschedsList,
                         ...responseBody.success,
                     ],
+                    cabschedsDataHasChanged: true,
                 }))
 
             const { success, failures, alreadyExists } = responseBody
@@ -1639,8 +1696,7 @@ const useStore = create((set, get) => ({
 
         // If a matching EquipRef is found, update the ZGlandArea
         if (matchingEquipRef) {
-            fieldValuesToUpdate.ZGlandArea =
-                matchingEquipRef.Area || matchingEquipRef.Area
+            fieldValuesToUpdate.ZGlandArea = matchingEquipRef.Area
         }
 
         const finalCabschedData = {
@@ -1669,6 +1725,7 @@ const useStore = create((set, get) => ({
                             ? updatedCabsched
                             : cabsched
                     ),
+                    cabschedsDataHasChanged: true,
                 }))
 
                 return { success: true, cabsched: updatedCabsched }
@@ -1712,6 +1769,7 @@ const useStore = create((set, get) => ({
                     cabschedsList: state.cabschedsList.map((cabsched) =>
                         cabsched.CabNum === cabNum ? updatedCabsched : cabsched
                     ),
+                    cabschedsDataHasChanged: true,
                 }))
 
                 return { success: true, cabsched: updatedCabsched }
@@ -1736,6 +1794,7 @@ const useStore = create((set, get) => ({
                     cabschedsList: state.cabschedsList.filter(
                         (cabsched) => cabsched.CabNum !== cabNum
                     ),
+                    cabschedsDataHasChanged: true,
                 }))
                 return { success: true }
             }
@@ -1773,6 +1832,7 @@ const useStore = create((set, get) => ({
                             ? markedCable
                             : cabsched
                     ),
+                    cabschedsDataHasChanged: true,
                 }))
 
                 return { success: true, markedCable }
@@ -1872,6 +1932,7 @@ const useStore = create((set, get) => ({
 
             set((state) => ({
                 ccsList: [...state.ccsList, ...newCcs],
+                ccsDataHasChanged: true,
             }))
 
             return { success: true, ccs: newCcs }
@@ -1904,6 +1965,7 @@ const useStore = create((set, get) => ({
                           }
                         : cc
                 ),
+                ccsDataHasChanged: true,
             }))
 
             return { success: true }

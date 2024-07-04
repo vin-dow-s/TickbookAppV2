@@ -64,13 +64,6 @@ export const generateProjectRevisionsURL = (jobNo) =>
 export const generateProjectComponentsURL = (jobNo) =>
     jobNo ? `${BASE_URL}/${encodeURIComponent(jobNo)}/components` : null
 
-export const generateProjectNonCBSComponentsWithLabnormsURL = (jobNo) =>
-    jobNo
-        ? `${BASE_URL}/${encodeURIComponent(
-              jobNo
-          )}/components/non-cbs-and-labnorms`
-        : null
-
 export const generateProjectComponentsBulkURL = (jobNo) =>
     jobNo ? `${BASE_URL}/${encodeURIComponent(jobNo)}/components/bulk` : null
 

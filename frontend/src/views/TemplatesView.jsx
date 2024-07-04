@@ -16,7 +16,6 @@ import {
 //Helpers
 import {
     displayToastMessagesOnFileUpload,
-    fetchComponentsInProject,
     fieldClasses,
     templateValidators,
 } from '../helpers/templateHelpers'
@@ -314,6 +313,7 @@ const TemplatesView = () => {
     const {
         jobNo,
         templatesList,
+        componentsList,
         isLoading,
         fetchTemplateComponents,
         onTemplateCreate,
@@ -322,6 +322,7 @@ const TemplatesView = () => {
     } = useStore((state) => ({
         jobNo: state.jobNo,
         templatesList: state.templatesList,
+        componentsList: state.componentsList,
         isLoading: state.isLoading,
         fetchTemplateComponents: state.fetchTemplateComponents,
         onTemplateCreate: state.onTemplateCreate,
@@ -352,10 +353,6 @@ const TemplatesView = () => {
         Name: '',
         WholeEstimate: false,
     })
-    const [nonCbsComponentsInProject, setNonCbsComponentsInProject] = useState(
-        []
-    )
-    const [isLoadingComponents, setIsLoadingComponents] = useState(true)
     const [selectedComponents, setSelectedComponents] = useState([])
     const [selectedTemplate, setSelectedTemplate] = useState(null)
     const [componentsInTemplate, setComponentsInTemplate] = useState([])
@@ -368,6 +365,10 @@ const TemplatesView = () => {
     const [creationStepMessage, setCreationStepMessage] = useState('')
 
     const fieldClassesComputed = fieldClasses(fieldErrors, fieldValues)
+
+    const nonCbsComponentsList = componentsList.filter(
+        (component) => component.Code !== 'cbs'
+    )
 
     //Updates selectedComponents on click in "Components in Project"
     const handleComponentSelect = (event) => {
@@ -431,7 +432,7 @@ const TemplatesView = () => {
         overlayLoadingTemplate: overlayLoadingTemplatePurple,
         onGridReady: (params) => {
             setComponentsInProjectTableGridApi(params.api)
-            params.api.updateGridOptions({ rowData: nonCbsComponentsInProject })
+            params.api.updateGridOptions({ rowData: nonCbsComponentsList })
         },
         onRowClicked: handleComponentSelect,
         suppressScrollOnNewData: true,
@@ -608,7 +609,7 @@ const TemplatesView = () => {
     //Returns Components present in the selected Template (ordered by templates.inOrder column)
     const filteredComponents = componentsInTemplate.map((templateComponent) => {
         //Find the corresponding Component in the template
-        const component = nonCbsComponentsInProject.find(
+        const component = nonCbsComponentsList.find(
             (c) => c.ID === templateComponent.Component_ID
         )
 
@@ -648,15 +649,12 @@ const TemplatesView = () => {
     const moveComponentUp = (index) => {
         if (index === 0) return
         setSelectedComponents((prevComponents) => {
-            const nonCbsComponentsInProject = [...prevComponents]
-            ;[
-                nonCbsComponentsInProject[index - 1],
-                nonCbsComponentsInProject[index],
-            ] = [
-                nonCbsComponentsInProject[index],
-                nonCbsComponentsInProject[index - 1],
+            const nonCbsComponentsList = [...prevComponents]
+            ;[nonCbsComponentsList[index - 1], nonCbsComponentsList[index]] = [
+                nonCbsComponentsList[index],
+                nonCbsComponentsList[index - 1],
             ]
-            return nonCbsComponentsInProject
+            return nonCbsComponentsList
         })
     }
 
@@ -664,47 +662,34 @@ const TemplatesView = () => {
     const moveComponentDown = (index) => {
         if (index === selectedComponents.length - 1) return
         setSelectedComponents((prevComponents) => {
-            const nonCbsComponentsInProject = [...prevComponents]
-            ;[
-                nonCbsComponentsInProject[index],
-                nonCbsComponentsInProject[index + 1],
-            ] = [
-                nonCbsComponentsInProject[index + 1],
-                nonCbsComponentsInProject[index],
+            const nonCbsComponentsList = [...prevComponents]
+            ;[nonCbsComponentsList[index], nonCbsComponentsList[index + 1]] = [
+                nonCbsComponentsList[index + 1],
+                nonCbsComponentsList[index],
             ]
-            return nonCbsComponentsInProject
+            return nonCbsComponentsList
         })
     }
 
     //4. useEffects
     useEffect(() => {
-        if (jobNo && isLoadingComponents) {
+        if (jobNo && isLoading) {
             componentsInProjectTableGridApi?.showLoadingOverlay()
         } else if (componentsInProjectTableGridApi) {
             componentsInProjectTableGridApi?.hideOverlay()
         }
-    }, [jobNo, isLoadingComponents, componentsInProjectTableGridApi])
-
-    useEffect(() => {
-        if (jobNo) {
-            fetchComponentsInProject(
-                jobNo,
-                setNonCbsComponentsInProject,
-                setIsLoadingComponents
-            )
-        }
-    }, [jobNo])
+    }, [jobNo, isLoading, componentsInProjectTableGridApi])
 
     useEffect(() => {
         if (
             componentsInProjectTableGridApi &&
-            nonCbsComponentsInProject.length > 0
+            nonCbsComponentsList.length > 0
         ) {
             componentsInProjectTableGridApi.updateGridOptions({
-                rowData: nonCbsComponentsInProject,
+                rowData: nonCbsComponentsList,
             })
         }
-    }, [nonCbsComponentsInProject, componentsInProjectTableGridApi])
+    }, [nonCbsComponentsList, componentsInProjectTableGridApi])
 
     useEffect(() => {
         if (isLoading) {
@@ -853,7 +838,7 @@ const TemplatesView = () => {
                                     gridOptions={
                                         componentsInProjectTableGridOptions
                                     }
-                                    rowData={nonCbsComponentsInProject}
+                                    rowData={nonCbsComponentsList}
                                 />
                             </div>
                         </ComponentsWrapper>
@@ -1028,7 +1013,7 @@ const TemplatesView = () => {
                     <EditTemplateDialogBox
                         jobNo={jobNo}
                         componentsInTemplate={componentsInTemplate}
-                        nonCbsComponentsInProject={nonCbsComponentsInProject}
+                        nonCbsComponentsList={nonCbsComponentsList}
                         handleComponentSelect={handleComponentSelect}
                         handleComponentDeselect={handleComponentDeselect}
                         updateTemplatesTable={updateTemplatesTable}

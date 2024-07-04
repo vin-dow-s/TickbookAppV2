@@ -66,13 +66,10 @@ const TenderSectionsFormField = styled(FormField)`
 `
 
 const TenderSectionsView = () => {
-    const { jobNo, tenderSectionsList, fetchTenderSectionsList, isLoading } =
-        useStore((state) => ({
-            jobNo: state.jobNo,
-            tenderSectionsList: state.tenderSectionsList,
-            fetchTenderSectionsList: state.fetchTenderSectionsList,
-            isLoading: state.isLoading,
-        }))
+    const { tenderSectionsList, isLoading } = useStore((state) => ({
+        tenderSectionsList: state.tenderSectionsList,
+        isLoading: state.isLoading,
+    }))
 
     const [tenderSectionsTableGridApi, setTenderSectionsTableGridApi] =
         useState(null)
@@ -99,12 +96,6 @@ const TenderSectionsView = () => {
             tenderSectionsTableGridApi?.showLoadingOverlay()
         } else tenderSectionsTableGridApi?.hideOverlay()
     }, [tenderSectionsList, tenderSectionsTableGridApi, isLoading])
-
-    useEffect(() => {
-        if (jobNo) {
-            fetchTenderSectionsList(jobNo)
-        }
-    }, [jobNo, fetchTenderSectionsList])
 
     useEffect(() => {
         if (tenderSectionsTableGridApi && quickFilterText !== null) {

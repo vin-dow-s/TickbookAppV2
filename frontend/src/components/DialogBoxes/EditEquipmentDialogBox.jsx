@@ -129,19 +129,13 @@ const EditEquipmentDialogBox = ({
     updateDashboardTablesAndSummary,
 }) => {
     // 1. State declarations
-    const {
-        templatesList,
-        fetchTemplatesList,
-        equipmentList,
-        fetchEquipmentList,
-        onEquipmentUpdate,
-    } = useStore((state) => ({
-        templatesList: state.templatesList,
-        fetchTemplatesList: state.fetchTemplatesList,
-        equipmentList: state.equipmentList,
-        fetchEquipmentList: state.fetchEquipmentList,
-        onEquipmentUpdate: state.onEquipmentUpdate,
-    }))
+    const { templatesList, equipmentList, onEquipmentUpdate } = useStore(
+        (state) => ({
+            templatesList: state.templatesList,
+            equipmentList: state.equipmentList,
+            onEquipmentUpdate: state.onEquipmentUpdate,
+        })
+    )
 
     const DEFAULT_VALUES = {
         Ref: equipmentData.Ref,
@@ -303,11 +297,6 @@ const EditEquipmentDialogBox = ({
             document.removeEventListener('mouseup', onMouseUp)
         }
     }, [])
-
-    useEffect(() => {
-        fetchTemplatesList(jobNo)
-        fetchEquipmentList(jobNo)
-    }, [jobNo, fetchTemplatesList, fetchEquipmentList])
 
     useEffect(() => {
         const currentEquipment = equipmentList.find(

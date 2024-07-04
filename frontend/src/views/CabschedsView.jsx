@@ -278,7 +278,6 @@ const CabschedsView = () => {
         jobNo,
         cabschedsList,
         isLoading,
-        fetchCabschedsList,
         onCabschedCreate,
         onCabschedUpdate,
         onCabschedCompletionUpdate,
@@ -288,7 +287,6 @@ const CabschedsView = () => {
         jobNo: state.jobNo,
         cabschedsList: state.cabschedsList,
         isLoading: state.isLoading,
-        fetchCabschedsList: state.fetchCabschedsList,
         onCabschedCreate: state.onCabschedCreate,
         onCabschedUpdate: state.onCabschedUpdate,
         onCabschedCompletionUpdate: state.onCabschedCompletionUpdate,
@@ -680,8 +678,7 @@ const CabschedsView = () => {
         if (equipmentRefs.length > 0) {
             setFieldValues((prevValues) => ({
                 ...prevValues,
-                ZGlandArea:
-                    equipmentRefs[0].Area || equipmentRefs[0].Area || '',
+                ZGlandArea: equipmentRefs[0].Area || '',
             }))
         }
     }, [equipmentRefs])
@@ -699,10 +696,6 @@ const CabschedsView = () => {
             cabschedsTableGridApi?.hideOverlay()
         }
     }, [cabschedsList, cabschedsTableGridApi, isLoading])
-
-    useEffect(() => {
-        if (jobNo) fetchCabschedsList(jobNo)
-    }, [jobNo, fetchCabschedsList])
 
     if (!isLoadingCabSizes && cabSizesError && jobNo) {
         console.error('Cable Sizes Data missing:', cabSizesError)

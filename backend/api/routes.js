@@ -31,10 +31,6 @@ router.get('/:jobNo/revisions', revisionController.getProjectRevisions)
 //Components
 router.get('/:jobNo/components', componentController.getProjectComponents)
 router.get(
-    '/:jobNo/components/non-cbs-and-labnorms',
-    componentController.getProjectNonCBSComponentsWithLabnorm
-)
-router.get(
     '/:jobNo/is-component-used-in-template/:id',
     componentController.isComponentUsedInTemplate
 )

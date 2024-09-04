@@ -601,9 +601,9 @@ const ComponentsView = () => {
             }
 
             const result = await onComponentCreate(jobNo, componentData)
-            if (result.success) {
+            if (result?.success) {
                 toast.success('Component successfully created.')
-            } else if (result.statusCode === 409) {
+            } else if (result?.statusCode === 409) {
                 toast.warning('This Component already exists.')
             } else {
                 toast.error('Error creating the Component.')

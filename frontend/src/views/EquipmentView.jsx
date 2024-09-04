@@ -725,12 +725,14 @@ const EquipmentView = () => {
                     </CreateEquipmentContainer>
                     <FileUploadContainer>
                         <div className="purple-label">
-                            Load Equipment from file
+                            Load/Update Equipment from file
                         </div>
                         <div className={'file-content'}>
                             <FileUploadButton onChange={handleFileUpload} />
                             <span className="file-loaded-indicator">
-                                File should be Equiplist_Template.xlsx
+                                File should be Equiplist_Template.xlsx (create
+                                Equipment) or the Main Table data export (update
+                                Equipment).
                             </span>
                         </div>
                     </FileUploadContainer>

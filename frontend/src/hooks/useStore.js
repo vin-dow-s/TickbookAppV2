@@ -1,4 +1,5 @@
 import { create } from 'zustand'
+import { toast } from 'react-toastify'
 
 import {
     generateProjectsURL,
@@ -60,6 +61,7 @@ const useStore = create((set, get) => ({
     localMainTableRefs: [],
     isLoading: false,
     viewType: 'Section',
+    setViewType: (newViewType) => set({ viewType: newViewType }),
     projectHasChanged: false,
     componentsDataHasChanged: false,
     templatesDataHasChanged: false,
@@ -68,6 +70,15 @@ const useStore = create((set, get) => ({
     revisionsDataHasChanged: false,
     ccsDataHasChanged: false,
     tenderSectionsDataHasChanged: false,
+
+    checkProjectSelected: async () => {
+        const jobNo = get().jobNo
+        if (!jobNo) {
+            toast.info('Please first select a project.')
+            return false
+        }
+        return true
+    },
 
     fetchProjectsList: async () => {
         if (get().projectsList.length > 0) return
@@ -99,6 +110,8 @@ const useStore = create((set, get) => ({
     },
 
     fetchComponentsList: async (jobNo) => {
+        if (!get().checkProjectSelected()) return
+
         if (!get().projectHasChanged && !get().componentsDataHasChanged) return
 
         set({ isLoading: true })
@@ -114,6 +127,8 @@ const useStore = create((set, get) => ({
     },
 
     fetchTemplatesList: async (jobNo) => {
+        if (!get().checkProjectSelected()) return
+
         if (
             !get().projectHasChanged &&
             !get().componentsDataHasChanged &&
@@ -134,6 +149,8 @@ const useStore = create((set, get) => ({
     },
 
     fetchTemplateComponents: async (jobNo, template) => {
+        if (!get().checkProjectSelected()) return
+
         try {
             const response = await fetch(
                 generateTemplateComponentsURL(jobNo, template)
@@ -150,6 +167,8 @@ const useStore = create((set, get) => ({
     },
 
     fetchEquipmentList: async (jobNo) => {
+        if (!get().checkProjectSelected()) return
+
         if (
             !get().projectHasChanged &&
             !get().componentsDataHasChanged &&
@@ -174,6 +193,8 @@ const useStore = create((set, get) => ({
     },
 
     fetchEquipmentCodes: async (jobNo, area, section) => {
+        if (!get().checkProjectSelected()) return
+
         try {
             const url = generateEquipmentComponentsCodesURL(
                 jobNo,
@@ -195,6 +216,8 @@ const useStore = create((set, get) => ({
     },
 
     fetchCabschedsList: async (jobNo) => {
+        if (!get().checkProjectSelected()) return
+
         if (
             !get().projectHasChanged &&
             !get().componentsDataHasChanged &&
@@ -216,6 +239,8 @@ const useStore = create((set, get) => ({
     },
 
     fetchRevisionsList: async (jobNo) => {
+        if (!get().checkProjectSelected()) return
+
         if (
             !get().projectHasChanged &&
             !get().equipmentDataHasChanged &&
@@ -236,6 +261,8 @@ const useStore = create((set, get) => ({
     },
 
     fetchCCsList: async (jobNo) => {
+        if (!get().checkProjectSelected()) return
+
         if (
             !get().projectHasChanged &&
             !get().equipmentDataHasChanged &&
@@ -256,6 +283,8 @@ const useStore = create((set, get) => ({
     },
 
     fetchTenderSectionsList: async (jobNo) => {
+        if (!get().checkProjectSelected()) return
+
         if (
             !get().projectHasChanged &&
             !get().equipmentDataHasChanged &&
@@ -276,6 +305,8 @@ const useStore = create((set, get) => ({
     },
 
     fetchLocalMainTableRefs: async (jobNo) => {
+        if (!get().checkProjectSelected()) return
+
         set({ isLoading: true })
         try {
             const response = await fetch(generateProjectEquipmentURL(jobNo))
@@ -323,6 +354,8 @@ const useStore = create((set, get) => ({
     },
 
     onComponentCreate: async (jobNo, componentData) => {
+        if (!get().checkProjectSelected()) return
+
         if (componentData.Name) {
             componentData.Name = componentData.Name.trim()
         }
@@ -392,9 +425,11 @@ const useStore = create((set, get) => ({
     },
 
     onComponentsBulkCreate: async (jobNo, componentsData) => {
+        if (!get().checkProjectSelected()) return
+
         const processedData = componentsData.map((componentData) => ({
             Code: 'acc',
-            Name: componentData.Component.trim(),
+            Name: componentData?.Component?.trim(),
             LabUplift: 0,
             MatNorm: 0,
             SubConCost: 0,
@@ -454,6 +489,8 @@ const useStore = create((set, get) => ({
         componentToUpdate,
         fieldValuesToUpdate
     ) => {
+        if (!get().checkProjectSelected()) return
+
         try {
             const url = updateComponentURL(jobNo, componentToUpdate)
 
@@ -486,6 +523,8 @@ const useStore = create((set, get) => ({
     },
 
     onComponentsCodesBulkUpdate: async (jobNo, componentIds, newCode) => {
+        if (!get().checkProjectSelected()) return
+
         try {
             const response = await fetch(bulkUpdateComponentsURL(jobNo), {
                 method: 'PUT',
@@ -514,6 +553,8 @@ const useStore = create((set, get) => ({
     },
 
     onComponentDelete: async (jobNo, componentId) => {
+        if (!get().checkProjectSelected()) return
+
         try {
             const response = await fetch(
                 deleteComponentURL(jobNo, componentId),
@@ -552,9 +593,17 @@ const useStore = create((set, get) => ({
         codesList,
         setCreationStepMessage
     ) => {
+        if (!get().checkProjectSelected()) return
+
         try {
             setCreationStepMessage('Reading Excel file...')
             const jsonData = await readExcelFile(file)
+
+            if (!jsonData || jsonData.length === 0)
+                throw new Error(
+                    'Please select the right file and make sure it is not empty.'
+                )
+
             let finalComponentsData = []
             const nonExistingCodes = new Set()
 
@@ -591,6 +640,8 @@ const useStore = create((set, get) => ({
     },
 
     onTemplateCreate: async (jobNo, templateData) => {
+        if (!get().checkProjectSelected()) return
+
         try {
             const response = await fetch(generateProjectTemplatesURL(jobNo), {
                 method: 'POST',
@@ -618,6 +669,8 @@ const useStore = create((set, get) => ({
     },
 
     onTemplatesBulkCreate: async (jobNo, templatesMap) => {
+        if (!get().checkProjectSelected()) return
+
         const templatesData = Array.from(templatesMap.entries()).map(
             ([template, components]) => ({
                 Name: template,
@@ -671,6 +724,8 @@ const useStore = create((set, get) => ({
     },
 
     onTemplateUpdate: async (jobNo, templateName, components) => {
+        if (!get().checkProjectSelected()) return
+
         const bodyData = {
             jobNo,
             components,
@@ -715,6 +770,8 @@ const useStore = create((set, get) => ({
     },
 
     onTemplateDuplicate: async (jobNo, templateData) => {
+        if (!get().checkProjectSelected()) return
+
         try {
             const response = await fetch(
                 generateTemplateComponentsURL(jobNo, templateData.Name)
@@ -769,6 +826,8 @@ const useStore = create((set, get) => ({
     },
 
     handleTemplateFileUpload: async (jobNo, event, setCreationStepMessage) => {
+        if (!get().checkProjectSelected()) return
+
         setCreationStepMessage('Reading Excel file...')
 
         try {
@@ -830,9 +889,9 @@ const useStore = create((set, get) => ({
                 success: true,
                 jsonDataLength: jsonData.length,
                 successCount,
-                componentsCreated: componentsCreated.results.success,
+                componentsCreated: componentsCreated?.results?.success,
                 componentsCreatedCount:
-                    componentsCreated.results.success.length,
+                    componentsCreated?.results?.success?.length,
                 equipmentCreatedCount: equipmentCreated.uniqueEquipmentCount,
                 templatesAlreadyExisting,
                 failureCount,
@@ -847,6 +906,8 @@ const useStore = create((set, get) => ({
     },
 
     onEquipmentCreate: async (jobNo, equipmentData) => {
+        if (!get().checkProjectSelected()) return
+
         try {
             const response = await fetch(generateProjectEquipmentURL(jobNo), {
                 method: 'POST',
@@ -876,6 +937,8 @@ const useStore = create((set, get) => ({
     },
 
     onEquipmentBulkCreateOnTemplateUpload: async (jobNo, templatesMap) => {
+        if (!get().checkProjectSelected()) return
+
         const equipmentData = []
 
         for (const [template, componentsArray] of templatesMap.entries()) {
@@ -949,6 +1012,8 @@ const useStore = create((set, get) => ({
         jsonData,
         equipmentList
     ) => {
+        if (!get().checkProjectSelected()) return
+
         let equipmentAlreadyExisting = []
         let equipmentData = []
 
@@ -1038,6 +1103,8 @@ const useStore = create((set, get) => ({
     },
 
     onEquipmentUpdate: async (jobNo, oldRef, fieldValuesToUpdate) => {
+        if (!get().checkProjectSelected()) return
+
         try {
             const url = updateEquipmentURL(jobNo, oldRef)
 
@@ -1089,6 +1156,8 @@ const useStore = create((set, get) => ({
         dataToUpdate,
         equipmentList
     ) => {
+        if (!get().checkProjectSelected()) return
+
         try {
             const headers = Object.keys(dataToUpdate[0])
             const fieldToUpdate = headers[1]
@@ -1217,6 +1286,8 @@ const useStore = create((set, get) => ({
         percentComplete,
         rowData
     ) => {
+        if (!get().checkProjectSelected()) return
+
         let url
         let bodyData
         const currentRecovery = (
@@ -1343,6 +1414,8 @@ const useStore = create((set, get) => ({
     },
 
     onEquipmentCompletionByComponentsBulkUpdate: async (jobNo, updates) => {
+        if (!get().checkProjectSelected()) return
+
         try {
             const response = await fetch(
                 bulkUpdateEquipmentCompletionByComponentsURL(jobNo),
@@ -1410,6 +1483,8 @@ const useStore = create((set, get) => ({
     },
 
     onEquipmentCompletionByCodesBulkUpdate: async (jobNo, updates) => {
+        if (!get().checkProjectSelected()) return
+
         try {
             const response = await fetch(
                 bulkUpdateEquipmentCompletionByCodesURL(jobNo),
@@ -1461,6 +1536,8 @@ const useStore = create((set, get) => ({
         deletedEquipment,
         deleteAssociatedCables
     ) => {
+        if (!get().checkProjectSelected()) return
+
         try {
             const requestOptions = {
                 method: 'DELETE',
@@ -1508,11 +1585,15 @@ const useStore = create((set, get) => ({
     },
 
     handleEquipmentFileUpload: async (jobNo, file) => {
+        if (!get().checkProjectSelected()) return
+
         set({ isLoading: true })
         try {
             const jsonData = await readExcelFile(file)
             if (!jsonData || jsonData.length === 0)
-                throw new Error('The file is empty.')
+                throw new Error(
+                    'Please select the right file and make sure it is not empty.'
+                )
 
             const isUpdateOperation = Object.keys(jsonData[0]).includes(
                 'TotalHours'
@@ -1575,6 +1656,8 @@ const useStore = create((set, get) => ({
     },
 
     onCabschedCreate: async (jobNo, cabschedData) => {
+        if (!get().checkProjectSelected()) return
+
         try {
             const response = await fetch(generateProjectCabschedsURL(jobNo), {
                 method: 'POST',
@@ -1609,6 +1692,8 @@ const useStore = create((set, get) => ({
         cabschedsList,
         cabSizesData
     ) => {
+        if (!get().checkProjectSelected()) return
+
         const newCabscheds = cabschedsToCreate.filter(
             (cabsched) =>
                 !cabschedsList.some(
@@ -1685,6 +1770,8 @@ const useStore = create((set, get) => ({
         equipmentRefs,
         cabSizesData
     ) => {
+        if (!get().checkProjectSelected()) return
+
         const matchingComponent = cabSizesData.find(
             (component) => component.Name === fieldValuesToUpdate.CabSize
         )
@@ -1745,6 +1832,8 @@ const useStore = create((set, get) => ({
         fieldToUpdate,
         percentComplete
     ) => {
+        if (!get().checkProjectSelected()) return
+
         try {
             const bodyData = {
                 JobNo: jobNo,
@@ -1784,6 +1873,8 @@ const useStore = create((set, get) => ({
     },
 
     onCabschedDelete: async (jobNo, cabNum) => {
+        if (!get().checkProjectSelected()) return
+
         try {
             const response = await fetch(deleteCabschedURL(jobNo, cabNum), {
                 method: 'DELETE',
@@ -1808,6 +1899,8 @@ const useStore = create((set, get) => ({
     },
 
     onCabschedMarkedInstalled: async (jobNo, rowData) => {
+        if (!get().checkProjectSelected()) return
+
         try {
             const response = await fetch(
                 markCableAsInstalledURL(jobNo, rowData.CabNum),
@@ -1856,11 +1949,15 @@ const useStore = create((set, get) => ({
         cabSizesData,
         equipmentRefs
     ) => {
+        if (!get().checkProjectSelected()) return
+
         set({ isLoading: true })
         try {
             const jsonData = await readExcelFile(file)
             if (!jsonData || jsonData.length === 0)
-                throw new Error('The file is empty.')
+                throw new Error(
+                    'Please select the right file and make sure it is not empty.'
+                )
 
             const {
                 cabscheds,
@@ -1916,6 +2013,8 @@ const useStore = create((set, get) => ({
     },
 
     onCcCreate: async (jobNo, ccData) => {
+        if (!get().checkProjectSelected()) return
+
         try {
             const response = await fetch(generateProjectCCsURL(jobNo), {
                 method: 'POST',
@@ -1943,6 +2042,8 @@ const useStore = create((set, get) => ({
     },
 
     onCcUpdate: async (jobNo, equipRef, ccRef, dateLift) => {
+        if (!get().checkProjectSelected()) return
+
         try {
             const response = await fetch(updateCCsURL(jobNo, equipRef, ccRef), {
                 method: 'PUT',

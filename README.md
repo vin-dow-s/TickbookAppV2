@@ -2,11 +2,19 @@
 
 ## NodeJS + Express + React (with Vite)
 
+Install:
+`npm i`
+`cd frontend`
+`npm i`
+
+Run:
+`npm start` at root level
+
 ### Dependencies
 
 #### Backend
 
-Express - Nodemon - MySQL2 - Sequelize - CORS - Concurrently - JEST
+Express - Express Session - Express Unless - Nodemon - MySQL2 - Sequelize - CORS - Concurrently - JEST - Azure/MSAL Node - JsonWebToken - JsonWebKeySets RSA
 
 #### Frontend
 
@@ -26,6 +34,10 @@ Root/backend:
 `npx sequelize-cli init`
 `npm install excel4node`
 `npm install jest`
+`npm install @azure/msal-node express-session`
+`npm install jsonwebtoken`
+`npm install jwks-rsa`
+`npm install express-unless`
 
 Frontend:
 `npm init vite` (React - JavaScript)

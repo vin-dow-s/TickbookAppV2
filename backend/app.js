@@ -1,17 +1,12 @@
 // Imports
 const express = require('express')
 const cors = require('cors')
-const session = require('express-session')
 const path = require('path')
 const crypto = require('crypto')
-const msal = require('@azure/msal-node')
 const jwt = require('jsonwebtoken')
+const cookieParser = require('cookie-parser')
 
-const {
-    msalConfig,
-    authCodeUrlParameters,
-    cca,
-} = require('./config/msalConfig')
+const { authCodeUrlParameters, cca } = require('./config/msalConfig')
 const User = require('./models/User')
 const verifyToken = require('./middlewares/verifyToken')
 const routes = require('./api/routes')
@@ -22,6 +17,9 @@ const app = express()
 const PORT = process.env.PORT || 4000
 const FONTS_DIR = path.join(__dirname, '..', 'frontend', 'public', 'fonts')
 const ONE_YEAR_IN_MILLISECONDS = 31557600000
+
+// Use cookie-parser
+app.use(cookieParser())
 
 // Static files
 app.use(
@@ -37,22 +35,14 @@ app.use(
     })
 )
 
-// Session management
+// CORS and JSON parsing
 app.use(
-    session({
-        secret: process.env.SESSION_SECRET,
-        resave: false,
-        saveUninitialized: false,
-        cookie: {
-            httpOnly: true,
-            secure: process.env.NODE_ENV === 'production',
-            maxAge: 1000 * 60 * 30,
-        },
+    cors({
+        origin: 'http://localhost:5173',
+        credentials: true,
     })
 )
 
-// CORS and JSON parsing
-app.use(cors())
 app.use(express.json({ limit: '5mb' }))
 
 // Error handling Middleware
@@ -78,9 +68,14 @@ function generatePKCECodes() {
  * Routes
  */
 // Route to initiate authentication
-app.get('/test', (req, res) => {
+app.get('/api/login', (req, res) => {
     const { codeVerifier, codeChallenge } = generatePKCECodes()
-    req.session.codeVerifier = codeVerifier
+
+    res.cookie('codeVerifier', codeVerifier, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        maxAge: 1000 * 60 * 10,
+    })
 
     cca.getAuthCodeUrl({ ...authCodeUrlParameters, codeChallenge })
         .then((response) => {
@@ -92,45 +87,34 @@ app.get('/test', (req, res) => {
 })
 
 // Callback route for authentication
-// TODO : Fix the Access Token : audience and issuer do not match with those of the ID token
-// TODO : Check in Entra ID that the v2.0 endpoints are being used
 app.get('/api/auth', async (req, res) => {
+    const codeVerifier = req.cookies.codeVerifier
+
+    if (!codeVerifier) {
+        return res.status(400).send('Missing code verifier')
+    }
+
     const tokenRequest = {
         code: req.query.code,
-        scopes: ['openid', 'profile', 'email'],
+        scopes: ['api://e076f08e-d578-42c1-b131-7233d57c51a9/User.Read'],
         redirectUri: authCodeUrlParameters.redirectUri,
-        codeVerifier: req.session.codeVerifier,
+        codeVerifier: codeVerifier,
     }
 
     try {
         const response = await cca.acquireTokenByCode(tokenRequest)
 
-        // ID token from the response
-        const idToken = response.idToken
-        const decodedIdToken = jwt.decode(idToken)
-
-        console.log('ID Token:', idToken)
-        console.log('Decoded ID Token Claims:', decodedIdToken)
-
         // Access token from the response
         const accessToken = response.accessToken
-        const decodedAccessToken = jwt.decode(accessToken)
-        const decodedAccessTokenHeader = jwt.decode(accessToken, {
-            complete: true,
-        }).header
-
         console.log('Access Token:', accessToken)
-        console.log('Decoded Access Token Claims:', decodedAccessToken)
-        console.log('Decoded Access Token Header:', decodedAccessTokenHeader)
 
-        // Extract claims from the ID token
-        const { oid, name, email } = decodedIdToken
+        const { oid, name, email } = jwt.decode(response.idToken)
 
         // Check if the user already exists in the database
         let user = await User.findOne({ where: { oid } })
 
+        // If the user doesn't exist, create a new user
         if (!user) {
-            // If the user doesn't exist, create a new user
             await User.create({
                 oid,
                 name,
@@ -138,45 +122,33 @@ app.get('/api/auth', async (req, res) => {
             })
         }
 
-        // Store user information in the session
-        req.session.user = {
-            oid,
-            name,
-            email,
-        }
+        res.cookie('token', accessToken, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            maxAge: 1000 * 60 * 30,
+        })
 
-        res.redirect('/api/auth/profile')
+        res.clearCookie('codeVerifier')
+
+        // Redirect the user to the frontend
+        res.redirect('http://localhost:5173')
     } catch (error) {
         console.error('Authentication error:', error)
         res.status(500).send('Authentication error occurred.')
     }
 })
 
-// Redirection to profile route to view user info after successful authentication
-app.get('/api/auth/profile', (req, res) => {
-    if (!req.session.user) {
-        return res.status(401).send('User is not authenticated')
-    }
-
-    res.send(
-        `Name: ${req.session.user.name}, Email: ${req.session.user.email}, Oid: ${req.session.user.oid}`
-    )
-})
-
 // Logout route
-app.get('/api/auth/logout', (req, res) => {
-    req.session.destroy(() => {
-        res.clearCookie('connect.sid', { path: '/' })
-        res.redirect('/')
-    })
+app.get('/api/logout', (req, res) => {
+    res.clearCookie('token')
+    res.redirect('/')
 })
 
 // verifyToken middleware to protect routes (excluding public routes)
-// TODO : Add /api/ to all routes in api/routes.js once authorization is fixed and the token is valid
 app.use(
     '/api',
     verifyToken.unless({
-        path: ['/api/auth', '/api/auth/profile', '/api/auth/logout'],
+        path: ['/api/login', '/api/auth', '/api/logout'],
     })
 )
 

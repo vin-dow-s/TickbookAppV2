@@ -84,7 +84,9 @@ const useStore = create((set, get) => ({
         if (get().projectsList.length > 0) return
         set({ isLoading: true })
         try {
-            const response = await fetch(generateProjectsURL())
+            const response = await fetch(generateProjectsURL(), {
+                credentials: 'include',
+            })
             const data = await response.json()
             set({ projectsList: data })
         } catch (error) {
@@ -99,7 +101,9 @@ const useStore = create((set, get) => ({
 
         set({ isLoading: true })
         try {
-            const response = await fetch(generateCodesURL(jobNo))
+            const response = await fetch(generateCodesURL(jobNo), {
+                credentials: 'include',
+            })
             const data = await response.json()
             set({ codesList: data })
         } catch (error) {
@@ -116,7 +120,9 @@ const useStore = create((set, get) => ({
 
         set({ isLoading: true })
         try {
-            const response = await fetch(generateProjectComponentsURL(jobNo))
+            const response = await fetch(generateProjectComponentsURL(jobNo), {
+                credentials: 'include',
+            })
             const data = await response.json()
             set({ componentsList: data })
         } catch (error) {
@@ -138,7 +144,9 @@ const useStore = create((set, get) => ({
 
         set({ isLoading: true })
         try {
-            const response = await fetch(generateProjectTemplatesURL(jobNo))
+            const response = await fetch(generateProjectTemplatesURL(jobNo), {
+                credentials: 'include',
+            })
             const data = await response.json()
             set({ templatesList: data })
         } catch (error) {
@@ -153,7 +161,10 @@ const useStore = create((set, get) => ({
 
         try {
             const response = await fetch(
-                generateTemplateComponentsURL(jobNo, template)
+                generateTemplateComponentsURL(jobNo, template),
+                {
+                    credentials: 'include',
+                }
             )
             if (!response.ok) {
                 throw new Error(`HTTP error! Status: ${response.status}`)
@@ -182,7 +193,9 @@ const useStore = create((set, get) => ({
 
         set({ isLoading: true })
         try {
-            const response = await fetch(generateProjectEquipmentURL(jobNo))
+            const response = await fetch(generateProjectEquipmentURL(jobNo), {
+                credentials: 'include',
+            })
             const data = await response.json()
             set({ equipmentList: data })
         } catch (error) {
@@ -201,7 +214,9 @@ const useStore = create((set, get) => ({
                 area,
                 section
             )
-            const response = await fetch(url)
+            const response = await fetch(url, {
+                credentials: 'include',
+            })
             const data = await response.json()
 
             const formattedData = data.map((code) => ({
@@ -228,7 +243,9 @@ const useStore = create((set, get) => ({
 
         set({ isLoading: true })
         try {
-            const response = await fetch(generateProjectCabschedsURL(jobNo))
+            const response = await fetch(generateProjectCabschedsURL(jobNo), {
+                credentials: 'include',
+            })
             const data = await response.json()
             set({ cabschedsList: data })
         } catch (error) {
@@ -250,7 +267,9 @@ const useStore = create((set, get) => ({
 
         set({ isLoading: true })
         try {
-            const response = await fetch(generateProjectRevisionsURL(jobNo))
+            const response = await fetch(generateProjectRevisionsURL(jobNo), {
+                credentials: 'include',
+            })
             const data = await response.json()
             set({ revisionsList: data })
         } catch (error) {
@@ -272,7 +291,9 @@ const useStore = create((set, get) => ({
 
         set({ isLoading: true })
         try {
-            const response = await fetch(generateProjectCCsURL(jobNo))
+            const response = await fetch(generateProjectCCsURL(jobNo), {
+                credentials: 'include',
+            })
             const data = await response.json()
             set({ ccsList: data })
         } catch (error) {
@@ -294,7 +315,9 @@ const useStore = create((set, get) => ({
 
         set({ isLoading: true })
         try {
-            const response = await fetch(generateProjectTenderHoursURL(jobNo))
+            const response = await fetch(generateProjectTenderHoursURL(jobNo), {
+                credentials: 'include',
+            })
             const data = await response.json()
             set({ tenderSectionsList: data })
         } catch (error) {
@@ -309,7 +332,9 @@ const useStore = create((set, get) => ({
 
         set({ isLoading: true })
         try {
-            const response = await fetch(generateProjectEquipmentURL(jobNo))
+            const response = await fetch(generateProjectEquipmentURL(jobNo), {
+                credentials: 'include',
+            })
             const data = await response.json()
             const refs = data.map((item) => ({ Ref: item.Ref }))
             set({ localMainTableRefs: refs })

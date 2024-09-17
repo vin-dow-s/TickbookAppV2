@@ -3,7 +3,7 @@
  * The routes correspond to the routes defined in backend/api/routes.js.
  */
 
-export const BASE_URL = 'http://localhost:4000'
+export const BASE_URL = 'http://localhost:4000/api'
 
 export const generateCodesURL = () => `${BASE_URL}/codes`
 

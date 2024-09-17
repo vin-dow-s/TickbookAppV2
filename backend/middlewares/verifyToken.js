@@ -12,16 +12,16 @@ function getKey(header, callback) {
             console.error('Error retrieving signing key:', err)
             return callback(err)
         }
-        const signingKey = key.publicKey
-        console.log('Signing key used for verification:', signingKey)
+        const signingKey = key.getPublicKey()
         callback(null, signingKey)
     })
 }
 
 function verifyToken(req, res, next) {
-    console.log('verifyToken middleware called')
     const token =
-        req.headers.authorization && req.headers.authorization.split(' ')[1]
+        (req.headers.authorization &&
+            req.headers.authorization.split(' ')[1]) ||
+        req.cookies.token
 
     if (!token) {
         console.log('No token provided')
@@ -32,8 +32,7 @@ function verifyToken(req, res, next) {
         token,
         getKey,
         {
-            audience: process.env.AZURE_CLIENT_ID,
-            issuer: `https://login.microsoftonline.com/${process.env.AZURE_TENANT_ID}`,
+            audience: `${process.env.AZURE_CLIENT_ID}`,
             algorithms: ['RS256'],
         },
         (err, decoded) => {
@@ -41,7 +40,6 @@ function verifyToken(req, res, next) {
                 console.log('Invalid token:', err)
                 return res.status(401).send('Invalid token.')
             }
-            console.log('Token verified successfully:', decoded)
             req.user = decoded
             next()
         }

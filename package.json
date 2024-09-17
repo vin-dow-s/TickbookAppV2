@@ -16,7 +16,6 @@
         "dotenv": "^16.4.5",
         "excel4node": "^1.8.2",
         "express": "^4.19.2",
-        "express-session": "^1.18.0",
         "express-unless": "^2.1.3",
         "http-errors": "~1.6.3",
         "jsonwebtoken": "^9.0.2",

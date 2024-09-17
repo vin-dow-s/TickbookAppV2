@@ -16,109 +16,134 @@ const templateController = require('../controllers/templateController')
  * ROUTER
  */
 //Codes
-router.get('/codes', codeController.getAllCodes)
-router.post('/codes', codeController.createNewCode)
+router.get('/api/codes', codeController.getAllCodes)
+router.post('/api/codes', codeController.createNewCode)
 
 //Projects
-router.get('/projects', projectController.getAllProjects)
-router.post('/projects', projectController.createNewProject)
+//Projects
+router.get('/api/projects', projectController.getAllProjects)
+router.post('/api/projects', projectController.createNewProject)
 
 //Project details
 
 //Revisions
-router.get('/:jobNo/revisions', revisionController.getProjectRevisions)
+router.get('/api/:jobNo/revisions', revisionController.getProjectRevisions)
 
 //Components
-router.get('/:jobNo/components', componentController.getProjectComponents)
+router.get('/api/:jobNo/components', componentController.getProjectComponents)
 router.get(
-    '/:jobNo/is-component-used-in-template/:id',
+    '/api/:jobNo/is-component-used-in-template/:id',
     componentController.isComponentUsedInTemplate
 )
-router.post('/:jobNo/components', componentController.createComponent)
-router.post('/:jobNo/components/bulk', componentController.bulkCreateComponents)
-router.put('/:jobNo/components/:id', componentController.updateComponent)
+router.post('/api/:jobNo/components', componentController.createComponent)
+router.post(
+    '/api/:jobNo/components/bulk',
+    componentController.bulkCreateComponents
+)
+router.put('/api/:jobNo/components/:id', componentController.updateComponent)
 router.put(
-    '/:jobNo/components/bulk/update',
+    '/api/:jobNo/components/bulk/update',
     componentController.bulkUpdateComponentsCodes
 )
-router.delete('/:jobNo/components/:id', componentController.deleteComponent)
+router.delete('/api/:jobNo/components/:id', componentController.deleteComponent)
 
 //Templates
-router.get('/:jobNo/templates', templateController.getProjectTemplates)
+router.get('/api/:jobNo/templates', templateController.getProjectTemplates)
 router.get(
-    '/:jobNo/templates/:template',
+    '/api/:jobNo/templates/:template',
     templateController.getTemplateComponents
 )
-router.post('/:jobNo/templates', templateController.createTemplate)
-router.post('/:jobNo/templates/bulk', templateController.bulkCreateTemplates)
-router.put('/:jobNo/templates/:template', templateController.updateTemplate)
+router.post('/api/:jobNo/templates', templateController.createTemplate)
+router.post(
+    '/api/:jobNo/templates/bulk',
+    templateController.bulkCreateTemplates
+)
+router.put('/api/:jobNo/templates/:template', templateController.updateTemplate)
 
 //Equipment
-router.get('/:jobNo/equipment', equipmentController.getProjectEquipment)
+router.get('/api/:jobNo/equipment', equipmentController.getProjectEquipment)
 router.get(
-    '/:jobNo/equipment/refs-desc-area',
+    '/api/:jobNo/equipment/refs-desc-area',
     equipmentController.getEquipmentRefsDescArea
 )
 router.get(
-    '/:jobNo/equipment/area/:area/section/:section/codes',
+    '/api/:jobNo/equipment/area/:area/section/:section/codes',
     equipmentController.getComponentsCodesForASpecificEquipment
 )
-router.get('/:jobNo/tender-hours', equipmentController.getProjectTenderHours)
-router.post('/:jobNo/equipment', equipmentController.createEquipment)
-router.post('/:jobNo/equipment/bulk', equipmentController.bulkCreateEquipment)
-router.put('/:jobNo/equipment/:ref', equipmentController.updateEquipment)
+router.get(
+    '/api/:jobNo/tender-hours',
+    equipmentController.getProjectTenderHours
+)
+router.post('/api/:jobNo/equipment', equipmentController.createEquipment)
+router.post(
+    '/api/:jobNo/equipment/bulk',
+    equipmentController.bulkCreateEquipment
+)
+router.put('/api/:jobNo/equipment/:ref', equipmentController.updateEquipment)
 router.put(
-    '/:jobNo/equipment/bulk/update',
+    '/api/:jobNo/equipment/bulk/update',
     equipmentController.bulkUpdateEquipment
 )
 router.put(
-    '/:jobNo/equipment/bulk/update-completion-by-codes',
+    '/api/:jobNo/equipment/bulk/update-completion-by-codes',
     equipmentController.bulkUpdateEquipmentCompletionByCodes
 )
 router.put(
-    '/:jobNo/equipment/bulk/update-completion-by-components',
+    '/api/:jobNo/equipment/bulk/update-completion-by-components',
     equipmentController.bulkUpdateEquipmentCompletionByComponents
 )
 router.put(
-    '/:jobNo/equipment/update-completion/:id',
+    '/api/:jobNo/equipment/update-completion/:id',
     equipmentController.updateEquipRecoveryAndCompletion
 )
-router.delete('/:jobNo/equipment/:ref', equipmentController.deleteEquipment)
+router.delete('/api/:jobNo/equipment/:ref', equipmentController.deleteEquipment)
 
 //Cabscheds
-router.get('/:jobNo/cabscheds', cabschedsController.getProjectCabscheds)
-router.get('/:jobNo/cabscheds/cabsizes', cabschedsController.getProjectCabSizes)
-router.post('/:jobNo/cabscheds', cabschedsController.createCabsched)
-router.post('/:jobNo/cabscheds/bulk', cabschedsController.bulkCreateCabscheds)
-router.put('/:jobNo/cabscheds/:cabNum', cabschedsController.updateCabsched)
+router.get('/api/:jobNo/cabscheds', cabschedsController.getProjectCabscheds)
+router.get(
+    '/api/:jobNo/cabscheds/cabsizes',
+    cabschedsController.getProjectCabSizes
+)
+router.post('/api/:jobNo/cabscheds', cabschedsController.createCabsched)
+router.post(
+    '/api/:jobNo/cabscheds/bulk',
+    cabschedsController.bulkCreateCabscheds
+)
+router.put('/api/:jobNo/cabscheds/:cabNum', cabschedsController.updateCabsched)
 router.put(
-    '/:jobNo/cabscheds/update-completion/:cabNum',
+    '/api/:jobNo/cabscheds/update-completion/:cabNum',
     cabschedsController.updateCabschedCompletion
 )
-router.delete('/:jobNo/cabscheds/:cabNum', cabschedsController.deleteCabsched)
+router.delete(
+    '/api/:jobNo/cabscheds/:cabNum',
+    cabschedsController.deleteCabsched
+)
 router.post(
-    '/:jobNo/cabscheds/mark-as-installed/:cabNum',
+    '/api/:jobNo/cabscheds/mark-as-installed/:cabNum',
     cabschedsController.markCableAsInstalled
 )
 
 //Export
-router.get('/:jobNo/export/full-detail', exportDataController.exportFullDetail)
 router.get(
-    '/:jobNo/export/main-table-data',
+    '/api/:jobNo/export/full-detail',
+    exportDataController.exportFullDetail
+)
+router.get(
+    '/api/:jobNo/export/main-table-data',
     exportDataController.exportMainTableData
 )
 router.get(
-    '/:jobNo/export/view-table-data/:viewType',
+    '/api/:jobNo/export/view-table-data/:viewType',
     exportDataController.exportViewTableData
 )
 
 //CCs
-router.get('/:jobNo/ccs', ccsController.getAllCCs)
-router.post('/:jobNo/ccs', ccsController.createCCs)
-router.put('/:jobNo/ccs/:equipRef/:ccRef', ccsController.updateCCs)
+router.get('/api/:jobNo/ccs', ccsController.getAllCCs)
+router.post('/api/:jobNo/ccs', ccsController.createCCs)
+router.put('/api/:jobNo/ccs/:equipRef/:ccRef', ccsController.updateCCs)
 
 //Fetch project's info (MainInfoSection.jsx) based on jobNo
-router.get('/:jobNo/projectInfo', async (req, res) => {
+router.get('/api/:jobNo/projectInfo', async (req, res) => {
     const { jobNo } = req.params
 
     try {
@@ -137,7 +162,7 @@ router.get('/:jobNo/projectInfo', async (req, res) => {
 })
 
 //Fetch project's main table (DashboardView.jsx) data based on jobNo
-router.get('/:jobNo/mainTableData', async (req, res) => {
+router.get('/api/:jobNo/mainTableData', async (req, res) => {
     const { jobNo } = req.params
 
     try {
@@ -156,7 +181,7 @@ router.get('/:jobNo/mainTableData', async (req, res) => {
 })
 
 //Fetch project's view table (DashboardView.jsx) data based on jobNo
-router.get('/:jobNo/viewTableData', async (req, res) => {
+router.get('/api/:jobNo/viewTableData', async (req, res) => {
     const { jobNo } = req.params
     const viewType = req.query.viewType
 
@@ -183,7 +208,7 @@ router.get('/:jobNo/viewTableData', async (req, res) => {
 })
 
 //Fetch project's summary values (Summary.jsx) based on jobNo
-router.get('/:jobNo/summaryValues', async (req, res) => {
+router.get('/api/:jobNo/summaryValues', async (req, res) => {
     const { jobNo } = req.params
 
     try {
@@ -201,7 +226,7 @@ router.get('/:jobNo/summaryValues', async (req, res) => {
 })
 
 //Fetch specific project's equipment data using jobNo and equipRef
-router.get('/:jobNo/:equipRef', async (req, res) => {
+router.get('/api/:jobNo/:equipRef', async (req, res) => {
     let { jobNo, equipRef } = req.params
     equipRef = decodeURIComponent(equipRef)
 
@@ -229,7 +254,7 @@ router.get('/:jobNo/:equipRef', async (req, res) => {
 })
 
 //Fetch specific area components's equipment list using jobNo, area and component
-router.get('/:jobNo/area/:area/component/:component', async (req, res) => {
+router.get('/api/:jobNo/area/:area/component/:component', async (req, res) => {
     let { jobNo, area, component } = req.params
     area = decodeURIComponent(area)
     component = decodeURIComponent(component)
@@ -262,7 +287,7 @@ router.get('/:jobNo/area/:area/component/:component', async (req, res) => {
 
 //Fetch specific area-section-component's equipment list using jobNo, area, section and component
 router.get(
-    '/:jobNo/area/:area/section/:section/component/:component',
+    '/api/:jobNo/area/:area/section/:section/component/:component',
     async (req, res) => {
         let { jobNo, area, section, component } = req.params
         area = decodeURIComponent(area)
@@ -299,7 +324,7 @@ router.get(
 )
 
 //Fetch specific section's equipment list using jobNo and section
-router.get('/:jobNo/section/:section', async (req, res) => {
+router.get('/api/:jobNo/section/:section', async (req, res) => {
     let { jobNo, section } = req.params
     section = decodeURIComponent(section)
 

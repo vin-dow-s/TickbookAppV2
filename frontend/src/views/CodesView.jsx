@@ -131,7 +131,6 @@ const CodesView = () => {
             params.api.updateGridOptions({ rowData: null })
         },
         suppressScrollOnNewData: true,
-
     }
 
     const handleFormSubmit = async (e) => {
@@ -162,6 +161,7 @@ const CodesView = () => {
                 headers: {
                     'Content-Type': 'application/json',
                 },
+                credentials: 'include',
                 body: JSON.stringify({ code, name }),
             })
 

@@ -465,7 +465,10 @@ const EquipmentView = () => {
     const getTemplateComponents = async (jobNo, Template) => {
         try {
             const response = await fetch(
-                generateTemplateComponentsURL(jobNo, Template)
+                generateTemplateComponentsURL(jobNo, Template),
+                {
+                    credentials: 'include',
+                }
             )
 
             if (!response.ok) {

@@ -178,6 +178,7 @@ const ProjectView = () => {
                 headers: {
                     'Content-Type': 'application/json',
                 },
+                credentials: 'include',
                 body: JSON.stringify({ number, title, address }),
             })
             if (response.status === 409) {

@@ -23,7 +23,9 @@ export const useFetch = (url, refreshDataTrigger) => {
         //Async function to fetch data from a given URL
         const fetchDataFromAPI = async () => {
             try {
-                const response = await fetch(url)
+                const response = await fetch(url, {
+                    credentials: 'include',
+                })
                 const result = await response.json()
                 setData(result)
             } catch (err) {

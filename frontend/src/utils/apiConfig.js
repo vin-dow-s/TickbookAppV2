@@ -5,6 +5,10 @@
 
 export const BASE_URL = 'http://localhost:4000/api'
 
+export const generateLoginURL = () => `${BASE_URL}/login`
+
+export const generateCheckAuthURL = () => `${BASE_URL}/check-auth`
+
 export const generateCodesURL = () => `${BASE_URL}/codes`
 
 export const generateProjectsURL = () => `${BASE_URL}/projects`

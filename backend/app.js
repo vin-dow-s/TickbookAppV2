@@ -138,6 +138,12 @@ app.get('/api/auth', async (req, res) => {
     }
 })
 
+// Route to check if the user is authenticated
+app.get('/api/check-auth', verifyToken, (req, res) => {
+    // If the verifyToken middleware succeeds, it means the user is authenticated
+    res.json({ authenticated: true, user: req.user })
+})
+
 // Logout route
 app.get('/api/logout', (req, res) => {
     res.clearCookie('token')

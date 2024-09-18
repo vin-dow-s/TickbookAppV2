@@ -12,6 +12,7 @@ import 'ag-grid-community/styles/ag-theme-quartz.css'
 
 //Component
 import App from './App'
+import { BrowserRouter } from 'react-router-dom'
 
 /**
  * @file Entry point of the application.
@@ -21,8 +22,10 @@ import App from './App'
  */
 ReactDOM.createRoot(document.getElementById('root')).render(
     <React.StrictMode>
-        <GlobalStyle />
-        <App />
-        <ToastContainer />
+        <BrowserRouter>
+            <GlobalStyle />
+            <App />
+            <ToastContainer />
+        </BrowserRouter>
     </React.StrictMode>
 )

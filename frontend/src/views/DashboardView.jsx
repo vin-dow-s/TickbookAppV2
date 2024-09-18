@@ -311,7 +311,10 @@ const DashboardView = () => {
         if (jobNo) {
             try {
                 const url = generateProjectSummaryValues(jobNo)
-                const response = await fetch(url)
+                const response = await fetch(url, {
+                    method: 'GET',
+                    credentials: 'include',
+                })
 
                 if (!response.ok) {
                     throw new Error(`HTTP error! status: ${response.status}`)

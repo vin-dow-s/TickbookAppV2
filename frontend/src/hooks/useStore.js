@@ -1151,6 +1151,7 @@ const useStore = create((set, get) => ({
             const response = await fetch(url, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
                 body: JSON.stringify(fieldValuesToUpdate),
             })
 

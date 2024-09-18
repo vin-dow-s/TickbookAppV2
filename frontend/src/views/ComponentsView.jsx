@@ -623,7 +623,9 @@ const ComponentsView = () => {
             }
 
             const url = isComponentUsedInTemplateURL(jobNo, componentData.ID)
-            const response = await fetch(url)
+            const response = await fetch(url, {
+                credentials: 'include',
+            })
 
             if (response.status === 403) {
                 toast.warning(
@@ -695,7 +697,9 @@ const ComponentsView = () => {
     const openDeleteComponentDialogBox = async (rowData) => {
         try {
             const url = isComponentUsedInTemplateURL(jobNo, rowData.ID)
-            const response = await fetch(url)
+            const response = await fetch(url, {
+                credentials: 'include',
+            })
 
             if (response.status === 403) {
                 toast.error(

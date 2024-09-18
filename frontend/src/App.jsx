@@ -1,5 +1,10 @@
 //Modules
-import { Route, BrowserRouter as Router, Routes } from 'react-router-dom'
+import {
+    Route,
+    BrowserRouter as Router,
+    Routes,
+    useNavigate,
+} from 'react-router-dom'
 import styled from 'styled-components'
 import { useEffect, useState } from 'react'
 
@@ -26,6 +31,7 @@ import RevisionsView from './views/RevisionsView'
 import TenderSectionsView from './views/TenderSectionsView'
 import CabschedsView from './views/CabschedsView'
 import MultiUpdateView from './views/MultiUpdateView'
+import { generateCheckAuthURL, generateLoginURL } from './utils/apiConfig'
 
 const AppContainer = styled.div`
     width: 100svw;
@@ -102,6 +108,7 @@ const App = () => {
         viewType: state.viewType,
     }))
     const [showExportDialog, setShowExportDialog] = useState(false)
+    const navigate = useNavigate()
 
     const handleOpenExportDialog = () => {
         setShowExportDialog(true)
@@ -111,7 +118,7 @@ const App = () => {
         setShowExportDialog(false)
     }
 
-    //Prevents the default browser right click menu to appear in tables
+    // Prevents the default browser right click menu to appear in tables
     useEffect(() => {
         const handleContextMenu = (event) => {
             if (
@@ -130,8 +137,34 @@ const App = () => {
         }
     }, [])
 
+    // Check if the user is authenticated when the app loads
+    useEffect(() => {
+        fetch(generateCheckAuthURL(), {
+            method: 'GET',
+            credentials: 'include',
+        })
+            .then((response) => {
+                if (response.ok) {
+                    return response.json()
+                }
+                throw new Error('Failed to authenticate')
+            })
+            .then((data) => {
+                if (!data.authenticated) {
+                    window.location.href = generateLoginURL()
+                } else {
+                    console.log('User is authenticated', data.user)
+                }
+            })
+
+            .catch((err) => {
+                console.error('Authentication error:', err)
+                window.location.href = generateLoginURL()
+            })
+    }, [navigate])
+
     return (
-        <Router>
+        <>
             <AppContainer>
                 <Sidebar />
                 <MainContainer>
@@ -194,7 +227,7 @@ const App = () => {
                     onClose={handleCloseExportDialog}
                 />
             )}
-        </Router>
+        </>
     )
 }
 

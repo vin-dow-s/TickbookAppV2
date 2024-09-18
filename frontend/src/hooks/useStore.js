@@ -416,6 +416,7 @@ const useStore = create((set, get) => ({
             const response = await fetch(generateProjectComponentsURL(jobNo), {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
                 body: JSON.stringify(dataToSend),
             })
 
@@ -469,6 +470,7 @@ const useStore = create((set, get) => ({
                 {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
                     body: JSON.stringify(processedData),
                 }
             )
@@ -522,6 +524,7 @@ const useStore = create((set, get) => ({
             const response = await fetch(url, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
                 body: JSON.stringify(fieldValuesToUpdate),
             })
 
@@ -554,6 +557,7 @@ const useStore = create((set, get) => ({
             const response = await fetch(bulkUpdateComponentsURL(jobNo), {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
                 body: JSON.stringify({ componentIds, newCode }),
             })
 
@@ -585,6 +589,7 @@ const useStore = create((set, get) => ({
                 deleteComponentURL(jobNo, componentId),
                 {
                     method: 'DELETE',
+                    credentials: 'include',
                 }
             )
 
@@ -671,6 +676,7 @@ const useStore = create((set, get) => ({
             const response = await fetch(generateProjectTemplatesURL(jobNo), {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
                 body: JSON.stringify(templateData),
             })
 
@@ -714,6 +720,7 @@ const useStore = create((set, get) => ({
                 {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
                     body: JSON.stringify(templatesData),
                 }
             )
@@ -762,6 +769,7 @@ const useStore = create((set, get) => ({
                 {
                     method: 'PUT',
                     headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
                     body: JSON.stringify(bodyData),
                 }
             )
@@ -799,7 +807,10 @@ const useStore = create((set, get) => ({
 
         try {
             const response = await fetch(
-                generateTemplateComponentsURL(jobNo, templateData.Name)
+                generateTemplateComponentsURL(jobNo, templateData.Name),
+                {
+                    credentials: 'include',
+                }
             )
 
             if (!response.ok) {
@@ -824,6 +835,7 @@ const useStore = create((set, get) => ({
                 {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
                     body: JSON.stringify(newTemplateData),
                 }
             )
@@ -937,6 +949,7 @@ const useStore = create((set, get) => ({
             const response = await fetch(generateProjectEquipmentURL(jobNo), {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
                 body: JSON.stringify(equipmentData),
             })
 
@@ -1000,6 +1013,7 @@ const useStore = create((set, get) => ({
                 {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
                     body: JSON.stringify(equipmentData),
                 }
             )
@@ -1089,6 +1103,7 @@ const useStore = create((set, get) => ({
                 {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
                     body: JSON.stringify(equipmentData),
                 }
             )
@@ -1252,6 +1267,7 @@ const useStore = create((set, get) => ({
             const response = await fetch(url, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
                 body: JSON.stringify(bulkUpdateData),
             })
 
@@ -1380,6 +1396,7 @@ const useStore = create((set, get) => ({
                 headers: {
                     'Content-Type': 'application/json',
                 },
+                credentials: 'include',
                 body: JSON.stringify(bodyData),
             })
 
@@ -1449,6 +1466,7 @@ const useStore = create((set, get) => ({
                     headers: {
                         'Content-Type': 'application/json',
                     },
+                    credentials: 'include',
                     body: JSON.stringify({ updates }),
                 }
             )
@@ -1518,6 +1536,7 @@ const useStore = create((set, get) => ({
                     headers: {
                         'Content-Type': 'application/json',
                     },
+                    credentials: 'include',
                     body: JSON.stringify(updates),
                 }
             )
@@ -1567,6 +1586,7 @@ const useStore = create((set, get) => ({
             const requestOptions = {
                 method: 'DELETE',
                 headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
                 body: JSON.stringify({
                     deleteAssociatedCables: deleteAssociatedCables,
                 }),
@@ -1687,6 +1707,7 @@ const useStore = create((set, get) => ({
             const response = await fetch(generateProjectCabschedsURL(jobNo), {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
                 body: JSON.stringify(cabschedData),
             })
 
@@ -1753,6 +1774,7 @@ const useStore = create((set, get) => ({
                 {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
                     body: JSON.stringify(bulkCreateData),
                 }
             )
@@ -1824,6 +1846,7 @@ const useStore = create((set, get) => ({
                 {
                     method: 'PUT',
                     headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
                     body: JSON.stringify(finalCabschedData),
                 }
             )
@@ -1872,6 +1895,7 @@ const useStore = create((set, get) => ({
                 {
                     method: 'PUT',
                     headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
                     body: JSON.stringify(bodyData),
                 }
             )
@@ -1903,6 +1927,7 @@ const useStore = create((set, get) => ({
         try {
             const response = await fetch(deleteCabschedURL(jobNo, cabNum), {
                 method: 'DELETE',
+                credentials: 'include',
             })
 
             if (response.ok) {
@@ -1934,6 +1959,7 @@ const useStore = create((set, get) => ({
                     headers: {
                         'Content-Type': 'application/json',
                     },
+                    credentials: 'include',
                     body: JSON.stringify(),
                 }
             )
@@ -2044,6 +2070,7 @@ const useStore = create((set, get) => ({
             const response = await fetch(generateProjectCCsURL(jobNo), {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
                 body: JSON.stringify(ccData),
             })
 
@@ -2073,6 +2100,7 @@ const useStore = create((set, get) => ({
             const response = await fetch(updateCCsURL(jobNo, equipRef, ccRef), {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
                 body: JSON.stringify({ DateLift: dateLift }),
             })
 

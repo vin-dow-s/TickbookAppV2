@@ -111,6 +111,7 @@ const CreateComponentAndFileUploadContainer = styled.div`
 
     @media screen and (max-width: 1017px) {
         flex-direction: column;
+
         > div {
             flex: 1;
         }
@@ -137,7 +138,6 @@ const FieldsWrapper = styled.div`
     flex-direction: row;
     flex-wrap: wrap;
     gap: 10px;
-    margin-bottom: 10px;
 
     @media screen and (max-width: 800px) {
         flex-direction: column;
@@ -187,7 +187,7 @@ const CreateComponentFormField = styled(FormField)`
     .codeName {
         position: absolute;
         width: 300px;
-        top: 45px;
+        top: 40px;
         font-size: smaller;
         color: ${colors.purpleBgenDarker};
     }

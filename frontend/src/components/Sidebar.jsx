@@ -14,6 +14,7 @@ import {
     RiBriefcaseLine,
     RiBarcodeLine,
 } from 'react-icons/ri'
+import useStore from '../hooks/useStore'
 
 const SidebarContainer = styled.div`
     width: 200px;
@@ -70,6 +71,10 @@ const SidebarLink = styled(NavLink)`
 `
 
 const Sidebar = () => {
+    const { jobNo } = useStore((state) => ({
+        jobNo: state.jobNo,
+    }))
+
     return (
         <SidebarContainer>
             <Menu>
@@ -88,44 +93,44 @@ const Sidebar = () => {
                         style={{ width: '50px', height: '50px' }}
                     />
                 </div>
-                <SidebarLink to="/dashboard">
+                <SidebarLink to={`/${jobNo}/dashboard`}>
                     <RiDashboardLine />
                     DASHBOARD
                 </SidebarLink>
-                <SidebarLink to="/components">
+                <SidebarLink to={`/${jobNo}/components`}>
                     <RiToolsFill />
                     COMPONENTS
                 </SidebarLink>
-                <SidebarLink to="/templates">
+                <SidebarLink to={`/${jobNo}/templates`}>
                     <RiFileList2Line />
                     TEMPLATES
                 </SidebarLink>
-                <SidebarLink to="/equipment">
+                <SidebarLink to={`/${jobNo}/equipment`}>
                     <RiArchive2Line />
                     EQUIPMENT
                 </SidebarLink>
-                <SidebarLink to="/cable-schedules">
+                <SidebarLink to={`/${jobNo}/cable-schedule`}>
                     <RiGitBranchLine />
                     CABLE SCHEDULE
                 </SidebarLink>
-                <SidebarLink to="/multi-update">
+                <SidebarLink to={`/${jobNo}/multi-update`}>
                     <RiCheckboxMultipleLine /> MULTI UPDATE
                 </SidebarLink>
-                <SidebarLink to="/revisions">
+                <SidebarLink to={`/${jobNo}/revisions`}>
                     <RiListCheck />
                     REVISIONS
                 </SidebarLink>
-                <SidebarLink to="/ccs">
+                <SidebarLink to={`/${jobNo}/ccs`}>
                     <RiMailSendLine />
                     CCs
                 </SidebarLink>
-                <SidebarLink to="/tender-sections">
+                <SidebarLink to={`/${jobNo}/tender-sections`}>
                     <RiListCheck3 />
                     TENDER SECTIONS
                 </SidebarLink>
             </Menu>
             <Menu>
-                <SidebarLink to="/">
+                <SidebarLink to="/projects">
                     <RiBriefcaseLine />
                     PROJECT
                 </SidebarLink>

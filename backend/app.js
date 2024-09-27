@@ -131,7 +131,7 @@ app.get('/api/auth', async (req, res) => {
         res.clearCookie('codeVerifier')
 
         // Redirect the user to the frontend
-        res.redirect('http://localhost:5173')
+        res.redirect('http://localhost:5173/projects')
     } catch (error) {
         console.error('Authentication error:', error)
         res.status(500).send('Authentication error occurred.')

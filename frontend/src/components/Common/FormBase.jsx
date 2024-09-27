@@ -30,6 +30,7 @@ export const ButtonsContainer = styled.div`
 
     @media screen and (max-width: 1017px), screen and (max-height: 700px) {
         font-size: smaller;
+        padding: 0;
     }
 `
 

@@ -1,10 +1,5 @@
 //Modules
-import {
-    Route,
-    BrowserRouter as Router,
-    Routes,
-    useNavigate,
-} from 'react-router-dom'
+import { Route, Routes, useNavigate } from 'react-router-dom'
 import styled from 'styled-components'
 import { useEffect, useState } from 'react'
 
@@ -21,7 +16,7 @@ import Sidebar from './components/Sidebar'
 
 //Views
 import DashboardView from './views/DashboardView'
-import ProjectView from './views/ProjectView'
+import ProjectsView from './views/ProjectsView'
 import CodesView from './views/CodesView'
 import ComponentsView from './views/ComponentsView'
 import TemplatesView from './views/TemplatesView'
@@ -29,7 +24,7 @@ import EquipmentView from './views/EquipmentView'
 import CCsView from './views/CCsView'
 import RevisionsView from './views/RevisionsView'
 import TenderSectionsView from './views/TenderSectionsView'
-import CabschedsView from './views/CabschedsView'
+import CableScheduleView from './views/CableScheduleView'
 import MultiUpdateView from './views/MultiUpdateView'
 import { generateCheckAuthURL, generateLoginURL } from './utils/apiConfig'
 
@@ -101,12 +96,22 @@ const ViewContainer = styled.div`
  * Integrates the main routing logic.
  */
 const App = () => {
-    const { jobNo, jobTitle, jobAddress, viewType } = useStore((state) => ({
+    const {
+        jobNo,
+        jobTitle,
+        jobAddress,
+        viewType,
+        onProjectSelect,
+        fetchAllProjectData,
+    } = useStore((state) => ({
         jobNo: state.jobNo,
         jobTitle: state.jobTitle,
         jobAddress: state.jobAddress,
         viewType: state.viewType,
+        onProjectSelect: state.onProjectSelect,
+        fetchAllProjectData: state.fetchAllProjectData,
     }))
+
     const [showExportDialog, setShowExportDialog] = useState(false)
     const navigate = useNavigate()
 
@@ -117,6 +122,14 @@ const App = () => {
     const handleCloseExportDialog = () => {
         setShowExportDialog(false)
     }
+
+    // Fetch the project when jobNoFromUrl changes
+    useEffect(() => {
+        if (jobNo) {
+            fetchAllProjectData(jobNo)
+            onProjectSelect({ JobNo: jobNo })
+        }
+    }, [jobNo, fetchAllProjectData, onProjectSelect])
 
     // Prevents the default browser right click menu to appear in tables
     useEffect(() => {
@@ -182,39 +195,42 @@ const App = () => {
                     <ViewContainer>
                         <Routes>
                             <Route
-                                path="/dashboard"
+                                path="/:jobNo/dashboard"
                                 element={<DashboardView />}
                             />
                             <Route
-                                path="/components"
+                                path="/:jobNo/components"
                                 element={<ComponentsView />}
                             />
                             <Route
-                                path="/templates"
+                                path="/:jobNo/templates"
                                 element={<TemplatesView />}
                             />
                             <Route
-                                path="/equipment"
+                                path="/:jobNo/equipment"
                                 element={<EquipmentView />}
                             />
                             <Route
-                                path="/cable-schedules"
-                                element={<CabschedsView />}
+                                path="/:jobNo/cable-schedules"
+                                element={<CableScheduleView />}
                             />
                             <Route
-                                path="/multi-update"
+                                path="/:jobNo/multi-update"
                                 element={<MultiUpdateView />}
                             />
                             <Route
-                                path="/revisions"
+                                path="/:jobNo/revisions"
                                 element={<RevisionsView />}
                             />
-                            <Route path="/ccs" element={<CCsView />} />
+                            <Route path="/:jobNo/ccs" element={<CCsView />} />
                             <Route
-                                path="/tender-sections"
+                                path="/:jobNo/tender-sections"
                                 element={<TenderSectionsView />}
                             />
-                            <Route path="/" element={<ProjectView />} />
+                            <Route
+                                path="/projects"
+                                element={<ProjectsView />}
+                            />
                             <Route path="/codes" element={<CodesView />} />
                         </Routes>
                     </ViewContainer>

@@ -76,7 +76,7 @@ const CreationStepMessageContainer = styled.div`
     text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
 `
 
-const CabschedsViewContainer = styled.div`
+const CableScheduleViewContainer = styled.div`
     display: flex;
     flex-direction: column;
     flex: 1;
@@ -272,7 +272,7 @@ const FileUploadContainer = styled.div`
 `
 
 //Main component of the file
-const CabschedsView = () => {
+const CableScheduleView = () => {
     //1. State declarations
     const {
         jobNo,
@@ -721,7 +721,7 @@ const CabschedsView = () => {
                     <MainLoader />
                 </MainLoaderOverlayContainer>
             )}
-            <CabschedsViewContainer>
+            <CableScheduleViewContainer>
                 <CabschedsDataContainer>
                     <LabelAndInputContainer>
                         <span className="grey-label">Cabscheds List</span>
@@ -974,9 +974,9 @@ const CabschedsView = () => {
                         onClose={() => setIsDeleteCabschedDialogBoxOpen(false)}
                     />
                 )}
-            </CabschedsViewContainer>
+            </CableScheduleViewContainer>
         </>
     )
 }
 
-export default CabschedsView
+export default CableScheduleView

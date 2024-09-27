@@ -694,7 +694,7 @@ export const columnsComponentsInSelectedTemplate = [
 ]
 
 /**
- * @file CabschedsView columns definition
+ * @file CableScheduleView columns definition
  */
 const completionCellStyle = (params) => {
     if (
@@ -1034,7 +1034,7 @@ export const columnsTenderSections = [
 ]
 
 /**
- * @file ProjectView columns definition
+ * @file ProjectsView columns definition
  */
 export const columnsSelectProject = [
     {

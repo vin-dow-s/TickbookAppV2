@@ -26,7 +26,7 @@ import {
 import FormButton from '../components/Common/FormButton'
 
 //Styled components declarations
-const ProjectViewContainer = styled.div`
+const ProjectsViewContainer = styled.div`
     display: flex;
     flex-direction: column;
     flex: 1;
@@ -90,7 +90,7 @@ const CreateProjectFormField = styled(FormField)`
     }
 `
 
-const ProjectView = () => {
+const ProjectsView = () => {
     const navigate = useNavigate()
     const {
         projectsList,
@@ -129,8 +129,10 @@ const ProjectView = () => {
             params.api.updateGridOptions({ rowData: projectsList })
         },
         onRowClicked: (params) => {
-            onProjectSelect(params.data)
-            navigate('/dashboard')
+            const project = params.data
+            onProjectSelect(project)
+
+            navigate(`/${project.JobNo}/dashboard`)
         },
         suppressScrollOnNewData: true,
     }
@@ -222,7 +224,7 @@ const ProjectView = () => {
     }, [projectsList, selectProjectTableGridApi, isLoading])
 
     return (
-        <ProjectViewContainer>
+        <ProjectsViewContainer>
             <SelectProjectContainer>
                 <span className="grey-label left">Projects List</span>
                 <div
@@ -323,8 +325,8 @@ const ProjectView = () => {
                     </ButtonsContainer>
                 </FormBase>
             </CreateProjectContainer>
-        </ProjectViewContainer>
+        </ProjectsViewContainer>
     )
 }
 
-export default ProjectView
+export default ProjectsView
